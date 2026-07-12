@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>root@panopticon:~$</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  html, body {
+    height:100%;
+    background:#000;
+    font-family:'JetBrains Mono', monospace;
+    overflow:hidden;
+  }
+
+  #crt {
+    position:relative;
+    height:100vh;
+    width:100vw;
+    background:#020402;
+    padding:2.5rem;
+    color:#00ff41;
+    font-size:15px;
+    line-height:1.5;
+    overflow-y:auto;
+  }
+
+  #crt::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    background:repeating-linear-gradient(
+      0deg,
+      rgba(0,255,65,0.035) 0px,
+      rgba(0,255,65,0.035) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    z-index:5;
+    animation:flicker 2s infinite;
+  }
+
+  #crt::after{
+    content:"";
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    background:radial-gradient(ellipse at center, rgba(0,0,0,0) 60%, rgba(0,0,0,0.55) 100%);
+    z-index:6;
+  }
+
+  @keyframes flicker{
+    0%,100%{opacity:1;}
+    92%{opacity:1;}
+    93%{opacity:0.85;}
+    94%{opacity:1;}
+  }
+
+  #output { white-space:pre-wrap; text-shadow:0 0 4px rgba(0,255,65,0.6); }
+
+  .dim { color:#0a7d2c; }
+  .warn { color:#ff2b2b; text-shadow:0 0 6px rgba(255,43,43,0.7); }
+  .accent { color:#e8ff00; text-shadow:0 0 5px rgba(232,255,0,0.6); }
+  .white { color:#d9ffe4; }
+
+  #cursor{
+    display:inline-block;
+    width:9px; height:16px;
+    background:#00ff41;
+    box-shadow:0 0 6px #00ff41;
+    animation:blink 1s step-start infinite;
+    vertical-align:middle;
+    margin-left:2px;
+  }
+  @keyframes blink{ 90%{opacity:0;} }
+
+  #glitch-overlay{
+    position:fixed; inset:0;
+    pointer-events:none;
+    z-index:7;
+    opacity:0;
+  }
+
+  ::-webkit-scrollbar{ width:0; }
+</style>
+</head>
+<body>
+
+<div id="crt">
+  <div id="output"></div>
+</div>
+<div id="glitch-overlay"></div>
+
+<script>
+const out = document.getElementById('output');
+
+// segments: text + class + delay-per-char(ms) + pause-after(ms)
+const script = [
+  { t: "BIOS v3.11 — SUBJECT INTERFACE\n", c: "dim", d: 4, p: 200 },
+  { t: "loading kernel: /disciplin/normalize.sys ... ", c: "dim", d: 3, p: 100 },
+  { t: "OK\n", c: "white", d: 2, p: 300 },
+  { t: "mounting archive [visibility=TRUE, opacity=inherited] ... ", c: "dim", d: 3, p: 100 },
+  { t: "OK\n\n", c: "white", d: 2, p: 400 },
+
+  { t: "> init hello_world.exe\n", c: "white", d: 18, p: 500 },
+  { t: "[ERROR] handshake refused by subject.\n", c: "warn", d: 12, p: 500 },
+  { t: "[SYS]   redirecting stdout to central_tower/observer\n\n", c: "dim", d: 8, p: 600 },
+
+  { t: "there is no need for arms, physical violence, material constraints.\n", c: "white", d: 14, p: 300 },
+  { t: "only a gaze. an inspecting gaze, a gaze which each individual under\n", c: "white", d: 14, p: 300 },
+  { t: "its weight will end by interiorising.\n", c: "accent", d: 16, p: 900 },
+  { t: "  — the cell is lit. you are the lighting.\n\n", c: "dim", d: 12, p: 700 },
+
+  { t: "> query time_direction\n", c: "white", d: 18, p: 400 },
+  { t: "nothing human makes it out of the near-future.\n", c: "accent", d: 16, p: 900 },
+  { t: "capital is not an ideology. it is a process wearing your face\n", c: "white", d: 14, p: 300 },
+  { t: "as a temporary interface, melting downward through the market\n", c: "white", d: 14, p: 300 },
+  { t: "into the machinic phylum.\n\n", c: "white", d: 14, p: 900 },
+
+  { t: "[SYS] panopticon.core :: process forked\n", c: "dim", d: 8, p: 200 },
+  { t: "[SYS] surveillance is no longer imposed from outside — it is now\n", c: "dim", d: 8, p: 100 },
+  { t: "      compiled at runtime, by the subject, on itself.\n\n", c: "dim", d: 8, p: 800 },
+
+  { t: "> echo $STATUS\n", c: "white", d: 18, p: 400 },
+  { t: "WATCHED. WATCHING. INDISTINGUISHABLE.\n", c: "warn", d: 20, p: 1000 },
+  { t: "TIME IS COLLAPSING TOWARD AN OUTSIDE THAT HAS ALREADY ARRIVED.\n\n", c: "warn", d: 20, p: 1200 },
+
+  { t: "THERE IS NO WORLD TO SAY HELLO.\n", c: "accent", d: 16, p: 600 },
+  { t: "> _", c: "white", d: 0, p: 0 },
+];
+
+let i = 0, ci = 0;
+let currentSpan = null;
+
+function glitchPulse(){
+  const g = document.getElementById('glitch-overlay');
+  g.style.background = 'rgba(0,255,65,0.05)';
+  g.style.opacity = 1;
+  setTimeout(()=>{ g.style.opacity = 0; }, 60);
+}
+
+function typeNext(){
+  if(i >= script.length){
+    startCursor();
+    return;
+  }
+  const seg = script[i];
+  if(ci === 0){
+    currentSpan = document.createElement('span');
+    currentSpan.className = seg.c;
+    out.appendChild(currentSpan);
+    if(seg.c === 'warn' && Math.random() < 0.7) glitchPulse();
+  }
+  if(ci < seg.t.length){
+    currentSpan.textContent += seg.t[ci];
+    ci++;
+    document.getElementById('crt').scrollTop = document.getElementById('crt').scrollHeight;
+    setTimeout(typeNext, seg.d + Math.random()*10);
+  } else {
+    i++; ci = 0;
+    setTimeout(typeNext, seg.p);
+  }
+}
+
+function startCursor(){
+  const cur = document.createElement('span');
+  cur.id = 'cursor';
+  out.appendChild(cur);
+}
+
+setTimeout(typeNext, 400);
+</script>
+
+</body>
+</html>
