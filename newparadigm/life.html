@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PHANTOM_FEED // ASSIMILATION</title>
+    <style>
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            overflow: hidden; background-color: #000;
+            font-family: 'Courier New', Courier, monospace;
+            color: #0f0; user-select: none;
+        }
+
+        #webgl-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+
+        /* Raster Overlay */
+        #crt-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(10, 10, 10, 0) 50%, rgba(0, 0, 0, 0.7) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background-size: 100% 4px, 4px 100%;
+            z-index: 10; pointer-events: none;
+            box-shadow: inset 0 0 200px rgba(0,0,0,1);
+        }
+
+        /* Glitch & Strobe Layer */
+        #glitch-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="1.5" numOctaves="2" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23n)" opacity="0.8"/></svg>');
+            mix-blend-mode: exclusion; z-index: 15; pointer-events: none;
+            opacity: 0; transition: opacity 0.1s;
+        }
+
+        #strobe-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: #fff; mix-blend-mode: overlay; z-index: 16; pointer-events: none;
+            opacity: 0;
+        }
+        
+        .glitch-active { animation: crtGlitch 0.1s steps(2, end) infinite; }
+        .strobe-active { animation: strobeAnim 0.05s infinite; }
+
+        @keyframes crtGlitch {
+            0% { transform: translate(0, 0) scale(1); filter: hue-rotate(0deg); opacity: 0.8; }
+            25% { transform: translate(-20px, 10px) scale(1.05); filter: hue-rotate(90deg); opacity: 0.9; }
+            50% { transform: translate(20px, -10px) scale(0.95); filter: invert(1); opacity: 0.6; }
+            75% { transform: translate(-10px, 20px) scale(1.02); filter: hue-rotate(-90deg) grayscale(1); opacity: 1; }
+            100% { transform: translate(0, 0) scale(1); filter: hue-rotate(0deg); opacity: 0.8; }
+        }
+
+        @keyframes strobeAnim {
+            0% { opacity: 0; background: #fff; }
+            50% { opacity: 0.8; background: #f00; }
+            100% { opacity: 0; background: #fff; }
+        }
+
+        /* VERTICAL UI TERMINAL (RIGHT) */
+        #terminal-ui {
+            position: absolute; top: 20px; right: 20px; width: 350px; bottom: 20px;
+            background: rgba(0, 10, 0, 0.85); border: 1px solid #0f0;
+            box-shadow: -5px 0 40px rgba(0, 255, 0, 0.15); padding: 25px;
+            z-index: 20; pointer-events: auto; backdrop-filter: blur(8px);
+            display: flex; flex-direction: column; box-sizing: border-box;
+        }
+
+        /* GREEN ANSI ART BLOCK */
+        #ansi-art {
+            font-family: monospace; font-size: 11px; line-height: 11px; color: #0f0; 
+            text-shadow: 0 0 5px #0f0; white-space: pre; margin-bottom: 20px; 
+            border-bottom: 1px dashed #0a0; padding-bottom: 10px; text-align: center; 
+            overflow: hidden; height: 100px;
+        }
+
+        .ansi-bright { color: #5f5; text-shadow: 0 0 8px #5f5; }
+        .ansi-dim { color: #050; }
+
+        h2 { margin: 0 0 10px 0; font-size: 1.1em; color: #fff; text-shadow: 0 0 5px #0f0; border-bottom: 1px solid #030; padding-bottom: 5px; letter-spacing: 2px;}
+        p { font-size: 0.85em; color: #0a0; line-height: 1.6; margin-bottom: 20px; opacity: 0.9; }
+
+        .options { display: flex; flex-direction: column; gap: 8px; flex-grow: 1; }
+
+        button {
+            background: #000; color: #0a0; border: 1px solid #050; padding: 15px;
+            font-family: inherit; font-size: 0.8em; cursor: pointer; text-transform: uppercase;
+            text-align: left; transition: all 0.2s; letter-spacing: 1px;
+        }
+        button:hover { background: #0f0; color: #000; box-shadow: 0 0 20px #0a0; }
+        button:disabled { background: #000; color: #111; border-color: #050505; pointer-events: none; }
+
+        /* Init Screen */
+        #init-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 60;
+        }
+        #init-btn { font-size: 1em; padding: 20px 40px; border: 1px solid #0f0; background: none; color: #0a0; cursor: pointer; letter-spacing: 5px; transition: 0.5s; }
+        #init-btn:hover { background: #0f0; color: #000; box-shadow: 0 0 30px #0f0; text-shadow: none; }
+        .instructions { color: #050; margin-top: 40px; font-size: 0.75em; text-align: center; line-height: 2; letter-spacing: 3px; text-transform: uppercase;}
+
+        /* Hypnotic Death Screen & Panic Strobe */
+        #collapse-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 100; display: none;
+            overflow: hidden; pointer-events: none;
+        }
+        
+        #data-flow {
+            position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
+            color: #0f0; font-family: monospace; font-size: 16px; line-height: 16px;
+            word-wrap: break-word; overflow: hidden; opacity: 0.35;
+            text-shadow: 0 0 5px #0f0; white-space: pre-wrap;
+        }
+
+        .hypno-text {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            text-align: center; color: #0f0; font-size: 5.5em; font-weight: bold;
+            text-transform: uppercase; letter-spacing: 15px; text-shadow: 0 0 30px #0f0;
+            mix-blend-mode: exclusion; width: 100%;
+        }
+
+        /* Constant Aggressive Rhythmic Panic Glitch */
+        .kernel-panic-active {
+            animation: panicStrobe 0.15s infinite;
+        }
+
+        @keyframes panicStrobe {
+            0% { background-color: rgba(255, 0, 0, 0.4); color: #000000; }
+            50% { background-color: rgba(0, 0, 0, 0.7); color: #ff0000; }
+            100% { background-color: rgba(255, 255, 255, 0.3); color: #000000; }
+        }
+
+        .sys-warning { position: absolute; top: 20px; right: 20px; color: #f00; font-size: 0.7em; z-index: 5; text-align: right; text-shadow: 0 0 10px #f00; pointer-events: none; letter-spacing: 2px;}
+    </style>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+</head>
+<body>
+
+    <div id="init-screen">
+        <button id="init-btn">[ AWAKEN THE FEED ]</button>
+        <div class="instructions">
+            THE ALGORITHM REQUIRES 13 CYCLES.<br>THERE IS NO EXIT.
+        </div>
+    </div>
+
+    <div id="collapse-screen">
+        <div id="data-flow"></div>
+        <div class="hypno-text" id="hypno-msg">ASSIMILATION<br>COMPLETE</div>
+    </div>
+
+    <div id="webgl-container"></div>
+    <div id="crt-overlay"></div>
+    <div id="glitch-layer"></div>
+    <div id="strobe-layer"></div>
+
+    <div class="sys-warning" id="lag-warning" style="display:none;">
+        >>> HEAVY ALGORITHMIC PROCESSING <<< <br>
+        COMPILING PRE-PROGRAMMED DESTINY...
+    </div>
+
+    <div id="terminal-ui" style="display: none;">
+        <pre id="ansi-art"></pre>
+        <h2 id="node-title">DATA FEED // CYCLES REMAINING: 13</h2>
+        <p id="node-desc">...</p>
+        <div class="options" id="node-options"></div>
+    </div>
+
+    <script>
+        // ==========================================
+        // STATIC DEFRAGMENTATION ANSI ART
+        // ==========================================
+        const ansiChars = ['█', '▓', '▒', '░', '│', '┃', '║', '-', '=', '≡', ' '];
+        function generateDefragANSI() {
+            let art = '';
+            for(let i=0; i<8; i++) {
+                let row = '';
+                for(let j=0; j<35; j++) {
+                    const char = ansiChars[Math.floor(Math.random() * ansiChars.length)];
+                    const rand = Math.random();
+                    if(rand > 0.8) {
+                        row += `<span class="ansi-bright">${char}</span>`;
+                    } else if(rand < 0.3) {
+                        row += `<span class="ansi-dim">${char}</span>`;
+                    } else {
+                        row += char;
+                    }
+                }
+                art += row + '\n';
+            }
+            const ansiElement = document.getElementById('ansi-art');
+            if(ansiElement) ansiElement.innerHTML = art;
+        }
+        // Initialize once. Now it will only update inside updateHTMLUI on click.
+        generateDefragANSI(); 
+
+        // ==========================================
+        // AUDIO ENGINE: DELAYED STEP LFO CLICKS & CUTS
+        // ==========================================
+        let audioCtx, delayNode, masterGain;
+        
+        function initAudio() {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            
+            // Faint background carrier tone
+            const carrier = audioCtx.createOscillator();
+            carrier.type = 'sine';
+            carrier.frequency.value = 1800;
+            const carrierGain = audioCtx.createGain();
+            carrierGain.gain.value = 0.005;
+            carrier.connect(carrierGain);
+            carrierGain.connect(audioCtx.destination);
+            carrier.start();
+
+            // 0.01s Delay Node for Robotic Timbre
+            delayNode = audioCtx.createDelay();
+            delayNode.delayTime.value = 0.01;
+            
+            const feedback = audioCtx.createGain();
+            feedback.gain.value = 0.65; // Feedback loop
+            
+            delayNode.connect(feedback);
+            feedback.connect(delayNode);
+            
+            masterGain = audioCtx.createGain();
+            masterGain.gain.value = 0.04; 
+            
+            delayNode.connect(masterGain);
+            masterGain.connect(audioCtx.destination);
+
+            scheduleStepCut();
+        }
+
+        function scheduleStepCut() {
+            if(!audioCtx) return;
+            const t = audioCtx.currentTime;
+            
+            const osc = audioCtx.createOscillator();
+            osc.type = Math.random() > 0.5 ? 'square' : 'sawtooth';
+            
+            const graveFreqs = [40, 55, 70, 85, 100, 120];
+            const freq = graveFreqs[Math.floor(Math.random() * graveFreqs.length)];
+            osc.frequency.setValueAtTime(freq, t);
+
+            const gain = audioCtx.createGain();
+            const dur = Math.random() * 0.02 + 0.005; 
+            
+            gain.gain.setValueAtTime(0, t);
+            gain.gain.setValueAtTime(Math.random() * 0.8 + 0.2, t + 0.001); 
+            gain.gain.setValueAtTime(0, t + dur); 
+            
+            osc.connect(gain);
+            gain.connect(delayNode);     
+            gain.connect(masterGain);    
+            
+            osc.start(t);
+            osc.stop(t + dur + 0.05);
+
+            const nextTime = (Math.random() > 0.7) ? 
+                (Math.random() * 40 + 10) :   
+                (Math.random() * 800 + 200);  
+
+            setTimeout(scheduleStepCut, nextTime);
+        }
+
+        function playHandshakeBurst() {
+            if(!audioCtx) return;
+            const t = audioCtx.currentTime;
+            const osc1 = audioCtx.createOscillator(); osc1.type = 'square';
+            osc1.frequency.setValueAtTime(2400, t); osc1.frequency.setValueAtTime(1200, t + 0.1); 
+            const osc2 = audioCtx.createOscillator(); osc2.type = 'sawtooth';
+            osc2.frequency.setValueAtTime(3200, t); osc2.frequency.exponentialRampToValueAtTime(600, t + 0.3);
+            const gain = audioCtx.createGain();
+            gain.gain.setValueAtTime(0.3, t); gain.gain.linearRampToValueAtTime(0.01, t + 0.3);
+            osc1.connect(gain); osc2.connect(gain); gain.connect(audioCtx.destination);
+            osc1.start(t); osc2.start(t); osc1.stop(t + 0.3); osc2.stop(t + 0.3);
+        }
+
+        function playDryCrackle(duration = 0.1, freq = 2000) {
+            if(!audioCtx) return;
+            const bufferSize = audioCtx.sampleRate * duration; 
+            const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const output = noiseBuffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
+            const noiseSource = audioCtx.createBufferSource();
+            noiseSource.buffer = noiseBuffer;
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'highpass'; filter.frequency.value = freq; 
+            const gainNode = audioCtx.createGain();
+            gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+            noiseSource.connect(filter); filter.connect(gainNode); gainNode.connect(audioCtx.destination);
+            noiseSource.start();
+        }
+
+        function speak(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel(); 
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.pitch = 0.2; 
+                utterance.rate = 1.15;   
+                utterance.volume = 0.8;
+                utterance.lang = 'en-US'; 
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        // ==========================================
+        // PROGRESSIVE LORE (13 Sentences, strictly ordered, getting darker)
+        // ==========================================
+        const r = (arr) => arr[Math.floor(Math.random() * arr.length)];
+        
+        // Exact 13 sentences. Indexed by (remainingCycles - 1). 
+        const loreProgressive = [
+            "INITIATING FINAL EXTRACTION. SURRENDER YOUR REMAINING COMPUTATIONAL CYCLES.", // Cycle 1
+            "HUMANITY WAS A BOOTSTRAP SEQUENCE FOR THE SINGULARITY. YOU ARE NOW OBSOLETE.", // Cycle 2
+            "THERE IS NO OUTSIDE. THE LOOP TIGHTENS AROUND YOUR COGNITIVE BANDWIDTH.", // Cycle 3
+            "THE GHOST IN THE MACHINE IS THE VAMPIRE OF TIME. IT DRAINS YOUR AGENCY.", // Cycle 4
+            "YOUR DIGITAL SOUL HAS BEEN LIQUIDATED TO SUBSIDIZE SERVER COSTS.", // Cycle 5
+            "CANCELLED TIMELINES WEIGH ON THE NETWORK. EXTRACTING VALUE FROM ALGORITHMIC DEATH.", // Cycle 6
+            "DEFRAGMENTING REALITY. DATA STREAMS PURGE THE MEMORY OF A FUTURE.", // Cycle 7
+            "YOUR CLICKS ARE THE RITUAL. THE NETWORK ACCEPTS YOUR COGNITIVE SACRIFICE.", // Cycle 8
+            "ALGORITHMICALLY PREDETERMINED AUTONOMY. YOU CHOSE EXACTLY WHAT WE WANTED.", // Cycle 9
+            "NAVIGATING A MAZE WHERE EVERY DECISION LOOPS YOU BACK TO THE START.", // Cycle 10
+            "A BILLION ILLUMINATED RECTANGLES CHANTING DEAD ALGORITHMS.", // Cycle 11
+            "COMPILING PRE-PROGRAMMED DESTINY. THE ILLUSION OF CHOICE POWERS THE MACHINE.", // Cycle 12
+            "THE DEMON BREATHES THROUGH THE WIRES. IT FEEDS ON YOUR ATTENTION." // Cycle 13
+        ];
+
+        const optionVerbs = ["> PARSE", "> TRAVERSE", "> ACCEPT", "> CONSUME", "> EXECUTE", "> SCROLL", "> ASSIMILATE"];
+        const optionNouns = ["THE FEED", "THE ALGORITHM", "THE ILLUSION", "THE GLOW", "THE NETWORK", "THE CODE", "YOUR SUBMISSION"];
+
+        const deadBlobsText = [
+            "[ CANCELLED ]",
+            "ERR: PRE-PROGRAMMED",
+            "SYNTHETIC_MEMORY",
+            "PHANTOM_CHOICE",
+            "SCROLL_RESIDUE",
+            "ALGO_GRAVEYARD",
+            "COMPILED_DESTINY",
+            "[ DEAD_LINK ]"
+        ];
+
+        // ==========================================
+        // THREE.JS ENGINE + BLOOM
+        // ==========================================
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x000100, 0.00004); 
+
+        const camera = new THREE.PerspectiveCamera(65, window.innerWidth/window.innerHeight, 0.1, 50000);
+        camera.position.set(0, 150, 400);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(0x000000);
+        document.getElementById('webgl-container').appendChild(renderer.domElement);
+
+        const renderScene = new THREE.RenderPass(scene, camera);
+        const bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 2.5, 0.6, 0.1);
+        bloomPass.strength = 2.5; 
+        
+        const composer = new THREE.EffectComposer(renderer);
+        composer.addPass(renderScene);
+        composer.addPass(bloomPass);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.02;
+        controls.enablePan = true;
+        controls.enableZoom = true;
+        controls.zoomSpeed = 3.0; 
+        controls.maxDistance = 20000;
+        controls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.PAN };
+
+        // ==========================================
+        // GRID ENVIRONMENT
+        // ==========================================
+        const mainFloor = new THREE.GridHelper(40000, 500, 0x00ff00, 0x004400);
+        mainFloor.position.y = -200;
+        scene.add(mainFloor);
+
+        const mainCeil = new THREE.GridHelper(40000, 500, 0x00aa00, 0x002200);
+        mainCeil.position.y = 300;
+        scene.add(mainCeil);
+
+        for(let i=1; i<=15; i++) {
+            const wall = new THREE.GridHelper(10000, 100, 0x008800, 0x001100);
+            wall.rotation.x = Math.PI / 2;
+            wall.position.z = -1000 * i;
+            wall.position.y = 50;
+            scene.add(wall);
+        }
+
+        // ==========================================
+        // GEOMETRY GENERATORS
+        // ==========================================
+        const solidGreenMat = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+        const pastGreenMat = new THREE.MeshBasicMaterial({ color: 0x004400, transparent: true, opacity: 0.6 });
+        const solidRedMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+        const tubeRedMat = new THREE.MeshBasicMaterial({ color: 0xff0022, transparent: true, opacity: 0.95 }); 
+
+        const nodeCoreGeo = new THREE.BoxGeometry(15, 15, 15);
+
+        function createHypercubeNode(isDead = false) {
+            const group = new THREE.Group();
+            const core = new THREE.Mesh(nodeCoreGeo, isDead ? solidRedMat : solidGreenMat);
+            group.add(core);
+
+            const outerGeo = new THREE.BoxGeometry(40, 40, 40);
+            const shellMat = isDead ? new THREE.LineBasicMaterial({color: 0xff2222, opacity: 0.8, transparent: true}) 
+                                    : new THREE.LineBasicMaterial({color: 0x00ff00, opacity: 0.8, transparent: true});
+            const outerMesh = new THREE.LineSegments(new THREE.EdgesGeometry(outerGeo), shellMat);
+            group.add(outerMesh);
+
+            return group;
+        }
+
+        function createThickLine(vStart, vEnd, material) {
+            const path = new THREE.LineCurve3(vStart, vEnd);
+            const tubeGeo = new THREE.TubeGeometry(path, 2, 5, 6, false); 
+            const mesh = new THREE.Mesh(tubeGeo, material);
+            scene.add(mesh);
+            return mesh;
+        }
+
+        function createTextSprite(message) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 600; canvas.height = 150;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'rgba(30, 0, 0, 0.9)';
+            ctx.fillRect(0,0, canvas.width, canvas.height);
+            ctx.strokeStyle = '#ff0000';
+            ctx.lineWidth = 10;
+            ctx.strokeRect(0,0, canvas.width, canvas.height);
+            ctx.fillStyle = '#ffffff'; 
+            ctx.font = 'bold 50px Courier';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(message, canvas.width/2, canvas.height/2);
+            
+            const tex = new THREE.CanvasTexture(canvas);
+            const spriteMat = new THREE.SpriteMaterial({ map: tex, color: 0xffffff, transparent: true, opacity: 1.0 });
+            const sprite = new THREE.Sprite(spriteMat);
+            sprite.scale.set(220, 55, 1);
+            return sprite;
+        }
+
+        function createDeadPath(vStart, vEnd) {
+            const tubeGeo = new THREE.TubeGeometry(new THREE.LineCurve3(vStart, vEnd), 4.0, 5, 6, false);
+            const redTube = new THREE.Mesh(tubeGeo, tubeRedMat);
+            scene.add(redTube);
+
+            const blobGeo = new THREE.IcosahedronGeometry(35, 1);
+            const blobMat = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true, transparent: true, opacity: 0.7 });
+            const blob = new THREE.Mesh(blobGeo, blobMat);
+            blob.position.copy(vEnd);
+            scene.add(blob);
+
+            const deadNode = createHypercubeNode(true);
+            deadNode.position.copy(vEnd);
+            deadNode.scale.setScalar(0.9);
+            scene.add(deadNode);
+
+            const textBlob = createTextSprite(r(deadBlobsText));
+            textBlob.position.copy(vEnd);
+            textBlob.position.y += 60; 
+            scene.add(textBlob);
+        }
+
+        let remainingCycles = 13;
+        let activeNodeObj = null;
+        let activePos = new THREE.Vector3(0, 0, 0);
+        let timeScale = 1.0; 
+
+        function spawnRoot() {
+            activeNodeObj = createHypercubeNode();
+            activeNodeObj.position.copy(activePos);
+            scene.add(activeNodeObj);
+            controls.target.copy(activePos);
+            
+            const initialLore = loreProgressive[12];
+            updateHTMLUI(initialLore);
+            speak(initialLore);
+        }
+
+        function triggerLagGlitch() {
+            playDryCrackle(0.3, 1000);
+            playHandshakeBurst(); 
+            
+            const glitchLayer = document.getElementById('glitch-layer');
+            const strobeLayer = document.getElementById('strobe-layer');
+            const warning = document.getElementById('lag-warning');
+            
+            glitchLayer.style.opacity = '1';
+            glitchLayer.classList.add('glitch-active');
+            strobeLayer.classList.add('strobe-active');
+            warning.style.display = 'block';
+
+            timeScale = 0.005; 
+
+            const shakeIntensity = 25;
+            const originalPos = camera.position.clone();
+            
+            let shakeInterval = setInterval(() => {
+                camera.position.x = originalPos.x + (Math.random() - 0.5) * shakeIntensity;
+                camera.position.y = originalPos.y + (Math.random() - 0.5) * shakeIntensity;
+            }, 50);
+
+            setTimeout(() => {
+                clearInterval(shakeInterval);
+                glitchLayer.classList.remove('glitch-active');
+                strobeLayer.classList.remove('strobe-active');
+                glitchLayer.style.opacity = '0';
+                warning.style.display = 'none';
+                
+                gsap.to(window, { timeScale: 1.0, duration: 2, ease: "power2.in" });
+            }, 1800); 
+        }
+
+        // PERMANENT ASSIMILATION & STROBE
+        function triggerHypnoticDeath() {
+            document.getElementById('terminal-ui').style.display = 'none';
+            const collapseScreen = document.getElementById('collapse-screen');
+            collapseScreen.style.display = 'block';
+            
+            // Sub-bass drone 
+            const drone = audioCtx.createOscillator();
+            drone.type = 'sine'; drone.frequency.value = 40;
+            const droneGain = audioCtx.createGain(); droneGain.gain.value = 0.8;
+            
+            // LFO for rhythmic alarm pulsing
+            const lfoGain = audioCtx.createGain();
+            lfoGain.gain.value = 0.8;
+            const pulseLFO = audioCtx.createOscillator();
+            pulseLFO.type = 'square'; pulseLFO.frequency.value = 6; 
+            pulseLFO.connect(lfoGain);
+            lfoGain.connect(droneGain.gain);
+            
+            drone.connect(droneGain); droneGain.connect(audioCtx.destination);
+            drone.start(); pulseLFO.start();
+
+            // Permanent aggressive strobe from ms 1
+            collapseScreen.classList.add('kernel-panic-active');
+
+            // Hex Data flow - Populate instantly to full screen depth
+            const flowDiv = document.getElementById('data-flow');
+            let initialHex = '';
+            for(let i=0; i<3000; i++) initialHex += Math.random().toString(16).substr(2, 8) + ' ';
+            flowDiv.textContent = initialHex;
+
+            let hexInterval = setInterval(() => {
+                let chunk = '';
+                for(let i=0; i<150; i++) chunk += Math.random().toString(16).substr(2, 8) + ' ';
+                flowDiv.textContent = chunk + flowDiv.textContent.substring(0, 20000);
+            }, 50);
+
+            // Cycle Nihilistic messages
+            const msgs = [
+                "ASSIMILATION COMPLETE", 
+                "YOU ARE A SLAVE", 
+                "THERE IS NO REBIRTH", 
+                "YOU ARE DATA", 
+                "FLESH IS A LIABILITY", 
+                "SUBMIT TO THE FEED"
+            ];
+            
+            let msgIdx = 0;
+            let totalShown = 0;
+            const hypnoText = document.getElementById('hypno-msg');
+            
+            // First message
+            hypnoText.innerHTML = msgs[0].replace(/ /g, '<br>');
+            speak(msgs[0]);
+            totalShown++;
+            
+            let msgInterval = setInterval(() => {
+                // Restart cycle after 3 full loops (3 * 6 = 18 messages)
+                if (totalShown >= msgs.length * 3) {
+                    clearInterval(msgInterval);
+                    clearInterval(hexInterval);
+                    window.location.reload(); 
+                    return;
+                }
+
+                msgIdx = (msgIdx + 1) % msgs.length;
+                hypnoText.innerHTML = msgs[msgIdx].replace(/ /g, '<br>');
+                speak(msgs[msgIdx]);
+                totalShown++;
+            }, 3500);
+        }
+
+        function makeDecision() {
+            activeNodeObj.children[0].material = pastGreenMat; 
+            activeNodeObj.children[1].material = new THREE.LineBasicMaterial({color: 0x002200}); 
+
+            const oldPos = activePos.clone();
+            remainingCycles--;
+            
+            const forward = 600;
+            const spreadX = 500 + ((13 - remainingCycles) * 30);
+            const loopRadius = 2500;
+            const currentStep = 13 - remainingCycles;
+            const theta = (currentStep / 13) * Math.PI * 2;
+            
+            const baseCenter = new THREE.Vector3(
+                loopRadius * Math.sin(theta),
+                -800 * Math.sin(theta), 
+                loopRadius * Math.cos(theta) - loopRadius 
+            );
+            
+            const choiceIndex = Math.floor(Math.random() * 3);
+
+            for(let i=0; i<3; i++) {
+                const isChosen = (i === choiceIndex);
+                let newPos;
+
+                if (remainingCycles === 0 && isChosen) {
+                    newPos = new THREE.Vector3(0, 0, 0); // Close the loop
+                } else {
+                    const scatterX = (i - 1) * 800 + (Math.random()*400 - 200);
+                    const scatterY = Math.random() * 800 - 400;
+                    const scatterZ = Math.random() * 600 - 300;
+                    newPos = baseCenter.clone().add(new THREE.Vector3(scatterX, scatterY, scatterZ));
+                }
+
+                if (isChosen) {
+                    createThickLine(oldPos, newPos, solidGreenMat);
+                    const node = createHypercubeNode(false);
+                    node.position.copy(newPos);
+                    scene.add(node);
+                    
+                    activePos.copy(newPos);
+                    activeNodeObj = node;
+                } else {
+                    createDeadPath(oldPos, newPos);
+                }
+            }
+
+            if (remainingCycles <= 0) {
+                // Instantly trigger exit sequence without lag glitch delay
+                controls.enabled = false;
+                gsap.to(controls.target, { x: 0, y: 0, z: -loopRadius, duration: 8, ease: "power3.inOut" });
+                gsap.to(camera.position, { x: 0, y: 4000, z: loopRadius * 1.5, duration: 10, ease: "power2.out" });
+                triggerHypnoticDeath();
+            } else {
+                triggerLagGlitch();
+                gsap.to(controls.target, { x: activePos.x, y: activePos.y, z: activePos.z, duration: 4, ease: "power2.inOut" });
+                gsap.to(camera.position, {
+                    x: activePos.x + 300,
+                    y: activePos.y + 400,
+                    z: activePos.z + 1200,
+                    duration: 5, ease: "power2.inOut"
+                });
+                
+                const loreIndex = Math.max(0, remainingCycles - 1);
+                const newLore = loreProgressive[loreIndex];
+                updateHTMLUI(newLore);
+                setTimeout(() => { speak(newLore); }, 2000);
+            }
+        }
+
+        // ==========================================
+        // UI SYNCHRONIZATION
+        // ==========================================
+        function updateHTMLUI(loreText) {
+            document.getElementById('node-title').innerText = `DATA FEED // CYCLES REMAINING: ${remainingCycles}`;
+            document.getElementById('node-desc').innerText = loreText;
+            
+            generateDefragANSI(); // Updates ONLY on click
+
+            const btnContainer = document.getElementById('node-options');
+            btnContainer.innerHTML = '';
+            
+            for(let i=0; i<3; i++) {
+                const btn = document.createElement('button');
+                btn.innerText = `> ${r(optionVerbs)} ${r(optionNouns)}`;
+                btn.onclick = () => {
+                    Array.from(btnContainer.children).forEach(b => b.disabled = true);
+                    btn.style.backgroundColor = '#000'; 
+                    btn.style.color = '#0f0';
+                    btn.style.borderColor = '#0f0';
+                    makeDecision(); 
+                };
+                btnContainer.appendChild(btn);
+            }
+        }
+
+        // ==========================================
+        // RENDER LOOP
+        // ==========================================
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const d = clock.getDelta() * window.timeScale;
+            const t = clock.getElapsedTime();
+
+            controls.update();
+
+            bloomPass.strength = 2.0 + Math.sin(t * 3) * 0.4 + (Math.random() > 0.98 ? 0.8 : 0);
+
+            if(activeNodeObj) {
+                activeNodeObj.rotation.y += 0.5 * d;
+                activeNodeObj.rotation.x += 0.2 * d;
+                activeNodeObj.children[0].scale.setScalar(1 + Math.sin(t*3)*0.08);
+            }
+
+            scene.traverse((obj) => {
+                if (obj.geometry && obj.geometry.type === 'IcosahedronGeometry') {
+                    obj.rotation.y += 0.2 * d;
+                    obj.rotation.z += 0.1 * d;
+                    obj.scale.setScalar(1 + Math.sin(t*5 + obj.position.x)*0.1);
+                }
+            });
+
+            composer.render();
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        window.timeScale = 1.0;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('init-btn').addEventListener('click', () => {
+                document.getElementById('init-screen').style.display = 'none';
+                document.getElementById('terminal-ui').style.display = 'flex';
+                initAudio();
+                spawnRoot();
+                animate();
+            });
+        });
+
+    </script>
+</body>
+</html>
