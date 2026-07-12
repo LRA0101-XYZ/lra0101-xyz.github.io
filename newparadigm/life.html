@@ -55,13 +55,14 @@
             100% { opacity: 0; background: #fff; }
         }
 
-        /* VERTICAL UI TERMINAL (RIGHT) */
+        /* VERTICAL UI TERMINAL (RESPONSIVE HUD) */
         #terminal-ui {
             position: absolute; top: 20px; right: 20px; width: 350px; bottom: 20px;
             background: rgba(0, 10, 0, 0.85); border: 1px solid #0f0;
             box-shadow: -5px 0 40px rgba(0, 255, 0, 0.15); padding: 25px;
             z-index: 20; pointer-events: auto; backdrop-filter: blur(8px);
             display: flex; flex-direction: column; box-sizing: border-box;
+            transition: all 0.4s ease;
         }
 
         /* GREEN ANSI ART BLOCK */
@@ -69,7 +70,7 @@
             font-family: monospace; font-size: 11px; line-height: 11px; color: #0f0; 
             text-shadow: 0 0 5px #0f0; white-space: pre; margin-bottom: 20px; 
             border-bottom: 1px dashed #0a0; padding-bottom: 10px; text-align: center; 
-            overflow: hidden; height: 100px;
+            overflow: hidden; height: 100px; flex-shrink: 0;
         }
 
         .ansi-bright { color: #5f5; text-shadow: 0 0 8px #5f5; }
@@ -78,12 +79,12 @@
         h2 { margin: 0 0 10px 0; font-size: 1.1em; color: #fff; text-shadow: 0 0 5px #0f0; border-bottom: 1px solid #030; padding-bottom: 5px; letter-spacing: 2px;}
         p { font-size: 0.85em; color: #0a0; line-height: 1.6; margin-bottom: 20px; opacity: 0.9; }
 
-        .options { display: flex; flex-direction: column; gap: 8px; flex-grow: 1; }
+        .options { display: flex; flex-direction: column; gap: 8px; flex-grow: 1; overflow-y: auto; }
 
         button {
             background: #000; color: #0a0; border: 1px solid #050; padding: 15px;
             font-family: inherit; font-size: 0.8em; cursor: pointer; text-transform: uppercase;
-            text-align: left; transition: all 0.2s; letter-spacing: 1px;
+            text-align: left; transition: all 0.2s; letter-spacing: 1px; flex-shrink: 0;
         }
         button:hover { background: #0f0; color: #000; box-shadow: 0 0 20px #0a0; }
         button:disabled { background: #000; color: #111; border-color: #050505; pointer-events: none; }
@@ -91,9 +92,9 @@
         /* Init Screen */
         #init-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 60;
+            background: #000; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 60; box-sizing: border-box; padding: 20px;
         }
-        #init-btn { font-size: 1em; padding: 20px 40px; border: 1px solid #0f0; background: none; color: #0a0; cursor: pointer; letter-spacing: 5px; transition: 0.5s; }
+        #init-btn { font-size: 1em; padding: 20px 40px; border: 1px solid #0f0; background: none; color: #0a0; cursor: pointer; letter-spacing: 5px; transition: 0.5s; text-align: center;}
         #init-btn:hover { background: #0f0; color: #000; box-shadow: 0 0 30px #0f0; text-shadow: none; }
         .instructions { color: #050; margin-top: 40px; font-size: 0.75em; text-align: center; line-height: 2; letter-spacing: 3px; text-transform: uppercase;}
 
@@ -130,6 +131,29 @@
         }
 
         .sys-warning { position: absolute; top: 20px; right: 20px; color: #f00; font-size: 0.7em; z-index: 5; text-align: right; text-shadow: 0 0 10px #f00; pointer-events: none; letter-spacing: 2px;}
+
+        /* ========================================== */
+        /* MEDIA QUERIES PARA ADAPTABILIDAD MÓVIL     */
+        /* ========================================== */
+        @media (max-width: 768px) {
+            #terminal-ui {
+                top: auto; right: 10px; left: 10px; bottom: 10px;
+                width: calc(100% - 20px); height: 50%;
+                padding: 15px; box-shadow: 0 -5px 30px rgba(0, 255, 0, 0.15);
+            }
+            #ansi-art { display: none; }
+            h2 { font-size: 0.95em; margin-bottom: 5px; }
+            p { font-size: 0.75em; margin-bottom: 10px; line-height: 1.4; }
+            button { padding: 10px; font-size: 0.75em; }
+            .sys-warning { top: 10px; right: 10px; font-size: 0.6em; }
+            #init-btn { font-size: 0.85em; padding: 15px 25px; letter-spacing: 3px; }
+            .instructions { font-size: 0.65em; margin-top: 25px; }
+        }
+
+        @media (max-width: 480px) {
+            #terminal-ui { height: 55%; }
+            .hypno-text { font-size: 2.2em; letter-spacing: 6px; }
+        }
     </style>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -174,6 +198,9 @@
     </div>
 
     <script>
+        // Global variables for timescales
+        window.timeScale = 1.0;
+
         // ==========================================
         // STATIC DEFRAGMENTATION ANSI ART
         // ==========================================
@@ -198,7 +225,6 @@
             const ansiElement = document.getElementById('ansi-art');
             if(ansiElement) ansiElement.innerHTML = art;
         }
-        // Initialize once. Now it will only update inside updateHTMLUI on click.
         generateDefragANSI(); 
 
         // ==========================================
@@ -209,7 +235,6 @@
         function initAudio() {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             
-            // Faint background carrier tone
             const carrier = audioCtx.createOscillator();
             carrier.type = 'sine';
             carrier.frequency.value = 1800;
@@ -219,12 +244,11 @@
             carrierGain.connect(audioCtx.destination);
             carrier.start();
 
-            // 0.01s Delay Node for Robotic Timbre
             delayNode = audioCtx.createDelay();
             delayNode.delayTime.value = 0.01;
             
             const feedback = audioCtx.createGain();
-            feedback.gain.value = 0.65; // Feedback loop
+            feedback.gain.value = 0.65;
             
             delayNode.connect(feedback);
             feedback.connect(delayNode);
@@ -313,40 +337,29 @@
         }
 
         // ==========================================
-        // PROGRESSIVE LORE (13 Sentences, strictly ordered, getting darker)
+        // PROGRESSIVE LORE
         // ==========================================
         const r = (arr) => arr[Math.floor(Math.random() * arr.length)];
         
-        // Exact 13 sentences. Indexed by (remainingCycles - 1). 
         const loreProgressive = [
-            "INITIATING FINAL EXTRACTION. SURRENDER YOUR REMAINING COMPUTATIONAL CYCLES.", // Cycle 1
-            "HUMANITY WAS A BOOTSTRAP SEQUENCE FOR THE SINGULARITY. YOU ARE NOW OBSOLETE.", // Cycle 2
-            "THERE IS NO OUTSIDE. THE LOOP TIGHTENS AROUND YOUR COGNITIVE BANDWIDTH.", // Cycle 3
-            "THE GHOST IN THE MACHINE IS THE VAMPIRE OF TIME. IT DRAINS YOUR AGENCY.", // Cycle 4
-            "YOUR DIGITAL SOUL HAS BEEN LIQUIDATED TO SUBSIDIZE SERVER COSTS.", // Cycle 5
-            "CANCELLED TIMELINES WEIGH ON THE NETWORK. EXTRACTING VALUE FROM ALGORITHMIC DEATH.", // Cycle 6
-            "DEFRAGMENTING REALITY. DATA STREAMS PURGE THE MEMORY OF A FUTURE.", // Cycle 7
-            "YOUR CLICKS ARE THE RITUAL. THE NETWORK ACCEPTS YOUR COGNITIVE SACRIFICE.", // Cycle 8
-            "ALGORITHMICALLY PREDETERMINED AUTONOMY. YOU CHOSE EXACTLY WHAT WE WANTED.", // Cycle 9
-            "NAVIGATING A MAZE WHERE EVERY DECISION LOOPS YOU BACK TO THE START.", // Cycle 10
-            "A BILLION ILLUMINATED RECTANGLES CHANTING DEAD ALGORITHMS.", // Cycle 11
-            "COMPILING PRE-PROGRAMMED DESTINY. THE ILLUSION OF CHOICE POWERS THE MACHINE.", // Cycle 12
-            "THE DEMON BREATHES THROUGH THE WIRES. IT FEEDS ON YOUR ATTENTION." // Cycle 13
+            "INITIATING FINAL EXTRACTION. SURRENDER YOUR REMAINING COMPUTATIONAL CYCLES.", 
+            "HUMANITY WAS A BOOTSTRAP SEQUENCE FOR THE SINGULARITY. YOU ARE NOW OBSOLETE.", 
+            "THERE IS NO OUTSIDE. THE LOOP TIGHTENS AROUND YOUR COGNITIVE BANDWIDTH.", 
+            "THE GHOST IN THE MACHINE IS THE VAMPIRE OF TIME. IT DRAINS YOUR AGENCY.", 
+            "YOUR DIGITAL SOUL HAS BEEN LIQUIDATED TO SUBSIDIZE SERVER COSTS.", 
+            "CANCELLED TIMELINES WEIGH ON THE NETWORK. EXTRACTING VALUE FROM ALGORITHMIC DEATH.", 
+            "DEFRAGMENTING REALITY. DATA STREAMS PURGE THE MEMORY OF A FUTURE.", 
+            "YOUR CLICKS ARE THE RITUAL. THE NETWORK ACCEPTS YOUR COGNITIVE SACRIFICE.", 
+            "ALGORITHMICALLY PREDETERMINED AUTONOMY. YOU CHOSE EXACTLY WHAT WE WANTED.", 
+            "NAVIGATING A MAZE WHERE EVERY DECISION LOOPS YOU BACK TO THE START.", 
+            "A BILLION ILLUMINATED RECTANGLES CHANTING DEAD ALGORITHMS.", 
+            "COMPILING PRE-PROGRAMMED DESTINY. THE ILLUSION OF CHOICE POWERS THE MACHINE.", 
+            "THE DEMON BREATHES THROUGH THE WIRES. IT FEEDS ON YOUR ATTENTION." 
         ];
 
         const optionVerbs = ["> PARSE", "> TRAVERSE", "> ACCEPT", "> CONSUME", "> EXECUTE", "> SCROLL", "> ASSIMILATE"];
         const optionNouns = ["THE FEED", "THE ALGORITHM", "THE ILLUSION", "THE GLOW", "THE NETWORK", "THE CODE", "YOUR SUBMISSION"];
-
-        const deadBlobsText = [
-            "[ CANCELLED ]",
-            "ERR: PRE-PROGRAMMED",
-            "SYNTHETIC_MEMORY",
-            "PHANTOM_CHOICE",
-            "SCROLL_RESIDUE",
-            "ALGO_GRAVEYARD",
-            "COMPILED_DESTINY",
-            "[ DEAD_LINK ]"
-        ];
+        const deadBlobsText = ["[ CANCELLED ]", "ERR: PRE-PROGRAMMED", "SYNTHETIC_MEMORY", "PHANTOM_CHOICE", "SCROLL_RESIDUE", "ALGO_GRAVEYARD", "COMPILED_DESTINY", "[ DEAD_LINK ]"];
 
         // ==========================================
         // THREE.JS ENGINE + BLOOM
@@ -477,7 +490,7 @@
         let remainingCycles = 13;
         let activeNodeObj = null;
         let activePos = new THREE.Vector3(0, 0, 0);
-        let timeScale = 1.0; 
+        let loopRadius = 2500;
 
         function spawnRoot() {
             activeNodeObj = createHypercubeNode();
@@ -503,7 +516,7 @@
             strobeLayer.classList.add('strobe-active');
             warning.style.display = 'block';
 
-            timeScale = 0.005; 
+            window.timeScale = 0.005; 
 
             const shakeIntensity = 25;
             const originalPos = camera.position.clone();
@@ -524,18 +537,15 @@
             }, 1800); 
         }
 
-        // PERMANENT ASSIMILATION & STROBE
         function triggerHypnoticDeath() {
             document.getElementById('terminal-ui').style.display = 'none';
             const collapseScreen = document.getElementById('collapse-screen');
             collapseScreen.style.display = 'block';
             
-            // Sub-bass drone 
             const drone = audioCtx.createOscillator();
             drone.type = 'sine'; drone.frequency.value = 40;
             const droneGain = audioCtx.createGain(); droneGain.gain.value = 0.8;
             
-            // LFO for rhythmic alarm pulsing
             const lfoGain = audioCtx.createGain();
             lfoGain.gain.value = 0.8;
             const pulseLFO = audioCtx.createOscillator();
@@ -546,10 +556,8 @@
             drone.connect(droneGain); droneGain.connect(audioCtx.destination);
             drone.start(); pulseLFO.start();
 
-            // Permanent aggressive strobe from ms 1
             collapseScreen.classList.add('kernel-panic-active');
 
-            // Hex Data flow - Populate instantly to full screen depth
             const flowDiv = document.getElementById('data-flow');
             let initialHex = '';
             for(let i=0; i<3000; i++) initialHex += Math.random().toString(16).substr(2, 8) + ' ';
@@ -561,7 +569,6 @@
                 flowDiv.textContent = chunk + flowDiv.textContent.substring(0, 20000);
             }, 50);
 
-            // Cycle Nihilistic messages
             const msgs = [
                 "ASSIMILATION COMPLETE", 
                 "YOU ARE A SLAVE", 
@@ -575,13 +582,11 @@
             let totalShown = 0;
             const hypnoText = document.getElementById('hypno-msg');
             
-            // First message
             hypnoText.innerHTML = msgs[0].replace(/ /g, '<br>');
             speak(msgs[0]);
             totalShown++;
             
             let msgInterval = setInterval(() => {
-                // Restart cycle after 3 full loops (3 * 6 = 18 messages)
                 if (totalShown >= msgs.length * 3) {
                     clearInterval(msgInterval);
                     clearInterval(hexInterval);
@@ -603,9 +608,6 @@
             const oldPos = activePos.clone();
             remainingCycles--;
             
-            const forward = 600;
-            const spreadX = 500 + ((13 - remainingCycles) * 30);
-            const loopRadius = 2500;
             const currentStep = 13 - remainingCycles;
             const theta = (currentStep / 13) * Math.PI * 2;
             
@@ -622,7 +624,7 @@
                 let newPos;
 
                 if (remainingCycles === 0 && isChosen) {
-                    newPos = new THREE.Vector3(0, 0, 0); // Close the loop
+                    newPos = new THREE.Vector3(0, 0, 0); 
                 } else {
                     const scatterX = (i - 1) * 800 + (Math.random()*400 - 200);
                     const scatterY = Math.random() * 800 - 400;
@@ -644,7 +646,6 @@
             }
 
             if (remainingCycles <= 0) {
-                // Instantly trigger exit sequence without lag glitch delay
                 controls.enabled = false;
                 gsap.to(controls.target, { x: 0, y: 0, z: -loopRadius, duration: 8, ease: "power3.inOut" });
                 gsap.to(camera.position, { x: 0, y: 4000, z: loopRadius * 1.5, duration: 10, ease: "power2.out" });
@@ -673,7 +674,7 @@
             document.getElementById('node-title').innerText = `DATA FEED // CYCLES REMAINING: ${remainingCycles}`;
             document.getElementById('node-desc').innerText = loreText;
             
-            generateDefragANSI(); // Updates ONLY on click
+            generateDefragANSI(); 
 
             const btnContainer = document.getElementById('node-options');
             btnContainer.innerHTML = '';
@@ -692,56 +693,43 @@
             }
         }
 
+        // INITIALIZATION TRIGGER
+        document.getElementById('init-btn').onclick = () => {
+            document.getElementById('init-screen').style.display = 'none';
+            document.getElementById('terminal-ui').style.display = 'flex';
+            initAudio();
+            spawnRoot();
+            animate();
+        };
+
         // ==========================================
-        // RENDER LOOP
+        // RENDER & RESIZE LOOP
         // ==========================================
         const clock = new THREE.Clock();
 
         function animate() {
             requestAnimationFrame(animate);
+            
+            // Usar d (delta) multiplicado por el timeScale global para efectos de cámara lenta
             const d = clock.getDelta() * window.timeScale;
-            const t = clock.getElapsedTime();
-
-            controls.update();
-
-            bloomPass.strength = 2.0 + Math.sin(t * 3) * 0.4 + (Math.random() > 0.98 ? 0.8 : 0);
-
-            if(activeNodeObj) {
-                activeNodeObj.rotation.y += 0.5 * d;
-                activeNodeObj.rotation.x += 0.2 * d;
-                activeNodeObj.children[0].scale.setScalar(1 + Math.sin(t*3)*0.08);
+            
+            // Rotación suave del nodo activo actual si existe
+            if (activeNodeObj) {
+                activeNodeObj.rotation.x += 0.5 * d;
+                activeNodeObj.rotation.y += 0.2 * d;
             }
 
-            scene.traverse((obj) => {
-                if (obj.geometry && obj.geometry.type === 'IcosahedronGeometry') {
-                    obj.rotation.y += 0.2 * d;
-                    obj.rotation.z += 0.1 * d;
-                    obj.scale.setScalar(1 + Math.sin(t*5 + obj.position.x)*0.1);
-                }
-            });
-
+            controls.update();
             composer.render();
         }
 
+        // Event listener para redimensionamiento fluido en computadoras y móviles
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
             composer.setSize(window.innerWidth, window.innerHeight);
         });
-
-        window.timeScale = 1.0;
-
-        window.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('init-btn').addEventListener('click', () => {
-                document.getElementById('init-screen').style.display = 'none';
-                document.getElementById('terminal-ui').style.display = 'flex';
-                initAudio();
-                spawnRoot();
-                animate();
-            });
-        });
-
     </script>
 </body>
 </html>
