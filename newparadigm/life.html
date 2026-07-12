@@ -55,11 +55,11 @@
             100% { opacity: 0; background: #fff; }
         }
 
-        /* VERTICAL UI TERMINAL (RESPONSIVE HUD) */
+        /* VERTICAL UI TERMINAL (DEFAULT PC) */
         #terminal-ui {
-            position: absolute; top: 20px; right: 20px; width: 350px; bottom: 20px;
+            position: absolute; top: 20px; right: 20px; width: 340px; bottom: 20px;
             background: rgba(0, 10, 0, 0.85); border: 1px solid #0f0;
-            box-shadow: -5px 0 40px rgba(0, 255, 0, 0.15); padding: 25px;
+            box-shadow: -5px 0 40px rgba(0, 255, 0, 0.15); padding: 20px;
             z-index: 20; pointer-events: auto; backdrop-filter: blur(8px);
             display: flex; flex-direction: column; box-sizing: border-box;
             transition: all 0.3s ease;
@@ -68,7 +68,7 @@
         /* GREEN ANSI ART BLOCK */
         #ansi-art {
             font-family: monospace; font-size: 11px; line-height: 11px; color: #0f0; 
-            text-shadow: 0 0 5px #0f0; white-space: pre; margin-bottom: 20px; 
+            text-shadow: 0 0 5px #0f0; white-space: pre; margin-bottom: 15px; 
             border-bottom: 1px dashed #0a0; padding-bottom: 10px; text-align: center; 
             overflow: hidden; height: 100px; flex-shrink: 0;
         }
@@ -76,13 +76,13 @@
         .ansi-bright { color: #5f5; text-shadow: 0 0 8px #5f5; }
         .ansi-dim { color: #050; }
 
-        h2 { margin: 0 0 10px 0; font-size: 1.1em; color: #fff; text-shadow: 0 0 5px #0f0; border-bottom: 1px solid #030; padding-bottom: 5px; letter-spacing: 2px;}
-        p { font-size: 0.85em; color: #0a0; line-height: 1.6; margin-bottom: 20px; opacity: 0.9; }
+        h2 { margin: 0 0 10px 0; font-size: 1.05em; color: #fff; text-shadow: 0 0 5px #0f0; border-bottom: 1px solid #030; padding-bottom: 5px; letter-spacing: 1px;}
+        p { font-size: 0.85em; color: #0a0; line-height: 1.5; margin-bottom: 15px; opacity: 0.9; }
 
         .options { display: flex; flex-direction: column; gap: 8px; flex-grow: 1; overflow-y: auto; }
 
         button {
-            background: #000; color: #0a0; border: 1px solid #050; padding: 15px;
+            background: #000; color: #0a0; border: 1px solid #050; padding: 12px;
             font-family: inherit; font-size: 0.8em; cursor: pointer; text-transform: uppercase;
             text-align: left; transition: all 0.2s; letter-spacing: 1px; flex-shrink: 0;
         }
@@ -98,7 +98,7 @@
         #init-btn:hover { background: #0f0; color: #000; box-shadow: 0 0 30px #0f0; text-shadow: none; }
         .instructions { color: #050; margin-top: 40px; font-size: 0.75em; text-align: center; line-height: 2; letter-spacing: 3px; text-transform: uppercase;}
 
-        /* Hypnotic Death Screen & Panic Strobe */
+        /* Hypnotic Death Screen */
         #collapse-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.8); z-index: 100; display: none;
@@ -129,43 +129,46 @@
 
         .sys-warning { position: absolute; top: 20px; right: 20px; color: #f00; font-size: 0.7em; z-index: 5; text-align: right; text-shadow: 0 0 10px #f00; pointer-events: none; letter-spacing: 2px;}
 
-        /* ========================================== */
-        /* MEDIA QUERIES PARA ADAPTABILIDAD MÓVIL     */
-        /* ========================================== */
+        /* ======================================================= */
+        /* MEDIA QUERIES OPTIMIZADAS: MENÚ COMPACTO SIN ESPACIOS   */
+        /* ======================================================= */
         
-        /* Celular Vertical (Modo normal) */
+        /* Celular en Vertical (Portrait) */
         @media (max-width: 768px) and (orientation: portrait) {
             #terminal-ui {
-                top: auto; right: 10px; left: 10px; bottom: 10px;
-                width: calc(100% - 20px); height: 45%;
-                padding: 15px; box-shadow: 0 -5px 30px rgba(0, 255, 0, 0.15);
+                top: auto; right: 8px; left: 8px; bottom: 8px;
+                width: calc(100% - 16px); 
+                height: 28%; /* Súper bajo, no tapa el centro */
+                padding: 10px; 
+                box-shadow: 0 -5px 25px rgba(0, 255, 0, 0.15);
             }
-            #ansi-art { display: none; }
-            h2 { font-size: 0.9em; margin-bottom: 5px; }
-            p { font-size: 0.75em; margin-bottom: 10px; line-height: 1.3; }
-            button { padding: 10px; font-size: 0.75em; }
-            .sys-warning { top: 10px; right: 10px; font-size: 0.6em; }
-            #init-btn { font-size: 0.85em; padding: 15px 25px; letter-spacing: 3px; }
+            #ansi-art, #terminal-ui p { display: none; } /* Ocultar para compactar al máximo */
+            h2 { font-size: 0.8em; margin-bottom: 5px; padding-bottom: 3px; }
+            .options { gap: 4px; }
+            button { padding: 8px 10px; font-size: 0.7em; }
+            .sys-warning { top: 8px; right: 8px; font-size: 0.55em; }
         }
 
-        /* Celular Acostado (Modo Horizontal / Landscape) - CORRECCIÓN AQUÍ */
-        @media (max-width: 900px) and (orientation: landscape) {
+        /* Celular Acostado (Landscape) */
+        @media (max-width: 950px) and (orientation: landscape) {
             #terminal-ui {
-                top: 10px; bottom: 10px; right: 10px; left: auto;
-                width: 40%; height: calc(100% - 20px);
-                padding: 12px; box-shadow: -5px 0 30px rgba(0, 255, 0, 0.15);
+                top: 8px; bottom: 8px; right: 8px; left: auto;
+                width: 30%; /* Súper angosto a la derecha */
+                height: calc(100% - 16px);
+                padding: 10px;
+                box-shadow: -5px 0 25px rgba(0, 255, 0, 0.15);
             }
-            #ansi-art, #terminal-ui p { display: none; } /* Quitamos p y ansi para ahorrar espacio */
-            h2 { font-size: 0.75em; margin-bottom: 8px; border-bottom: 1px solid #020; }
+            #ansi-art, #terminal-ui p { display: none; } /* Cero relleno innecesario */
+            h2 { font-size: 0.75em; margin-bottom: 6px; padding-bottom: 3px; }
             .options { gap: 4px; }
-            button { padding: 6px 10px; font-size: 0.65em; }
-            .sys-warning { display: none !important; } /* Ocultar advertencia para limpiar la vista */
-            .hypno-text { font-size: 2em; letter-spacing: 5px; }
+            button { padding: 6px 8px; font-size: 0.65em; }
+            .sys-warning { display: none !important; }
+            .hypno-text { font-size: 2em; letter-spacing: 4px; }
         }
 
         @media (max-width: 480px) and (orientation: portrait) {
-            #terminal-ui { height: 48%; }
-            .hypno-text { font-size: 2.2em; letter-spacing: 6px; }
+            #terminal-ui { height: 30%; } /* Ajuste fino para pantallas diminutas */
+            .hypno-text { font-size: 2em; letter-spacing: 4px; }
         }
     </style>
     
@@ -213,7 +216,7 @@
     <script>
         window.timeScale = 1.0;
 
-        // ANSI
+        // ANSI ART
         const ansiChars = ['█', '▓', '▒', '░', '│', '┃', '║', '-', '=', '≡', ' '];
         function generateDefragANSI() {
             let art = '';
@@ -233,7 +236,7 @@
         }
         generateDefragANSI(); 
 
-        // AUDIO
+        // AUDIO ENGINE
         let audioCtx, delayNode, masterGain;
         function initAudio() {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -303,7 +306,7 @@
             }
         }
 
-        // LORE
+        // TEXT LOOPS
         const r = (arr) => arr[Math.floor(Math.random() * arr.length)];
         const loreProgressive = [
             "INITIATING FINAL EXTRACTION. SURRENDER YOUR REMAINING COMPUTATIONAL CYCLES.", 
@@ -325,7 +328,7 @@
         const optionNouns = ["THE FEED", "THE ALGORITHM", "THE ILLUSION", "THE GLOW", "THE NETWORK", "THE CODE", "YOUR SUBMISSION"];
         const deadBlobsText = ["[ CANCELLED ]", "ERR: PRE-PROGRAMMED", "SYNTHETIC_MEMORY", "PHANTOM_CHOICE", "SCROLL_RESIDUE", "ALGO_GRAVEYARD", "COMPILED_DESTINY", "[ DEAD_LINK ]"];
 
-        // THREE.JS SETUP
+        // THREE.JS IMPLEMENTATION
         const scene = new THREE.Scene();
         scene.fog = new THREE.FogExp2(0x000100, 0.00004); 
 
@@ -348,7 +351,6 @@
         controls.enableDamping = true; controls.dampingFactor = 0.02;
         controls.zoomSpeed = 3.0; controls.maxDistance = 20000;
 
-        // SCENE ITEMS
         const mainFloor = new THREE.GridHelper(40000, 500, 0x00ff00, 0x004400); mainFloor.position.y = -200; scene.add(mainFloor);
         const mainCeil = new THREE.GridHelper(40000, 500, 0x00aa00, 0x002200); mainCeil.position.y = 300; scene.add(mainCeil);
 
