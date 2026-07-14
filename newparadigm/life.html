@@ -487,7 +487,11 @@
                 gsap.to(controls.target, { x: activePos.x, y: activePos.y, z: activePos.z, duration: 4, ease: "power2.inOut" });
                 gsap.to(camera.position, { x: activePos.x + 300, y: activePos.y + 400, z: activePos.z + 1200, duration: 5, ease: "power2.inOut" });
                 const newLore = loreProgressive[Math.max(0, remainingCycles - 1)];
-                updateHTMLUI(newLore); setTimeout(() => { speak(newLore); }, 2000);
+                updateHTMLUI(newLore); 
+                 setTimeout(() => {
+        window.location.href = "index.html"; /// aqui lugar nuevo 
+    }, 15000);
+                //setTimeout(() => { speak(newLore); }, 2000);
             }
         }
 
