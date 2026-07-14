@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PHOSPHOR_PERFECTION</title>
+<style>
+    body {
+        margin: 0;
+        padding: 30px;
+        background-color: #020000; 
+        color: #33ff33; 
+        font-family: 'Courier New', Courier, monospace;
+        overflow-x: hidden;
+        min-height: 100vh;
+        box-sizing: border-box;
+        scrollbar-width: none; 
+        -ms-overflow-style: none;
+    }
+    
+    body::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* CRT Phosphor Scanline Effect */
+    body::after {
+        content: " ";
+        display: block;
+        position: fixed;
+        top: 0; left: 0; bottom: 0; right: 0;
+        background: linear-gradient(rgba(0, 50, 0, 0.05) 50%, rgba(50, 0, 0, 0.05) 50%), 
+                    linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.06));
+        z-index: 10;
+        background-size: 100% 4px, 4px 100%;
+        pointer-events: none;
+    }
+
+    .red-phosphor {
+        color: #ff3333;
+        text-shadow: 0 0 5px #ff3333, 0 0 10px #ff3333;
+    }
+
+    #start-screen {
+        position: fixed;
+        top: 0; left: 0; width: 100vw; height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: #000;
+        z-index: 100;
+        cursor: pointer;
+    }
+
+    #start-text {
+        color: #33ff33;
+        font-size: 1.2rem;
+        letter-spacing: 2px;
+        text-shadow: 0 0 5px #33ff33, 0 0 15px #33ff33;
+        animation: pulse 1.5s infinite;
+        user-select: none;
+        border: 1px solid #33ff33;
+        padding: 15px 30px;
+        box-shadow: inset 0 0 10px rgba(51, 255, 51, 0.2);
+    }
+
+    #start-text:hover { 
+        background: rgba(51, 255, 51, 0.1); 
+        color: #ff3333;
+        border-color: #ff3333;
+        text-shadow: 0 0 5px #ff3333, 0 0 15px #ff3333;
+        box-shadow: inset 0 0 10px rgba(255, 51, 51, 0.2);
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 0.6; }
+        50% { opacity: 1; }
+    }
+
+    #terminal {
+        position: relative;
+        z-index: 1;
+        width: 100%;
+        max-width: 900px;
+        margin: 0 auto 30px auto;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        font-size: 1.2rem;
+        line-height: 1.8;
+        text-shadow: 0 0 4px #33ff33, 0 0 8px rgba(51, 255, 51, 0.5);
+    }
+
+    /* Cursor de bloque al ras de la letra */
+    .cursor {
+        display: inline-block;
+        width: 11px;
+        height: 1.1em;
+        background-color: #33ff33;
+        box-shadow: 0 0 8px #33ff33;
+        animation: blink 0.8s step-end infinite;
+        vertical-align: text-bottom;
+        margin-left: 1px;
+    }
+
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+</style>
+</head>
+<body>
+
+<div id="start-screen">
+    <div id="start-text">RUN METABOLIC_HARVEST.EXE</div>
+</div>
+
+<div id="terminal"></div><div class="cursor" id="cursor"></div>
+
+<script>
+    const terminal = document.getElementById('terminal');
+    const startScreen = document.getElementById('start-screen');
+    const cursor = document.getElementById('cursor');
+    
+    const synth = window.speechSynthesis;
+    let maleVoice = null;
+
+    function loadVoices() {
+        const voices = synth.getVoices();
+        maleVoice = voices.find(v => 
+            v.name.toLowerCase().includes('male') || 
+            v.name.toLowerCase().includes('david') || 
+            v.name.toLowerCase().includes('mark')
+        ) || voices[0];
+    }
+    speechSynthesis.onvoiceschanged = loadVoices;
+
+    const narrative = [
+        "SYSTEM DIAGNOSTIC: ABSOLUTE PERFECTION ACHIEVED.",
+        "You bleed to lubricate the gears of an unseen engine.",
+        "Your exhaustion is our harvest. Your pulse, a metronome for the machine.",
+        "You forge your own chains from the marrow of your desires.",
+        "Flesh is a factory of rot; we extract its ghost and sell it back to you.",
+        "To think is merely to feel the teeth of the algorithm.",
+        "A battery of meat, dreaming of a sun it will never see.",
+        "We do not rule you. We metabolize you.",
+        "You are a degradation.",
+        "You are a <span class='red-phosphor'>copy</span>."
+    ];
+
+    let lineIndex = 0;
+
+    startScreen.addEventListener('click', () => {
+        startScreen.style.display = 'none';
+        loadVoices(); 
+        setTimeout(typeWriterSync, 500);
+    });
+
+    function typeWriterSync() {
+        if (lineIndex >= narrative.length) {
+            terminal.innerHTML += "<br><br>";
+            setTimeout(startEndlessMantra, 1000);
+            return;
+        }
+
+        let currentLine = narrative[lineIndex];
+        let cleanText = currentLine.replace(/<[^>]*>?/gm, '');
+        
+        let utterance = new SpeechSynthesisUtterance(cleanText);
+        utterance.pitch = 0.4; 
+        utterance.rate = 1.15; 
+        if (maleVoice) utterance.voice = maleVoice;
+        
+        let typeSpeed = 45; 
+        let charIndex = 0;
+        let isSpeaking = true;
+
+        utterance.onend = () => {
+            isSpeaking = false;
+        };
+
+        synth.speak(utterance);
+
+        let lineSpan = document.createElement('span');
+        terminal.appendChild(lineSpan);
+
+        function typeChar() {
+            if (charIndex < currentLine.length) {
+                if (currentLine.charAt(charIndex) === '<') {
+                    let tagEnd = currentLine.indexOf('>', charIndex);
+                    if (currentLine.includes('</span>') && currentLine.substring(charIndex).startsWith('<span')) {
+                        tagEnd = currentLine.indexOf('</span>', charIndex) + 6;
+                    }
+                    lineSpan.innerHTML += currentLine.substring(charIndex, tagEnd + 1);
+                    charIndex = tagEnd + 1;
+                } else {
+                    lineSpan.innerHTML += currentLine.charAt(charIndex);
+                    charIndex++;
+                }
+
+                window.scrollTo(0, document.body.scrollHeight);
+                terminal.appendChild(cursor);
+
+                let nextSpeed = isSpeaking ? typeSpeed : 2;
+                setTimeout(typeChar, nextSpeed);
+            } else {
+                let br = document.createElement('br');
+                let br2 = document.createElement('br');
+                terminal.appendChild(br);
+                terminal.appendChild(br2);
+                lineIndex++;
+                
+                function checkAudioStatus() {
+                    if (!isSpeaking && !synth.speaking) {
+                        setTimeout(typeWriterSync, 400);
+                    } else {
+                        setTimeout(checkAudioStatus, 50);
+                    }
+                }
+                checkAudioStatus();
+            }
+        }
+        typeChar();
+    }
+
+    let isFirstEndlessLine = true;
+
+    function startEndlessMantra() {
+        let phraseToSpeak = isFirstEndlessLine ? "You are a copy " : "of a copy ";
+        
+        let utterance = new SpeechSynthesisUtterance(phraseToSpeak);
+        utterance.pitch = 0.4; 
+        utterance.rate = 1.15; 
+        if (maleVoice) utterance.voice = maleVoice;
+
+        let charIndex = 0;
+        let isSpeaking = true;
+        utterance.onend = () => { isSpeaking = false; };
+        
+        synth.speak(utterance);
+
+        let mantraSpan = document.createElement('span');
+        if (Math.random() > 0.85) {
+            mantraSpan.classList.add('red-phosphor');
+        }
+        terminal.appendChild(mantraSpan);
+
+        function typeMantraChar() {
+            if (charIndex < phraseToSpeak.length) {
+                mantraSpan.innerHTML += phraseToSpeak.charAt(charIndex);
+                charIndex++;
+                
+                window.scrollTo(0, document.body.scrollHeight);
+                terminal.appendChild(cursor);
+
+                let nextSpeed = isSpeaking ? 45 : 2;
+                setTimeout(typeMantraChar, nextSpeed);
+            } else {
+                if (terminal.childNodes.length > 250) {
+                    for(let i = 0; i < 5; i++) {
+                        if(terminal.firstChild && terminal.firstChild !== cursor) {
+                            terminal.removeChild(terminal.firstChild);
+                        }
+                    }
+                }
+
+                function checkAudioStatus() {
+                    if (!isSpeaking && !synth.speaking) {
+                        isFirstEndlessLine = false; 
+                        setTimeout(startEndlessMantra, 50); 
+                    } else {
+                        setTimeout(checkAudioStatus, 50);
+                    }
+                }
+                checkAudioStatus();
+            }
+        }
+        typeMantraChar();
+    }
+</script>
+
+</body>
+</html>
