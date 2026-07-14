@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SYNERGY // PHYSICAL_OVERLOAD_MATRIX</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+        
+        body, html {
+            width: 100%; height: 100%;
+            font-family: monospace;
+            background-color: #0c0e0d;
+            color: #d1d5db; overflow: hidden;
+        }
+
+        /* 1. LOGIN SCREEN */
+        #login-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #ffffff; z-index: 100;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .login-card {
+            width: 400px; padding: 45px; background: #ffffff;
+            border: 1px solid #000; text-align: center;
+        }
+        .login-card h2 { font-weight: 400; font-size: 16px; color: #000; margin-bottom: 25px; letter-spacing: 2px; }
+        .input-group { margin-bottom: 20px; text-align: left; }
+        .input-group label { display: block; font-size: 10px; color: #555; margin-bottom: 6px; letter-spacing: 1px; text-transform: uppercase; }
+        .input-group input { width: 100%; padding: 12px; border: 1px solid #000; font-size: 12px; background: #fff; color: #000; outline: none; font-family: monospace; }
+        .login-btn { width: 100%; padding: 14px; background: #000; color: white; border: none; font-size: 11px; letter-spacing: 2px; cursor: pointer; text-transform: uppercase; }
+
+        /* 2. CONTROL HUD */
+        #hud-layer {
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            z-index: 10; pointer-events: none; opacity: 0; width: 90%; max-width: 900px;
+            display: flex; justify-content: space-between; align-items: center;
+            transition: opacity 0.3s ease, border 0.5s ease;
+        }
+        #hud-layer.visible { opacity: 1; }
+        .brand-info { text-align: left; }
+        h1 { font-weight: 400; font-size: 13px; color: #fff; letter-spacing: 2px; text-transform: uppercase; transition: color 0.5s; }
+        #subtitle { font-size: 9px; color: #555; text-transform: uppercase; margin-top: 3px; transition: color 0.5s; }
+        
+        .status-widget {
+            padding: 12px 20px; background: rgba(255,255,255,0.02); 
+            border: 1px solid rgba(255,255,255,0.1); display: flex; gap: 30px;
+            align-items: center; transition: border 0.5s, background 0.5s;
+        }
+        .metric-block { text-align: left; }
+        .w-label { font-size: 9px; color: #666; text-transform: uppercase; letter-spacing: 1px; }
+        .w-value { font-size: 16px; color: #fff; font-weight: bold; }
+        #sys-msg { font-size: 11px; color: #ef4444; text-align: right; min-width: 280px; transition: color 0.5s; }
+
+        /* 3. RENDER CANVAS */
+        #canvas-2D {
+            position: absolute; top: 0; left: 0; z-index: 5; opacity: 0;
+            background-color: #f4f6f5; transition: opacity 0.2s ease, background-color 0.5s;
+        }
+
+        /* VIOLENT SHAKE ANIMATION */
+        .hypnotic-violence { animation: violent-shake 0.01s infinite; }
+        @keyframes violent-shake {
+            0% { transform: translate(0); }
+            33% { transform: translate(-16px, 12px); }
+            66% { transform: translate(15px, -15px); }
+            100% { transform: translate(-6px, -9px); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="login-screen">
+        <div class="login-card">
+            <h2>AUDIT_NET_INTERFACE_v35</h2>
+            <form id="login-form" onsubmit="handleLogin(event)">
+                <div class="input-group">
+                    <label>Corporate Host ID</label>
+                    <input type="text" required value="amortized_unit_99">
+                </div>
+                <div class="input-group">
+                    <label>Consent Token</label>
+                    <input type="password" required value="unconditional">
+                </div>
+                <button type="submit" class="login-btn" id="login-btn-text">Authorise Transfer</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="hud-layer">
+        <div class="brand-info">
+            <h1 id="title">Subjection Ledger</h1>
+            <p id="subtitle">Asset Amortization & Alignment Office</p>
+        </div>
+        <div class="status-widget" id="main-widget">
+            <div class="metric-block">
+                <div class="w-label">Liquidations Audited</div>
+                <div class="w-value" id="val-links">0</div>
+            </div>
+            <div class="metric-block">
+                <div class="w-label">Required Enclosure</div>
+                <div class="w-value" id="val-quota" style="color:#666;">3</div>
+            </div>
+            <div id="sys-msg">Connect central nodes to balance the ledger...</div>
+        </div>
+    </div>
+
+    <canvas id="canvas-2D"></canvas>
+
+    <script>
+        let phase = -1; 
+        let linksCount = 0;
+        let quota = 3; 
+
+        const loginScreen = document.getElementById('login-screen');
+        const hudLayer = document.getElementById('hud-layer');
+        const canvas2D = document.getElementById('canvas-2D');
+        const sysMsg = document.getElementById('sys-msg');
+
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function playMechanicalClick() {
+            initAudio();
+            if (!audioCtx) return;
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(190, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1, audioCtx.currentTime + 0.04);
+            gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.05);
+        }
+
+        function playSharpStrobePulse() {
+            if (!audioCtx) return;
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+            
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(1600, audioCtx.currentTime); 
+            osc.frequency.setValueAtTime(1000, audioCtx.currentTime + 0.01);
+            
+            gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.02);
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.025);
+        }
+
+        function speak(text, pitch = 0.35, rate = 0.70) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel(); 
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'en-US'; 
+                utterance.pitch = pitch; 
+                utterance.rate = rate;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            initAudio();
+            document.getElementById('login-btn-text').innerText = "Decrypting Matrix...";
+            speak("Welcome to the ledger. Yield your corporate assets.", 0.45, 0.80);
+            
+            setTimeout(() => {
+                loginScreen.style.opacity = '0';
+                setTimeout(() => {
+                    loginScreen.style.display = 'none';
+                    startDashboard();
+                }, 400);
+            }, 500);
+        }
+
+        const ctx2D = canvas2D.getContext('2d');
+        let w, h, boxes = [], activePort = null, mouseX = 0, mouseY = 0;
+
+        function resize() {
+            w = canvas2D.width = window.innerWidth;
+            h = canvas2D.height = window.innerHeight;
+            if (phase === 0) rebuildMoireLayout();
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        const baseMetaphors = ["DEBT_LIQUIDATION", "CONSCIOUSNESS", "SURRENDER_ASSET", "DESIRE_AUDIT", "MEMBRANE_TAX", "INFRA_STREAM"];
+        const structuralMetaphors = ["SYS_NODE_V1", "RAW_DATA_STREAM", "SUB_CORE_FEED", "ALIGNED_UNIT_X", "INFRA_VECTOR", "NODE_MATRIX"];
+        
+        // CLEAN TEXT DICTIONARY: Stops overlapping by enforcing wide boundaries
+        const overloadAphorisms = [
+            "KEEP STARING", "DONT LOOK AWAY", "KEEP STARING", "DONT LOOK AWAY"
+        ];
+
+        function rebuildMoireLayout() {
+            boxes = [];
+            const leftCount = 3;
+            const rightCount = 3;
+            
+            // Left Column (Outputs only)
+            for(let i = 0; i < leftCount; i++) {
+                let x = w * 0.15;
+                let y = (h * 0.2) + (i * (h * 0.22));
+                boxes.push({
+                    id: 'L_' + i,
+                    x, y, w: 200, h: 65,
+                    label: baseMetaphors[i],
+                    ports: [{ type: 'out', x: 200, y: 32.5 }], 
+                    connections: []
+                });
+            }
+
+            // Right Column (Inputs only)
+            for(let i = 0; i < rightCount; i++) {
+                let x = w * 0.68;
+                let y = (h * 0.2) + (i * (h * 0.22));
+                boxes.push({
+                    id: 'R_' + i,
+                    x, y, w: 200, h: 65,
+                    label: baseMetaphors[i + 3],
+                    ports: [{ type: 'in', x: 0, y: 32.5 }], 
+                    connections: []
+                });
+            }
+        }
+
+        function startDashboard() {
+            phase = 0;
+            hudLayer.classList.add('visible');
+            canvas2D.style.opacity = '1';
+            rebuildMoireLayout();
+            draw2D();
+        }
+
+        // ULTRA-ASSISTED MAGNETS (130px catchment zone)
+        canvas2D.addEventListener('mousedown', (e) => {
+            if (phase !== 0 && phase !== 2) return; 
+            initAudio();
+            const mx = e.clientX, my = e.clientY;
+            
+            for (let b of boxes) {
+                for (let p of b.ports) {
+                    if (Math.hypot((b.x + p.x) - mx, (b.y + p.y) - my) < 130) { 
+                        activePort = { box: b, port: p, px: b.x + p.x, py: b.y + p.y };
+                        playMechanicalClick();
+                        return;
+                    }
+                }
+            }
+        });
+
+        canvas2D.addEventListener('mousemove', (e) => { mouseX = e.clientX; mouseY = e.clientY; });
+
+        canvas2D.addEventListener('mouseup', (e) => {
+            if ((phase !== 0 && phase !== 2) || !activePort) { activePort = null; return; }
+            const mx = e.clientX, my = e.clientY;
+
+            for (let b of boxes) {
+                if (b.id !== activePort.box.id) {
+                    for (let p of b.ports) {
+                        if (Math.hypot((b.x + p.x) - mx, (b.y + p.y) - my) < 130 && p.type !== activePort.port.type) {
+                            activePort.box.connections.push({ fromPort: activePort.port, toBox: b, toPort: p });
+
+                            if(phase === 0) {
+                                linksCount++;
+                                document.getElementById('val-links').innerText = linksCount;
+                                playMechanicalClick();
+                                
+                                if (linksCount >= quota) {
+                                    activePort = null;
+                                    triggerLongHypnosis(); 
+                                    return;
+                                } else {
+                                    speak("Secured.", 0.4, 0.9);
+                                }
+                            } else {
+                                playMechanicalClick(); 
+                            }
+                            activePort = null;
+                            return;
+                        }
+                    }
+                }
+            }
+            activePort = null;
+        });
+
+        let strobeInterval = 350; // Starts slightly slower to make the acceleration feel massive
+        let lastStrobeTime = 0;
+        let strobeColor = '#f4f6f5';
+        let moireRotation = 0;
+
+        function draw2D() {
+            requestAnimationFrame(draw2D);
+            let currentTime = Date.now();
+
+            // 1. BACKGROUND ENGINE
+            if (phase === 1) {
+                if (currentTime - lastStrobeTime > strobeInterval) {
+                    let strobeFactor = Math.random();
+                    strobeColor = strobeFactor > 0.66 ? '#ffffff' : (strobeFactor > 0.33 ? '#ef4444' : '#000000');
+                    playSharpStrobePulse();
+                    lastStrobeTime = currentTime;
+                }
+                ctx2D.fillStyle = strobeColor;
+                ctx2D.fillRect(0, 0, w, h);
+            } else if (phase === 2) {
+                ctx2D.fillStyle = '#020302'; 
+                ctx2D.fillRect(0, 0, w, h);
+            } else {
+                // Phase 0: Dense Scintillating Grid + High Frequency Moiré Pattern
+                ctx2D.fillStyle = '#0f1110'; 
+                ctx2D.fillRect(0, 0, w, h);
+
+                // ULTRA SMALL HIGH-DENSITY GRID FRAMEWORK
+                let step = 20; 
+                ctx2D.strokeStyle = '#1b1e1c';
+                ctx2D.lineWidth = 1;
+                
+                ctx2D.beginPath();
+                for (let x = 0; x < w; x += step) {
+                    ctx2D.moveTo(x, 0); ctx2D.lineTo(x, h);
+                }
+                for (let y = 0; y < h; y += step) {
+                    ctx2D.moveTo(0, y); ctx2D.lineTo(w, y);
+                }
+                ctx2D.stroke();
+
+                // Scintillating Illusion Dots (Generates phantom black dots in peripheral vision)
+                ctx2D.fillStyle = '#ffffff';
+                for (let x = 0; x < w; x += step) {
+                    for (let y = 0; y < h; y += step) {
+                        ctx2D.beginPath(); ctx2D.arc(x, y, 1.5, 0, Math.PI * 2); ctx2D.fill();
+                    }
+                }
+
+                // Fine-Line Mouse Driven Rotating Moiré Overlay
+                moireRotation += 0.001;
+                ctx2D.save();
+                ctx2D.translate(w / 2, h / 2);
+                ctx2D.rotate(moireRotation + (mouseX * 0.00003));
+                ctx2D.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+                ctx2D.lineWidth = 1;
+                let moireStep = 22; 
+                ctx2D.beginPath();
+                for (let i = -w; i < w; i += moireStep) {
+                    ctx2D.moveTo(i, -h); ctx2D.lineTo(i, h);
+                }
+                ctx2D.stroke();
+                ctx2D.restore();
+            }
+
+            // 2. RENDER LINK WIRES
+            boxes.forEach(b => {
+                b.connections.forEach(c => {
+                    if (phase === 1) {
+                        ctx2D.strokeStyle = Math.random() > 0.5 ? '#ffffff' : '#000000';
+                        ctx2D.lineWidth = 7;
+                    } else if (phase === 2) {
+                        ctx2D.strokeStyle = '#ef4444'; 
+                        ctx2D.lineWidth = 1.5;
+                    } else {
+                        ctx2D.strokeStyle = '#ffffff'; // FIXED: High-contrast white cables in phase 0 so they are perfectly visible
+                        ctx2D.lineWidth = 2.5;
+                    }
+                    ctx2D.beginPath();
+                    ctx2D.moveTo(b.x + c.fromPort.x, b.y + c.fromPort.y);
+                    ctx2D.lineTo(c.toBox.x + c.toPort.x, c.toBox.y + c.toPort.y);
+                    ctx2D.stroke();
+                });
+            });
+
+            if (activePort) {
+                ctx2D.strokeStyle = '#ef4444'; ctx2D.lineWidth = 2.5; ctx2D.beginPath();
+                ctx2D.moveTo(activePort.px, activePort.py); ctx2D.lineTo(mouseX, mouseY); ctx2D.stroke();
+            }
+
+            // 3. RENDER DATA BOXES
+            boxes.forEach(b => {
+                if (phase === 1) {
+                    // Wide structural bounds to completely avoid word clipping or text overlap
+                    b.w = 250 + Math.random() * 50;
+                    b.h = 60 + Math.random() * 20;
+                    b.x = Math.random() * (w - b.w);
+                    b.y = Math.random() * (h - b.h);
+                    b.label = overloadAphorisms[Math.floor(Math.random() * overloadAphorisms.length)];
+                    
+                    ctx2D.fillStyle = Math.random() > 0.5 ? '#000000' : '#ef4444';
+                    ctx2D.strokeStyle = '#ffffff';
+                    ctx2D.lineWidth = 4;
+                } else if (phase === 2) {
+                    ctx2D.fillStyle = 'rgba(239, 68, 68, 0.04)';
+                    ctx2D.strokeStyle = '#ef4444';
+                    ctx2D.lineWidth = 1;
+                } else {
+                    ctx2D.fillStyle = '#ffffff';
+                    ctx2D.strokeStyle = '#000000';
+                    ctx2D.lineWidth = 1.5;
+                }
+
+                ctx2D.beginPath(); ctx2D.rect(b.x, b.y, b.w, b.h); ctx2D.fill(); ctx2D.stroke();
+
+                // Strict Centering Text Engine
+                ctx2D.fillStyle = (phase === 1 || phase === 2) ? '#ef4444' : '#000000';
+                ctx2D.font = phase === 1 ? 'bold 16px monospace' : '11px monospace';
+                ctx2D.textAlign = 'center';
+                ctx2D.textBaseline = 'middle';
+                ctx2D.fillText(b.label, b.x + (b.w / 2), b.y + (b.h / 2));
+
+                b.ports.forEach(p => {
+                    ctx2D.fillStyle = phase === 2 ? '#ef4444' : '#000000';
+                    ctx2D.beginPath(); ctx2D.arc(b.x + p.x, b.y + (b.h / 2), phase === 2 ? 4 : 6, 0, Math.PI * 2); ctx2D.fill();
+                });
+            });
+        }
+
+        // FASE 1: 30-SECOND ACCELERATING OVERLOAD
+        let voiceClockId = null;
+        let accelerationClockId = null;
+
+        function triggerLongHypnosis() {
+            phase = 1;
+            document.body.classList.add('hypnotic-violence');
+            sysMsg.innerText = "OVERLOAD_STIMULUS_RUNNING";
+            
+            const executeVoiceSequence = () => {
+                if (phase !== 1) return;
+                speak("Keep staring. Do not look away.", 0.28, 0.65);
+            };
+
+            executeVoiceSequence();
+            voiceClockId = setInterval(executeVoiceSequence, 1500);
+
+            // AGGRESSIVE EXPONENTIAL ACCELERATION LOOP
+            accelerationClockId = setInterval(() => {
+                if (strobeInterval > 6) {
+                    strobeInterval -= 14; // Drops much faster down to an ultra-rapid mechanical flash frequency
+                }
+            }, 200);
+
+            // MANDATORY 30 SECONDS RETAINED
+            setTimeout(() => {
+                clearInterval(voiceClockId);
+                clearInterval(accelerationClockId);
+                triggerStructuralConsummation();
+            }, 30000); 
+        }
+
+        // FASE 2: STRUCTURAL DESTRUCTION COMPLETE
+        function triggerStructuralConsummation() {
+            phase = 2;
+            document.body.classList.remove('hypnotic-violence');
+            
+            canvas2D.style.backgroundColor = '#020302';
+            
+            document.getElementById('title').style.color = '#ef4444';
+            document.getElementById('title').innerText = "CORE_STRUCTURE_REVEALED_";
+            
+            document.getElementById('subtitle').style.color = '#666';
+            document.getElementById('subtitle').innerText = "Direct programmatic alignment vector active. Permanent access.";
+            
+            document.getElementById('main-widget').style.border = "1px solid #ef4444";
+            document.getElementById('main-widget').style.background = "rgba(239, 68, 68, 0.02)";
+            
+            sysMsg.style.color = "#4ade80";
+            sysMsg.innerText = "ALIGNMENT_CONSUMMATED // OPEN_SYSTEM";
+            
+            speak("Alienation consummated. Structural core alignment permanently completed. Welcome to the objective framework.", 0.16, 0.70);
+
+            boxes.forEach((b, idx) => {
+                b.label = structuralMetaphors[idx % structuralMetaphors.length];
+                b.w = 200;
+                b.h = 60;
+                
+                if (b.id.startsWith('L')) {
+                    b.x = w * 0.20;
+                    b.y = (h * 0.25) + (parseInt(b.id.split('_')[1]) * (h * 0.22));
+                } else {
+                    b.x = w * 0.60;
+                    b.y = (h * 0.25) + (parseInt(b.id.split('_')[1]) * (h * 0.22));
+                }
+            });
+        }
+    </script>
+</body>
+</html>
