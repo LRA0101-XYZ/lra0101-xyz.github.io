@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>0x00_HYPER_DENSE_PARASITE</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    background-color: #000000;
+    overflow: hidden;
+    user-select: none;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  /* Lienzo de saturación total */
+  #dense-grid {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    font-family: 'Consolas', Courier, monospace;
+    font-size: 0.9vw; /* Texto ultra denso */
+    line-height: 0.7;  /* Sin espacio vertical entre líneas */
+    letter-spacing: -0.5px;
+    white-space: pre;
+    box-sizing: border-box;
+    padding: 1px;
+    color: #001100; /* Rejilla base casi invisible */
+  }
+
+  @media (max-width: 768px) {
+    #dense-grid { font-size: 1.5vw; }
+  }
+
+  /* Canales de fósforo del parásito */
+  .active-g { color: #00ff00; }
+  .active-G { color: #39ff14; text-shadow: 0 0 4px #39ff14; font-weight: bold; }
+  .active-w { color: #ffffff; text-shadow: 0 0 6px #ffffff; }
+  .active-r { color: #ff0000; }
+  .active-inv-r { background-color: #ff0000; color: #ffffff; font-weight: bold; }
+  .active-inv-g { background-color: #00ff00; color: #000000; font-weight: bold; }
+
+  /* Espasmos físicos de hardware */
+  body.flash-red { background-color: #ff0000 !important; }
+  body.flash-white { background-color: #ffffff !important; }
+</style>
+</head>
+<body>
+
+<pre id="dense-grid"></pre>
+
+<script>
+  const gridContainer = document.getElementById('dense-grid');
+  
+  const GLYPHS = '᚛᚜ᚗᚖᚕᚔΞΨΩ██▓▒░┼╬═║╚╔▲▼◄►░▄■▓/\\*+:=--01XØ█'.split('');
+
+  // Compás compuesto asimétrico y desequilibrado (pulsos en ms: síncopa pura)
+  const METRIC_PULSES = [120, 280, 80, 450, 110, 320, 150];
+  let pulsePointer = 0;
+
+  let state = 'feed'; // 'feed' (asimilación densa), 'spasm' (interferencia total), 'static' (silencio corrupto)
+  let nextEvent = Date.now();
+
+  const ROWS = 65; // Ajuste para cubrir toda la pantalla verticalmente
+  const COLS = 130; // Ajuste para cubrir toda la pantalla horizontalmente
+
+  // Inicializa el mapa base (la estructura de silicio que el virus parásito habita)
+  let virtualMemory = [];
+  for (let r = 0; r < ROWS; r++) {
+    virtualMemory[r] = [];
+    for (let c = 0; c < COLS; c++) {
+      virtualMemory[r][c] = `<span class="dim">${GLYPHS[Math.floor(Math.random() * GLYPHS.length)]}</span>`;
+    }
+  }
+
+  // Renderizador principal en baja frecuencia simulada
+  function rhythmEngine() {
+    const now = Date.now();
+
+    if (now >= nextEvent) {
+      const currentPulse = METRIC_PULSES[pulsePointer];
+      pulsePointer = (pulsePointer + 1) % METRIC_PULSES.length;
+      nextEvent = now + currentPulse;
+
+      // Selección de estados polirrítmicos
+      const r = Math.random();
+      if (r < 0.6) {
+        state = 'feed'; // Inyecta energía asimétrica
+      } else if (r < 0.85) {
+        state = 'spasm'; // El sistema sufre cortocircuito masivo
+      } else {
+        state = 'static'; // La pantalla "muere" en un patrón denso congelado
+      }
+
+      // --- TRATAMIENTO DE ESTADOS DE HARDWARE ---
+      document.body.className = '';
+      if (state === 'spasm') {
+        // Estrobo seco
+        if (Math.random() < 0.5) document.body.classList.add('flash-red');
+        else document.body.classList.add('flash-white');
+      }
+    }
+
+    // Dibujar pantalla
+    updateScreen();
+    requestAnimationFrame(rhythmEngine);
+  }
+
+  // Proceso de dibujo y asimilación (Saturación de pantalla)
+  function updateScreen() {
+    // Si estamos en spasm o static, rompemos la matriz de manera radical
+    if (state === 'spasm') {
+      for (let i = 0; i < 40; i++) {
+        let rR = Math.floor(Math.random() * ROWS);
+        let rC = Math.floor(Math.random() * COLS);
+        const style = Math.random() < 0.5 ? 'active-inv-r' : 'active-r';
+        virtualMemory[rR][rC] = `<span class="${style}">█ERR_0x0${Math.floor(Math.random()*9)}█</span>`;
+      }
+    } 
+    else if (state === 'static') {
+      // Congelación en verde oscuro sin pulsación activa
+      for (let r = 0; r < ROWS; r++) {
+        if (Math.random() < 0.1) {
+          for (let c = 0; c < COLS; c++) {
+            virtualMemory[r][c] = `<span class="dim">░</span>`;
+          }
+        }
+      }
+    } 
+    else if (state === 'feed') {
+      // Inyección tipo "aserradero": Escribe ráfagas de datos en posiciones completamente aleatorias
+      for (let i = 0; i < 8; i++) {
+        let rR = Math.floor(Math.random() * ROWS);
+        let startC = Math.floor(Math.random() * (COLS - 20));
+        
+        let colorClass = 'active-g';
+        const randColor = Math.random();
+        if (randColor < 0.25) colorClass = 'active-G';
+        else if (randColor < 0.35) colorClass = 'active-w';
+        else if (randColor < 0.4) colorClass = 'active-inv-g';
+
+        for (let c = startC; c < startC + 20; c++) {
+          virtualMemory[rR][c] = `<span class="${colorClass}">${GLYPHS[Math.floor(Math.random() * GLYPHS.length)]}</span>`;
+        }
+      }
+
+      // Enfriamiento natural: Algunos bloques de fósforo se "apagan" volviendo al color oscuro
+      for (let i = 0; i < 60; i++) {
+        let rR = Math.floor(Math.random() * ROWS);
+        let rC = Math.floor(Math.random() * COLS);
+        virtualMemory[rR][rC] = `<span class="dim">${GLYPHS[Math.floor(Math.random() * GLYPHS.length)]}</span>`;
+      }
+    }
+
+    // Renderizar la matriz completa (Siempre al 100% de su capacidad física)
+    let finalHTML = '';
+    for (let r = 0; r < ROWS; r++) {
+      finalHTML += virtualMemory[r].join('') + '\n';
+    }
+    gridContainer.innerHTML = finalHTML;
+  }
+
+  // Lanzar el sistema parásito hiper-saturado
+  requestAnimationFrame(rhythmEngine);
+</script>
+</body>
+</html>
