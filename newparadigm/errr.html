@@ -2,7 +2,8 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>0x00_HYPER_DENSE_PARASITE</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-select: none">
+<title>0x00_HYPER_DENSE_PARASITE_RESPONSIVE</title>
 <style>
   html, body {
     margin: 0;
@@ -14,7 +15,7 @@
     height: 100vh;
   }
 
-  /* Lienzo de saturación total */
+  /* Lienzo de saturación total adaptativo */
   #dense-grid {
     position: absolute;
     top: 0;
@@ -22,20 +23,30 @@
     width: 100vw;
     height: 100vh;
     font-family: 'Consolas', Courier, monospace;
-    font-size: 0.9vw; /* Texto ultra denso */
-    line-height: 0.7;  /* Sin espacio vertical entre líneas */
+    
+    /* 2. Unidades dinámicas (vw) combinadas con breakpoints para consistencia */
+    font-size: 0.85vw; 
+    line-height: 0.7;  
     letter-spacing: -0.5px;
     white-space: pre;
     box-sizing: border-box;
-    padding: 1px;
-    color: #001100; /* Rejilla base casi invisible */
+    padding: 2px;
+    color: #001100; 
   }
 
+  /* 3. BREAKPOINTS RESPONSIVOS: Escalar la tipografía según el dispositivo */
+  @media (max-width: 1024px) {
+    #dense-grid { font-size: 1.2vw; } /* Tabletas */
+  }
   @media (max-width: 768px) {
-    #dense-grid { font-size: 1.5vw; }
+    #dense-grid { font-size: 1.6vw; letter-spacing: -0.2px; } /* Móviles grandes */
+  }
+  @media (max-width: 480px) {
+    #dense-grid { font-size: 2.3vw; letter-spacing: 0px; } /* Móviles pequeños */
   }
 
-  /* Canales de fósforo del parásito */
+  /* Estilos del parásito */
+  .dim { color: #001600; }
   .active-g { color: #00ff00; }
   .active-G { color: #39ff14; text-shadow: 0 0 4px #39ff14; font-weight: bold; }
   .active-w { color: #ffffff; text-shadow: 0 0 6px #ffffff; }
@@ -43,7 +54,7 @@
   .active-inv-r { background-color: #ff0000; color: #ffffff; font-weight: bold; }
   .active-inv-g { background-color: #00ff00; color: #000000; font-weight: bold; }
 
-  /* Espasmos físicos de hardware */
+  /* Estrobos */
   body.flash-red { background-color: #ff0000 !important; }
   body.flash-white { background-color: #ffffff !important; }
 </style>
@@ -57,26 +68,44 @@
   
   const GLYPHS = '᚛᚜ᚗᚖᚕᚔΞΨΩ██▓▒░┼╬═║╚╔▲▼◄►░▄■▓/\\*+:=--01XØ█'.split('');
 
-  // Compás compuesto asimétrico y desequilibrado (pulsos en ms: síncopa pura)
   const METRIC_PULSES = [120, 280, 80, 450, 110, 320, 150];
   let pulsePointer = 0;
 
-  let state = 'feed'; // 'feed' (asimilación densa), 'spasm' (interferencia total), 'static' (silencio corrupto)
+  let state = 'feed'; 
   let nextEvent = Date.now();
 
-  const ROWS = 65; // Ajuste para cubrir toda la pantalla verticalmente
-  const COLS = 130; // Ajuste para cubrir toda la pantalla horizontalmente
-
-  // Inicializa el mapa base (la estructura de silicio que el virus parásito habita)
+  // Variables dinámicas que se recalculan según el dispositivo del usuario
+  let ROWS = 0;
+  let COLS = 0;
   let virtualMemory = [];
-  for (let r = 0; r < ROWS; r++) {
-    virtualMemory[r] = [];
-    for (let c = 0; c < COLS; c++) {
-      virtualMemory[r][c] = `<span class="dim">${GLYPHS[Math.floor(Math.random() * GLYPHS.length)]}</span>`;
+
+  // 4. MOTOR DE AJUSTE DINÁMICO: Mide la pantalla y calcula la cuadrícula exacta
+  function setupResponsiveGrid() {
+    const computedStyle = window.getComputedStyle(gridContainer);
+    const fontSize = parseFloat(computedStyle.fontSize);
+    
+    // Proporciones geométricas aproximadas de la fuente Consolas
+    const charWidth = fontSize * 0.55; 
+    const charHeight = fontSize * 0.70; 
+
+    // Asignar tamaño exacto para rellenar el 100% sin barras de scroll
+    COLS = Math.floor(window.innerWidth / charWidth);
+    ROWS = Math.floor(window.innerHeight / charHeight);
+
+    // Inicializar o reconstruir la memoria de silicio
+    virtualMemory = [];
+    for (let r = 0; r < ROWS; r++) {
+      virtualMemory[r] = [];
+      for (let c = 0; c < COLS; c++) {
+        virtualMemory[r][c] = `<span class="dim">${GLYPHS[Math.floor(Math.random() * GLYPHS.length)]}</span>`;
+      }
     }
   }
 
-  // Renderizador principal en baja frecuencia simulada
+  // Ejecución inicial y vinculación al redimensionado (rotación de pantalla en móviles)
+  setupResponsiveGrid();
+  window.addEventListener('resize', setupResponsiveGrid);
+
   function rhythmEngine() {
     const now = Date.now();
 
@@ -85,43 +114,40 @@
       pulsePointer = (pulsePointer + 1) % METRIC_PULSES.length;
       nextEvent = now + currentPulse;
 
-      // Selección de estados polirrítmicos
       const r = Math.random();
       if (r < 0.6) {
-        state = 'feed'; // Inyecta energía asimétrica
+        state = 'feed'; 
       } else if (r < 0.85) {
-        state = 'spasm'; // El sistema sufre cortocircuito masivo
+        state = 'spasm'; 
       } else {
-        state = 'static'; // La pantalla "muere" en un patrón denso congelado
+        state = 'static'; 
       }
 
-      // --- TRATAMIENTO DE ESTADOS DE HARDWARE ---
       document.body.className = '';
       if (state === 'spasm') {
-        // Estrobo seco
         if (Math.random() < 0.5) document.body.classList.add('flash-red');
         else document.body.classList.add('flash-white');
       }
     }
 
-    // Dibujar pantalla
     updateScreen();
     requestAnimationFrame(rhythmEngine);
   }
 
-  // Proceso de dibujo y asimilación (Saturación de pantalla)
   function updateScreen() {
-    // Si estamos en spasm o static, rompemos la matriz de manera radical
+    if (ROWS === 0 || COLS === 0) return;
+
     if (state === 'spasm') {
-      for (let i = 0; i < 40; i++) {
+      const loops = Math.floor(ROWS * 0.6); // Adaptar cantidad de fallos al tamaño de pantalla
+      for (let i = 0; i < loops; i++) {
         let rR = Math.floor(Math.random() * ROWS);
-        let rC = Math.floor(Math.random() * COLS);
+        let rC = Math.floor(Math.random() * (COLS - 10));
+        if(rC < 0) rC = 0;
         const style = Math.random() < 0.5 ? 'active-inv-r' : 'active-r';
         virtualMemory[rR][rC] = `<span class="${style}">█ERR_0x0${Math.floor(Math.random()*9)}█</span>`;
       }
     } 
     else if (state === 'static') {
-      // Congelación en verde oscuro sin pulsación activa
       for (let r = 0; r < ROWS; r++) {
         if (Math.random() < 0.1) {
           for (let c = 0; c < COLS; c++) {
@@ -131,10 +157,13 @@
       }
     } 
     else if (state === 'feed') {
-      // Inyección tipo "aserradero": Escribe ráfagas de datos en posiciones completamente aleatorias
-      for (let i = 0; i < 8; i++) {
+      const bursts = Math.floor(ROWS * 0.12);
+      const segment = Math.floor(COLS * 0.15); // Longitud del bloque proporcional al ancho
+
+      for (let i = 0; i < bursts; i++) {
         let rR = Math.floor(Math.random() * ROWS);
-        let startC = Math.floor(Math.random() * (COLS - 20));
+        let startC = Math.floor(Math.random() * (COLS - segment));
+        if (startC < 0) startC = 0;
         
         let colorClass = 'active-g';
         const randColor = Math.random();
@@ -142,20 +171,23 @@
         else if (randColor < 0.35) colorClass = 'active-w';
         else if (randColor < 0.4) colorClass = 'active-inv-g';
 
-        for (let c = startC; c < startC + 20; c++) {
-          virtualMemory[rR][c] = `<span class="${colorClass}">${GLYPHS[Math.floor(Math.random() * GLYPHS.length)]}</span>`;
+        for (let c = startC; c < startC + segment; c++) {
+          if (virtualMemory[rR] && c < COLS) {
+            virtualMemory[rR][c] = `<span class="${colorClass}">${GLYPHS[Math.floor(Math.random() * GLYPHS.length)]}</span>`;
+          }
         }
       }
 
-      // Enfriamiento natural: Algunos bloques de fósforo se "apagan" volviendo al color oscuro
-      for (let i = 0; i < 60; i++) {
+      const cools = Math.floor((ROWS * COLS) * 0.01);
+      for (let i = 0; i < cools; i++) {
         let rR = Math.floor(Math.random() * ROWS);
         let rC = Math.floor(Math.random() * COLS);
-        virtualMemory[rR][rC] = `<span class="dim">${GLYPHS[Math.floor(Math.random() * GLYPHS.length)]}</span>`;
+        if (virtualMemory[rR]) {
+          virtualMemory[rR][rC] = `<span class="dim">${GLYPHS[Math.floor(Math.random() * GLYPHS.length)]}</span>`;
+        }
       }
     }
 
-    // Renderizar la matriz completa (Siempre al 100% de su capacidad física)
     let finalHTML = '';
     for (let r = 0; r < ROWS; r++) {
       finalHTML += virtualMemory[r].join('') + '\n';
@@ -163,7 +195,6 @@
     gridContainer.innerHTML = finalHTML;
   }
 
-  // Lanzar el sistema parásito hiper-saturado
   requestAnimationFrame(rhythmEngine);
 </script>
 </body>
