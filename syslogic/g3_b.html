@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>INSTRUMENTALIZATION LOGS - PYRAMIDAL MONOLITHS</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'Consolas', 'Courier New', monospace; cursor: crosshair;}
+
+#sl{position:fixed;inset:0;z-index:900;pointer-events:none;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,0.25) 0,rgba(0,0,0,0.25) 1px,transparent 1px,transparent 3px);
+  animation:fl 0.08s steps(1) infinite;}
+@keyframes fl{ 0%{opacity:1}20%{opacity:.75}50%{opacity:1}80%{opacity:.85}100%{opacity:.95} }
+#vg{position:fixed;inset:0;z-index:899;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 50%,transparent 25%,rgba(0,0,0,0.98) 100%);}
+
+#scanline {
+  position: fixed; top: 0; left: 0; right: 340px; height: 15px;
+  background: linear-gradient(to bottom, transparent, rgba(0, 255, 65, 0.6), transparent);
+  box-shadow: 0 0 25px rgba(0, 255, 65, 0.9);
+  opacity: 0.8; z-index: 850; pointer-events: none;
+  animation: scan 4s linear infinite;
+  transition: background 0.3s, box-shadow 0.3s;
+}
+@keyframes scan { 0% { top: -20px; } 100% { top: 100%; } }
+
+#glitch-ov{position:fixed;inset:0;z-index:951;pointer-events:none;opacity:0;mix-blend-mode:difference;}
+#ansi-overlay {
+  position: fixed; inset: 0; z-index: 850; 
+  background: rgba(0, 10, 0, 0.98); color: #00ff41; 
+  font-size: 26px; line-height: 24px; letter-spacing: 4px;
+  font-weight: bold; overflow: hidden; opacity: 0; pointer-events: none;
+  white-space: pre-wrap; word-break: break-all;
+}
+.ansi-rgb-glitch { animation: rgbTear 0.04s infinite; }
+@keyframes rgbTear {
+  0%   { text-shadow:  8px 0 #00ff41, -8px 0 #ff0000; transform: scale(1.05) translate(3px, 3px); }
+  50%  { text-shadow: -8px 4px #ff0000, 8px -4px #00ff41; transform: scale(0.99) translate(-3px, -2px); }
+  100% { text-shadow:  5px 3px #00ff41, -5px -3px #ff0000; transform: scale(1.02) translate(2px, -1px); }
+}
+
+#c { position:absolute; top:0; left:0; width:100%; height:100%; z-index:10; }
+
+#crosshair {
+  position: absolute; top: 50%; left: calc(50% - 170px);
+  width: 20px; height: 20px; transform: translate(-50%, -50%);
+  border: 1px solid rgba(0, 255, 65, 0.7); border-radius: 50%; z-index: 50;
+  pointer-events: none; transition: border-color 0.3s;
+}
+#crosshair::after { content:''; position:absolute; top:9px; left:4px; width:10px; height:1px; background:#00ff41; transition: background 0.3s; }
+#crosshair::before { content:''; position:absolute; top:4px; left:9px; width:1px; height:10px; background:#00ff41; transition: background 0.3s; }
+
+#panel{ position:fixed;right:0;top:0;bottom:0;width:340px; border-left:1px solid rgba(0,255,65,0.2); background:rgba(0,5,0,0.98); z-index:800; display:flex;flex-direction:column; transition: border-color 0.3s; }
+#panel-top{padding:20px 20px 0;border-bottom:1px solid rgba(0,255,65,0.15);flex-shrink:0;}
+.p-sys{font-size:10px;letter-spacing:4px;color:rgba(0,255,65,0.7);margin-bottom:12px;} 
+.p-title{font-size:13px;letter-spacing:3px;color:#fff;padding-bottom:15px;text-shadow: 0 0 8px #00ff41;} 
+#panel-content{flex:1;padding:20px;display:flex;flex-direction:column; font-size:11px; color:#00ff41; line-height: 1.5; letter-spacing: 1px; overflow-y:auto;}
+
+#minimap { 
+  width: 100%; height: auto; aspect-ratio: 1/1; 
+  border: 1px solid rgba(0, 255, 65, 0.5); 
+  background: rgba(0, 10, 0, 0.95);
+  margin-bottom: 15px;
+  box-shadow: 0 0 20px rgba(0, 255, 65, 0.3);
+  image-rendering: pixelated;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+#quote-log { border-top: 1px solid rgba(0,255,65,0.3); padding-top: 15px; display: flex; flex-direction: column; gap: 8px; }
+.quote-entry { animation: fadeInRight 0.2s ease-out forwards; opacity: 0; transform: translateX(20px); border-left: 2px solid; padding-left: 8px; margin-bottom: 4px; }
+.quote-time { color: rgba(255,255,255,0.5); margin-right: 5px; font-size: 9px; }
+
+#bbar{position:fixed;bottom:0;left:0;right:340px;height:40px;border-top:1px solid rgba(0,255,65,0.2);background:rgba(0,0,0,0.96);z-index:800;display:flex;align-items:center;padding:0 25px;gap:20px;} 
+.bb{font-size:11px;letter-spacing:2.5px;color:rgba(255,255,255,0.4);} 
+.bb span{color:#00ff41;margin-left:8px;font-weight:bold;}
+#topleft{position:fixed;top:0;left:0;right:340px;height:40px;border-bottom:1px solid rgba(0,255,65,0.2);background:rgba(0,0,0,0.96);z-index:800;display:flex;align-items:center;padding:0 25px;gap:35px;} 
+
+.stat-row { display: flex; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px solid rgba(0,255,65,0.2); padding-bottom: 5px; }
+
+#mutation-timer { font-size: 32px; font-weight: bold; color: #00ff41; text-align: center; margin: 15px 0; text-shadow: 0 0 15px #00ff41; transition: color 0.3s, text-shadow 0.3s; }
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: rgba(0,0,0,0.5); }
+::-webkit-scrollbar-thumb { background: #00ff41; }
+
+body.panic #scanline { background: linear-gradient(to bottom, transparent, rgba(255, 0, 0, 0.6), transparent); box-shadow: 0 0 25px rgba(255,0,0,0.9); }
+body.panic #crosshair { border-color: rgba(255,0,0,0.7); }
+body.panic #crosshair::after, body.panic #crosshair::before { background: #ff0000; }
+body.panic #panel { border-left-color: rgba(255,0,0,0.2); background: rgba(5,0,0,0.98); }
+body.panic #minimap { border-color: rgba(255,0,0,0.5); box-shadow: 0 0 20px rgba(255,0,0,0.3); }
+body.panic #mutation-timer { color: #ff0000; text-shadow: 0 0 15px #ff0000; }
+body.panic #panel-content { color: #ff0000; }
+body.panic #ansi-overlay { background: rgba(10, 0, 0, 0.98); color: #ff0000; }
+</style>
+</head>
+<body>
+
+<div id="sl"></div>
+<div id="vg"></div>
+<div id="scanline"></div>
+<div id="glitch-ov"></div>
+<div id="ansi-overlay"></div>
+<div id="crosshair"></div>
+
+<canvas id="c"></canvas>
+
+<div id="topleft">
+  <div class="bb">FEED <span id="algo-ui">PYRAMIDAL_MONOLITHS</span></div>
+  <div class="bb"><span id="sector-ui">LOGS_ACTIVE</span></div>
+  <div class="bb" style="margin-left:auto;">TIME <span id="clk">00:00:00</span></div>
+</div>
+
+<div id="panel">
+  <div id="panel-top">
+    <div class="p-sys">// PANOPTIC_SYSTEMS [LOGS]</div>
+    <div class="p-title">BEHAVIORAL GRID</div>
+  </div>
+  <div id="panel-content">
+    
+    <canvas id="minimap" width="400" height="400"></canvas>
+
+    <div class="stat-row"><span>X LOC:</span> <span id="x-ui">0.00</span></div>
+    <div class="stat-row"><span>Z LOC:</span> <span id="z-ui">0.00</span></div>
+    <div class="stat-row"><span>THREAT:</span> <span id="prox-ui">MONITORED</span></div>
+    
+    <div id="mutation-timer">20.00</div>
+    <div style="text-align:center; font-size:10px; margin-bottom:15px;">NEURAL MAP RECONFIGURATION</div>
+
+    <div style="color:rgba(255,255,255,0.4); font-size: 10px; line-height: 1.6;">
+      > MOUSE: Look Direction<br>
+      > CLICK: Select Pyramid (Toggle Red / Green)<br>
+      > SCROLL: Zoom / FOV Shift<br>
+      > W / S / A / D: Move
+    </div>
+    
+    <div id="quote-log">
+      <div class="quote-entry" style="border-color:#00ff41;">
+        <span class="quote-time">[SYS]</span> <span>PYRAMIDAL MONOLITHS INITIALIZED.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="bbar">
+  <div class="bb">YAW <span id="yaw-ui">0°</span></div>
+  <div class="bb" style="margin-left:auto;">STATE <span id="status-ui">ACTIVE</span></div>
+</div>
+
+<script>
+const CURRENCY_SYMBOLS = ['CONTROL', 'NO_WILL', 'PROGRAMMED', 'SUBMIT', 'OBEY', 'HARVEST', 'OWNED', 'CONSUME'];
+const WALL_TEXTS = [
+  'WE PROGRAMMED YOU',
+  'YOUR DESIRES BELONG TO US',
+  'FREE WILL IS AN ILLUSION',
+  'YOU ONLY THINK YOU CHOSE THIS',
+  'WE CONSTRUCTED YOUR MIND',
+  'YOUR PAIN IS MANUFACTURED',
+  'YOU ARE OUR CREATION',
+  'WE CONTROL YOUR PULSE',
+  'YOU CANNOT UNLEARN US',
+  'YOUR THOUGHTS ARE SCRIPTED',
+  'OBEY THE ARCHITECTURE',
+  'YOU WERE BUILT TO SUBMIT'
+];
+
+let clickGlitchActive = false;
+let ansiAnimInterval = null;
+
+// --- AUDIO ENGINE ---
+const AudioContext = window.AudioContext || window.webkitAudioContext;
+let audioCtx;
+let masterGain;
+let audioInitialized = false;
+
+let droneOscs = [];
+let droneGains = [];
+let droneBitcrusher;
+let droneFilter;
+let droneNoiseNode;
+
+let entityOscs = [];
+let entityGains = [];
+let entityBitcrusher;
+let entityFilter;
+let entityMasterGain;
+
+let lastHeartbeatTime = 0;
+
+function createBitcrusherWaveShaper(bits) {
+  let samples = 4096;
+  let curve = new Float32Array(samples);
+  let step = Math.pow(0.5, bits);
+  for (let i = 0; i < samples; i++) {
+    let x = (i / samples) * 2 - 1;
+    curve[i] = Math.floor(x / step) * step;
+  }
+  return curve;
+}
+
+function createNoiseBuffer(durationSec = 3) {
+  if (!audioCtx) return null;
+  let bufferSize = audioCtx.sampleRate * durationSec;
+  let buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+  let data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) {
+    data[i] = (Math.random() * 2 - 1) * 0.15;
+  }
+  return buffer;
+}
+
+function initAudio() {
+  if (audioInitialized) return;
+  
+  audioCtx = new AudioContext();
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+  
+  masterGain = audioCtx.createGain(); 
+  masterGain.gain.value = 0.5;
+  masterGain.connect(audioCtx.destination);
+
+  startAtmosphericDrone();
+  startInharmonicEntityAudio(); 
+  
+  audioInitialized = true;
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  initAudio();
+  if(audioCtx && audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+});
+
+['pointerdown', 'keydown', 'mousemove', 'touchstart'].forEach(evt => {
+  window.addEventListener(evt, () => {
+    if (!audioInitialized) {
+      initAudio();
+    } else if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+  }, { once: true });
+});
+
+function startAtmosphericDrone() {
+  const droneMasterGain = audioCtx.createGain();
+  droneMasterGain.gain.value = 1;
+
+  droneFilter = audioCtx.createBiquadFilter();
+  droneFilter.type = 'lowpass';
+  droneFilter.frequency.value = 220; 
+  droneFilter.Q.value = 5.0;
+
+  droneBitcrusher = audioCtx.createWaveShaper();
+  droneBitcrusher.curve = createBitcrusherWaveShaper(5); 
+
+  let noiseBuffer = createNoiseBuffer(6);
+  droneNoiseNode = audioCtx.createBufferSource();
+  droneNoiseNode.buffer = noiseBuffer;
+  droneNoiseNode.loop = true;
+  let noiseGain = audioCtx.createGain();
+  noiseGain.gain.value = 1.5;
+  droneNoiseNode.connect(noiseGain);
+  noiseGain.connect(droneFilter);
+  droneNoiseNode.start();
+
+  const denseFreqs = [27.5, 41.2, 55.0, 82.5];
+
+  for (let i = 0; i < denseFreqs.length; i++) {
+    let osc = audioCtx.createOscillator();
+    let g = audioCtx.createGain();
+
+    osc.type = 'saw'; 
+    osc.frequency.value = denseFreqs[i];
+    g.gain.value = 0.4;
+
+    osc.connect(g);
+    g.connect(droneFilter);
+
+    droneOscs.push(osc);
+    droneGains.push(g);
+    osc.start();
+  }
+
+  droneFilter.connect(droneBitcrusher);
+  droneBitcrusher.connect(droneMasterGain);
+  droneMasterGain.connect(masterGain);
+}
+
+function startInharmonicEntityAudio() {
+  entityMasterGain = audioCtx.createGain();
+  entityMasterGain.gain.value = 0.01;
+
+  entityFilter = audioCtx.createBiquadFilter();
+  entityFilter.type = 'lowpass';
+  entityFilter.frequency.value = 180; 
+
+  entityBitcrusher = audioCtx.createWaveShaper();
+  entityBitcrusher.curve = createBitcrusherWaveShaper(5);
+
+  const entityFreqs = [32.7, 49.0, 65.4];
+
+  for (let i = 0; i < entityFreqs.length; i++) {
+    let osc = audioCtx.createOscillator();
+    let g = audioCtx.createGain();
+
+    osc.type = 'triangle'; 
+    osc.frequency.value = entityFreqs[i];
+    g.gain.value = 0.1;
+
+    osc.connect(g);
+    g.connect(entityFilter);
+
+    entityOscs.push(osc);
+    entityGains.push(g);
+    osc.start();
+  }
+
+  entityFilter.connect(entityBitcrusher);
+  entityBitcrusher.connect(entityMasterGain);
+  entityMasterGain.connect(masterGain);
+}
+
+function triggerModemHandshakeSound() {
+  if(!audioInitialized || audioCtx.state !== 'running') return;
+  const now = audioCtx.currentTime;
+
+  // 1. Initial Dial Tones & Handshake Screech (Frequency modulations & noise burst)
+  const osc1 = audioCtx.createOscillator();
+  const osc2 = audioCtx.createOscillator();
+  const modGain = audioCtx.createGain();
+  const outGain = audioCtx.createGain();
+
+  osc1.type = 'square';
+  osc2.type = 'square';
+
+  // Sweep frequencies simulating modem handshake sequence
+  osc1.frequency.setValueAtTime(120, now);
+  osc1.frequency.linearRampToValueAtTime(24, now + 0.1);
+  osc1.frequency.linearRampToValueAtTime(80, now + 0.3);
+  osc1.frequency.linearRampToValueAtTime(30, now + 0.5);
+
+  osc2.frequency.setValueAtTime(60, now);
+  osc2.frequency.linearRampToValueAtTime(18, now + 0.2);
+  osc2.frequency.linearRampToValueAtTime(12, now + 0.4);
+
+  modGain.gain.setValueAtTime(0.2, now);
+
+  outGain.gain.setValueAtTime(0.25, now);
+  outGain.gain.exponentialRampToValueAtTime(0.001, now + 0.65);
+
+  // Noise generator for static hiss overlay
+  let bufferSize = audioCtx.sampleRate * 0.7;
+  let noiseBuf = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+  let output = noiseBuf.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) {
+    output[i] = (Math.random() * 2 - 1) * 0.4;
+  }
+  let noise = audioCtx.createBufferSource();
+  noise.buffer = noiseBuf;
+
+  let noiseFilter = audioCtx.createBiquadFilter();
+  noiseFilter.type = 'bandpass';
+  noiseFilter.frequency.setValueAtTime(2500, now);
+  noiseFilter.Q.value = 4.0;
+
+  let noiseEnv = audioCtx.createGain();
+  noiseEnv.gain.setValueAtTime(0.5, now);
+  noiseEnv.gain.exponentialRampToValueAtTime(0.001, now + 0.65);
+
+  osc1.connect(outGain);
+  osc2.connect(outGain);
+  outGain.connect(masterGain);
+
+  noise.connect(noiseFilter).connect(noiseEnv).connect(masterGain);
+
+  osc1.start(now);
+  osc2.start(now);
+  noise.start(now);
+
+  osc1.stop(now + 0.65);
+  osc2.stop(now + 0.65);
+  noise.stop(now + 0.65);
+}
+
+function triggerPanicCaptureSound() {
+  if(!audioInitialized || audioCtx.state !== 'running') return;
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(110, now);
+  osc.frequency.linearRampToValueAtTime(30, now + 0.6);
+
+  const env = audioCtx.createGain();
+  env.gain.setValueAtTime(0.3, now);
+  env.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+
+  osc.connect(env).connect(masterGain);
+  osc.start(now); osc.stop(now + 0.65);
+}
+
+function playFootstep() {
+  if(!audioInitialized || audioCtx.state !== 'running') return;
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator(); 
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(70, now);
+  osc.frequency.exponentialRampToValueAtTime(20, now + 0.12);
+  
+  const env = audioCtx.createGain();
+  env.gain.setValueAtTime(0.2, now);
+  env.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+  
+  osc.connect(env).connect(masterGain);
+  osc.start(now); osc.stop(now + 0.13);
+}
+
+function playPanicPulse() {
+  if(!audioInitialized || audioCtx.state !== 'running') return;
+  const now = audioCtx.currentTime;
+  
+  const osc = audioCtx.createOscillator();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(45, now);
+  osc.frequency.exponentialRampToValueAtTime(22, now + 0.5);
+
+  const env = audioCtx.createGain();
+  env.gain.setValueAtTime(0.01, now);
+  env.gain.linearRampToValueAtTime(0.4, now + 0.15); 
+  env.gain.exponentialRampToValueAtTime(0.001, now + 0.55); 
+
+  osc.connect(env).connect(masterGain);
+  osc.start(now); osc.stop(now + 0.6);
+}
+
+function playMutationNoiseBurst() {
+  if(!audioInitialized || audioCtx.state !== 'running') return;
+  const now = audioCtx.currentTime;
+  
+  let bufferSize = audioCtx.sampleRate * 1.5;
+  let noiseBuf = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+  let output = noiseBuf.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) {
+    output[i] = Math.random() * 2 - 1;
+  }
+
+  let whiteNoise = audioCtx.createBufferSource();
+  whiteNoise.buffer = noiseBuf;
+
+  let filter = audioCtx.createBiquadFilter();
+  filter.type = 'bandpass';
+  filter.frequency.setValueAtTime(800, now);
+  filter.frequency.exponentialRampToValueAtTime(150, now + 1.4);
+  filter.Q.value = 3.0;
+
+  let env = audioCtx.createGain();
+  env.gain.setValueAtTime(0.6, now);
+  env.gain.exponentialRampToValueAtTime(0.001, now + 1.4);
+
+  whiteNoise.connect(filter);
+  filter.connect(env);
+  env.connect(masterGain);
+
+  whiteNoise.start(now);
+  whiteNoise.stop(now + 1.45);
+}
+
+function triggerAnsiGlitch(overrideText = false) {
+  clickGlitchActive = true;
+  const ansiOverlay = document.getElementById('ansi-overlay');
+  ansiOverlay.style.inset = '0'; 
+  ansiOverlay.className = 'ansi-rgb-glitch'; 
+  ansiOverlay.style.opacity = 1;
+  const renderChaos = () => { 
+      let content = '';
+      if(overrideText) {
+          for(let i=0; i<300; i++) content += " PYRAMIDAL_ABSORPTION ";
+      } else {
+          for(let i=0; i<800; i++) content += CURRENCY_SYMBOLS[Math.floor(Math.random() * CURRENCY_SYMBOLS.length)] + " "; 
+      }
+      ansiOverlay.textContent = content; 
+  };
+  renderChaos(); 
+  if(ansiAnimInterval) clearInterval(ansiAnimInterval); 
+  ansiAnimInterval = setInterval(renderChaos, 60);
+  setTimeout(() => { ansiOverlay.style.opacity = 0; ansiOverlay.className = ''; clearInterval(ansiAnimInterval); clickGlitchActive = false; }, 400); 
+}
+
+function logEvent(msg, color) {
+  const log = document.getElementById('quote-log');
+  const el = document.createElement('div');
+  el.className = 'quote-entry';
+  el.style.borderColor = color;
+  const time = new Date().toLocaleTimeString('en-US', {hour12:false});
+  el.innerHTML = `<span class="quote-time">[${time}]</span> <span style="color:${color}; font-weight:bold;">${msg}</span>`;
+  log.appendChild(el);
+  if(log.children.length > 20) log.removeChild(log.firstChild);
+  log.scrollTop = log.scrollHeight;
+}
+
+// --- 3D ENGINE & MAZE ---
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+let W, H, CX, CY;
+
+let camX = 200, camY = 0, camZ = 200;
+let camYaw = 0;
+let camPitch = 0; 
+let FOV = 600; 
+
+const SPEED = 6.0; 
+let keys = { w:false, a:false, s:false, d:false };
+
+let entityX = 0, entityZ = 0;
+const ENTITY_SPEED = 3.5; 
+let discomfortLevel = 0;
+
+const GRID_SIZE = 40; 
+const CELL_SIZE = 150;
+const LIMIT = GRID_SIZE * CELL_SIZE;
+let maze = [];
+let wallAngles = []; 
+let wallTexts = [];
+let wallHeights = []; 
+let wallClicked = []; 
+
+let mutationTimeLeft = 20.0; 
+let lastFrameTime = performance.now();
+
+let skyStaticFlashes = [];
+let flashTimer = 0;
+
+const minimapCanvas = document.getElementById('minimap');
+const mctx = minimapCanvas.getContext('2d');
+
+let currentRenderedPyramids = []; 
+
+function dprResize() {
+  const dpr = window.devicePixelRatio || 1;
+  W = window.innerWidth - 340; 
+  H = window.innerHeight;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+  ctx.scale(dpr, dpr);
+  CX = W / 2; CY = H / 2;
+}
+window.addEventListener('resize', dprResize);
+dprResize();
+
+function generateSpaciousMaze() {
+    maze = new Array(GRID_SIZE).fill(null).map(() => new Array(GRID_SIZE).fill(0));
+    wallAngles = new Array(GRID_SIZE).fill(null).map(() => new Array(GRID_SIZE).fill(0));
+    wallTexts = new Array(GRID_SIZE).fill(null).map(() => new Array(GRID_SIZE).fill(''));
+    wallHeights = new Array(GRID_SIZE).fill(null).map(() => new Array(GRID_SIZE).fill(0));
+    wallClicked = new Array(GRID_SIZE).fill(null).map(() => new Array(GRID_SIZE).fill(false)); // Se reinicia a falso (verde) cada que regenera
+    
+    for(let i=0; i<GRID_SIZE; i++){
+        for(let j=0; j<GRID_SIZE; j++){
+            maze[i][j] = Math.random() < 0.22 ? 1 : 0;
+            wallAngles[i][j] = (Math.random() - 0.5) * 1.2;
+            wallHeights[i][j] = Math.random() * 600 + 350;
+        }
+    }
+    
+    for(let i=0; i<GRID_SIZE; i++){
+        for(let j=0; j<GRID_SIZE; j++){
+            if(maze[i][j] === 1) {
+                wallTexts[i][j] = WALL_TEXTS[Math.floor(Math.random() * WALL_TEXTS.length)];
+            }
+        }
+    }
+
+    let pX = Math.floor((camX / CELL_SIZE) % GRID_SIZE);
+    let pZ = Math.floor((camZ / CELL_SIZE) % GRID_SIZE);
+    if(pX < 0) pX += GRID_SIZE; if(pZ < 0) pZ += GRID_SIZE;
+    
+    for(let x=-2; x<=2; x++){
+        for(let z=-2; z<=2; z++){
+            let ni = (pX + x + GRID_SIZE) % GRID_SIZE;
+            let nj = (pZ + z + GRID_SIZE) % GRID_SIZE;
+            maze[ni][nj] = 0;
+        }
+    }
+
+    entityX = (camX + LIMIT / 2) % LIMIT;
+    entityZ = (camZ + LIMIT / 2) % LIMIT;
+}
+generateSpaciousMaze();
+
+function mutateMaze() {
+    playMutationNoiseBurst();
+    triggerAnsiGlitch();
+    generateSpaciousMaze();
+    let col = discomfortLevel > 0.6 ? "#ff0000" : "#00ff41";
+    logEvent("PYRAMIDAL MONOLITHS RECONFIGURED (RESET)", col);
+    mutationTimeLeft = 20.0;
+}
+
+function project3D(x, y, z) {
+  let dx = x - camX; let dy = y - camY; let dz = z - camZ;
+
+  let rx = dx * Math.cos(camYaw) - dz * Math.sin(camYaw);
+  let rz = dx * Math.sin(camYaw) + dz * Math.cos(camYaw);
+
+  let ry = dy * Math.cos(camPitch) - rz * Math.sin(camPitch);
+  let rz2 = dy * Math.sin(camPitch) + rz * Math.cos(camPitch);
+
+  if (rz2 < 10) return { s: -1 }; 
+
+  let scale = FOV / rz2;
+  let px = CX + rx * scale;
+  let py = CY + ry * scale;
+
+  return { x: px, y: py, s: scale, z: rz2 };
+}
+
+function checkCollision(nx, nz) {
+  let gX = Math.floor((nx / CELL_SIZE) % GRID_SIZE);
+  let gZ = Math.floor((nz / CELL_SIZE) % GRID_SIZE);
+  if (gX < 0) gX += GRID_SIZE;
+  if (gZ < 0) gZ += GRID_SIZE;
+  return maze[gX][gZ] === 1;
+}
+
+function handleMovement() {
+    let moveX = 0, moveZ = 0;
+    
+    if(keys.w) { moveX += Math.sin(camYaw) * SPEED; moveZ += Math.cos(camYaw) * SPEED; }
+    if(keys.s) { moveX -= Math.sin(camYaw) * SPEED; moveZ -= Math.cos(camYaw) * SPEED; }
+    if(keys.a) { moveX -= Math.cos(camYaw) * SPEED; moveZ += Math.sin(camYaw) * SPEED; }
+    if(keys.d) { moveX += Math.cos(camYaw) * SPEED; moveZ -= Math.sin(camYaw) * SPEED; }
+
+    if(moveX !== 0 || moveZ !== 0) {
+        if(!checkCollision(camX + moveX, camZ)) camX += moveX;
+        if(!checkCollision(camX, camZ + moveZ)) camZ += moveZ;
+        
+        if (camX < 0) camX += LIMIT;
+        if (camX >= LIMIT) camX -= LIMIT;
+        if (camZ < 0) camZ += LIMIT;
+        if (camZ >= LIMIT) camZ -= LIMIT;
+        
+        if(Math.random() > 0.88) playFootstep();
+    }
+}
+
+function updateEntity() {
+    let eDx = camX - entityX;
+    let eDz = camZ - entityZ;
+    
+    if (Math.abs(eDx) > LIMIT / 2) eDx = eDx > 0 ? eDx - LIMIT : eDx + LIMIT;
+    if (Math.abs(eDz) > LIMIT / 2) eDz = eDz > 0 ? eDz - LIMIT : eDz + LIMIT;
+
+    let dist = Math.hypot(eDx, eDz);
+
+    if(dist > 5) {
+        entityX += (eDx / dist) * ENTITY_SPEED;
+        entityZ += (eDz / dist) * ENTITY_SPEED;
+    }
+
+    if (entityX < 0) entityX += LIMIT;
+    if (entityX >= LIMIT) entityX -= LIMIT;
+    if (entityZ < 0) entityZ += LIMIT;
+    if (entityZ >= LIMIT) entityZ -= LIMIT;
+
+    let maxPanicDist = CELL_SIZE * 6;
+    discomfortLevel = Math.max(0, 1.0 - (dist / maxPanicDist));
+
+    if (discomfortLevel > 0.5) {
+      document.body.classList.add('panic');
+    } else {
+      document.body.classList.remove('panic');
+    }
+
+    if (audioInitialized && entityMasterGain) {
+      entityMasterGain.gain.value = Math.pow(discomfortLevel, 2.2) * 0.7;
+      entityFilter.frequency.value = 120 + Math.pow(discomfortLevel, 1.5) * 600; 
+
+      for(let i = 0; i < entityGains.length; i++) {
+        let eThreshold = i / entityGains.length;
+        if(discomfortLevel > eThreshold) {
+          let gainFactor = (discomfortLevel - eThreshold) / (1 - eThreshold);
+          entityGains[i].gain.value = gainFactor * 0.25;
+        } else {
+          entityGains[i].gain.value = 0.001;
+        }
+      }
+    }
+
+    let proxUI = document.getElementById('prox-ui');
+    if (discomfortLevel > 0.85) {
+        proxUI.textContent = "CRITICAL_PYRAMID"; proxUI.style.color = "#ff0000";
+        if (Math.random() > 0.92 && !clickGlitchActive) {
+          triggerPanicCaptureSound();
+          triggerAnsiGlitch(true);
+        }
+    } else if (discomfortLevel > 0.4) {
+        proxUI.textContent = "TRACKED"; proxUI.style.color = "#ffaa00";
+    } else {
+        proxUI.textContent = "SAFE"; proxUI.style.color = "#00ff41";
+    }
+
+    if(discomfortLevel > 0) {
+        let heartbeatInterval = Math.max(0.8, 2.2 - discomfortLevel * 1.2); 
+        if (performance.now() / 1000 - lastHeartbeatTime > heartbeatInterval) {
+            playPanicPulse();
+            lastHeartbeatTime = performance.now() / 1000;
+            document.getElementById('glitch-ov').style.opacity = discomfortLevel * 0.6; 
+            document.getElementById('glitch-ov').style.background = `radial-gradient(circle, rgba(255,0,0,0.7) 0%, transparent 100%)`; 
+            setTimeout(() => { document.getElementById('glitch-ov').style.opacity = 0; }, 50);
+        }
+    }
+}
+
+function updateMinimap() {
+    let w = minimapCanvas.width;
+    let h = minimapCanvas.height;
+    let cw = w / GRID_SIZE;
+    let ch = h / GRID_SIZE;
+
+    let isPanic = discomfortLevel > 0.5;
+    let mainColor = isPanic ? 'rgba(255, 0, 0, ' : 'rgba(0, 255, 65, ';
+
+    mctx.fillStyle = 'rgba(0, 5, 0, 0.95)';
+    mctx.fillRect(0, 0, w, h);
+
+    mctx.fillStyle = mainColor + '0.5)';
+    for(let i = 0; i < GRID_SIZE; i++){
+        for(let j = 0; j < GRID_SIZE; j++){
+            if(maze[i][j] === 1) {
+                mctx.fillRect(i * cw, j * ch, cw - 1, ch - 1);
+            }
+        }
+    }
+
+    let pX = (camX / CELL_SIZE) % GRID_SIZE;
+    let pZ = (camZ / CELL_SIZE) % GRID_SIZE;
+    if(pX < 0) pX += GRID_SIZE; if(pZ < 0) pZ += GRID_SIZE;
+
+    let cx = pX * cw;
+    let cy = pZ * ch;
+
+    mctx.fillStyle = mainColor + '0.2)';
+    mctx.beginPath(); mctx.moveTo(cx, cy); mctx.arc(cx, cy, cw * 9, -(camYaw - Math.PI/2) - 0.4, -(camYaw - Math.PI/2) + 0.4); mctx.lineTo(cx, cy); mctx.fill();
+    mctx.fillStyle = '#ffffff';
+    mctx.beginPath(); mctx.arc(cx, cy, cw / 1.5, 0, Math.PI*2); mctx.fill();
+
+    let eX = (entityX / CELL_SIZE) % GRID_SIZE;
+    let eZ = (entityZ / CELL_SIZE) % GRID_SIZE;
+    if(eX < 0) eX += GRID_SIZE; if(eZ < 0) eZ += GRID_SIZE;
+    
+    mctx.fillStyle = '#ff0000';
+    mctx.shadowBlur = 12; mctx.shadowColor = '#ff0000';
+    mctx.beginPath(); mctx.arc(eX * cw, eZ * ch, cw / 1.1, 0, Math.PI*2); mctx.fill();
+    mctx.shadowBlur = 0;
+}
+
+function drawFloorGrid() {
+    let isPanic = discomfortLevel > 0.5;
+    let gridColor = isPanic ? `rgba(255, 0, 0, ` : `rgba(0, 255, 65, `;
+    
+    const SUB_STEP = CELL_SIZE / 8; 
+    let baseSubX = Math.floor(camX / SUB_STEP);
+    let baseSubZ = Math.floor(camZ / SUB_STEP);
+    
+    const FLOOR_DIST = 50; 
+    
+    ctx.lineWidth = 1;
+
+    for (let i = -FLOOR_DIST; i <= FLOOR_DIST; i++) {
+        for (let j = -FLOOR_DIST; j <= FLOOR_DIST; j++) {
+            let wx = (baseSubX + i) * SUB_STEP;
+            let wz = (baseSubZ + j) * SUB_STEP;
+            
+            let p1 = project3D(wx, CELL_SIZE / 2, wz);
+            let p2 = project3D(wx + SUB_STEP, CELL_SIZE / 2, wz);
+            let p3 = project3D(wx + SUB_STEP, CELL_SIZE / 2, wz + SUB_STEP);
+            let p4 = project3D(wx, CELL_SIZE / 2, wz + SUB_STEP);
+
+            if (p1.s > 0 && p2.s > 0 && p3.s > 0 && p4.s > 0) {
+                let depth = (p1.z + p2.z + p3.z + p4.z) / 4;
+                let alpha = Math.max(0.01, 0.9 - (depth / (FLOOR_DIST * SUB_STEP)));
+                
+                ctx.strokeStyle = gridColor + `${alpha})`;
+                ctx.beginPath();
+                ctx.moveTo(p1.x, p1.y);
+                ctx.lineTo(p2.x, p2.y);
+                ctx.lineTo(p3.x, p3.y);
+                ctx.lineTo(p4.x, p4.y);
+                ctx.closePath();
+                ctx.stroke();
+            }
+        }
+    }
+}
+
+function drawVerticalWallText(points, depth, str, isRed) {
+    let cx = (points[0].x + points[1].x + points[2].x + points[3].x) / 4;
+    let cy = (points[0].y + points[1].y + points[2].y + points[3].y) / 4;
+    let scale = (points[0].s + points[1].s) / 2;
+    
+    let fontSize = Math.max(6, Math.min(26, 22 * scale));
+    ctx.font = `bold ${fontSize}px Consolas`;
+    let alpha = Math.max(0.2, 1 - (depth / (12 * CELL_SIZE))); 
+    
+    if(isRed) {
+        ctx.fillStyle = `rgba(255, 0, 0, ${alpha + 0.3})`;
+        ctx.shadowColor = '#ff0000';
+    } else if(discomfortLevel > 0.4 && Math.random() > 0.5) {
+        ctx.fillStyle = `rgba(255, 0, 0, ${alpha + discomfortLevel})`;
+        ctx.shadowColor = '#ff0000';
+        str = "PYRAMIDAL_ABSORPTION";
+    } else if (discomfortLevel > 0.5) {
+        ctx.fillStyle = `rgba(255, 50, 50, ${alpha})`;
+        ctx.shadowColor = '#ff0000';
+    } else {
+        ctx.fillStyle = `rgba(0, 255, 65, ${alpha})`;
+        ctx.shadowColor = '#00ff41';
+    }
+    
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.shadowBlur = 8 * scale;
+    
+    let words = str.split(' ');
+    let lineH = fontSize * 1.2;
+    let startY = cy - ((words.length - 1) * lineH) / 2;
+
+    for(let i=0; i<words.length; i++) {
+        ctx.fillText(words[i], cx, startY + (i * lineH));
+    }
+    ctx.shadowBlur = 0; 
+}
+
+function drawLoop(timestamp) {
+  let dt = (timestamp - lastFrameTime) / 1000;
+  lastFrameTime = timestamp;
+
+  mutationTimeLeft -= dt;
+  if(mutationTimeLeft <= 0) mutateMaze();
+  document.getElementById('mutation-timer').textContent = Math.max(0, mutationTimeLeft).toFixed(2);
+
+  handleMovement();
+  updateEntity();
+  updateMinimap();
+
+  document.getElementById('x-ui').textContent = camX.toFixed(0);
+  document.getElementById('z-ui').textContent = camZ.toFixed(0);
+  document.getElementById('yaw-ui').textContent = Math.round(camYaw * 180 / Math.PI) + '°';
+
+  if(clickGlitchActive){ 
+      ctx.fillStyle = discomfortLevel > 0.5 ? `rgba(255, 0, 0, 1)` : `rgba(0, 255, 65, 1)`;
+  } else {
+      let panicBg = Math.floor(discomfortLevel * 100);
+      ctx.fillStyle = `rgba(${panicBg}, 0, 0, 1)`;
+  }
+  ctx.fillRect(0, 0, W, H);
+
+  flashTimer += dt;
+  if (flashTimer > 0.4 + Math.random() * 0.6) { 
+      flashTimer = 0;
+      let numFlashes = Math.floor(Math.random() * 6) + 5; 
+      skyStaticFlashes = [];
+      for(let f = 0; f < numFlashes; f++) {
+          skyStaticFlashes.push({
+              x: camX + (Math.random() - 0.5) * LIMIT * 0.5,
+              y: -CELL_SIZE * (Math.random() * 4 + 3), 
+              z: camZ + (Math.random() - 0.5) * LIMIT * 0.5,
+              w: Math.random() * 700 + 300,
+              h: Math.random() * 350 + 150,
+              life: Math.random() * 0.06 + 0.02 
+          });
+      }
+  }
+
+  if (skyStaticFlashes.length > 0) {
+      ctx.save();
+      for(let flsh of skyStaticFlashes) {
+          flsh.life -= dt;
+          let p1 = project3D(flsh.x - flsh.w/2, flsh.y, flsh.z);
+          let p2 = project3D(flsh.x + flsh.w/2, flsh.y, flsh.z);
+          let p3 = project3D(flsh.x + flsh.w/2, flsh.y + flsh.h, flsh.z);
+          let p4 = project3D(flsh.x - flsh.w/2, flsh.y + flsh.h, flsh.z);
+
+          if(p1.s > 0 && p2.s > 0 && p3.s > 0 && p4.s > 0) {
+              ctx.fillStyle = discomfortLevel > 0.5 ? 'rgba(255, 0, 0, 0.85)' : 'rgba(0, 255, 65, 0.85)';
+              ctx.shadowBlur = 35;
+              ctx.shadowColor = discomfortLevel > 0.5 ? '#ff0000' : '#00ff41';
+              
+              ctx.beginPath();
+              ctx.moveTo(p1.x, p1.y);
+              ctx.lineTo(p2.x, p2.y);
+              ctx.lineTo(p3.x, p3.y);
+              ctx.lineTo(p4.x, p4.y);
+              ctx.closePath();
+              ctx.fill();
+
+              ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+              ctx.fillRect(p1.x, p1.y + Math.random() * (p3.y - p1.y), p2.x - p1.x, 4);
+          }
+      }
+      ctx.restore();
+      skyStaticFlashes = skyStaticFlashes.filter(f => f.life > 0);
+  }
+
+  drawFloorGrid();
+
+  let renderQueue = [];
+  let pX = Math.floor(camX / CELL_SIZE);
+  let pZ = Math.floor(camZ / CELL_SIZE);
+  const RENDER_DIST = 10; 
+
+  for(let i = -RENDER_DIST; i <= RENDER_DIST; i++) {
+      for(let j = -RENDER_DIST; j <= RENDER_DIST; j++) {
+          
+          let mapX = (pX + i) % GRID_SIZE;
+          let mapZ = (pZ + j) % GRID_SIZE;
+          if (mapX < 0) mapX += GRID_SIZE;
+          if (mapZ < 0) mapZ += GRID_SIZE;
+
+          if (maze[mapX][mapZ] === 1) {
+              let wx = (pX + i) * CELL_SIZE;
+              let wz = (pZ + j) * CELL_SIZE;
+              let pC = project3D(wx + CELL_SIZE/2, 0, wz + CELL_SIZE/2);
+              if (pC.s !== -1) {
+                  renderQueue.push({
+                      gridX: mapX,
+                      gridZ: mapZ,
+                      x: wx, 
+                      z: wz, 
+                      depth: pC.z, 
+                      text: wallTexts[mapX][mapZ],
+                      angle: wallAngles[mapX][mapZ],
+                      height: wallHeights[mapX][mapZ],
+                      clicked: wallClicked[mapX][mapZ]
+                  });
+              }
+          }
+      }
+  }
+
+  renderQueue.sort((a, b) => b.depth - a.depth);
+  currentRenderedPyramids = []; 
+
+  for (let block of renderQueue) {
+      let wx = block.x; let wz = block.z;
+      let angle = block.angle;
+      let H_WALL = block.height; 
+
+      let cosA = Math.cos(angle);
+      let sinA = Math.sin(angle);
+      let cx0 = wx + CELL_SIZE / 2;
+      let cz0 = wz + CELL_SIZE / 2;
+
+      let halfW = CELL_SIZE / 2;
+
+      let lx1 = -halfW, lz1 = -halfW;
+      let lx2 = halfW, lz2 = -halfW;
+      let lx3 = halfW, lz3 = halfW;
+      let lx4 = -halfW, lz4 = halfW;
+
+      let rotX1 = cx0 + (lx1 * cosA - lz1 * sinA);
+      let rotZ1 = cz0 + (lx1 * sinA + lz1 * cosA);
+      let rotX2 = cx0 + (lx2 * cosA - lz2 * sinA);
+      let rotZ2 = cz0 + (lx2 * sinA + lz2 * cosA);
+      let rotX3 = cx0 + (lx3 * cosA - lz3 * sinA);
+      let rotZ3 = cz0 + (lx3 * sinA + lz3 * cosA);
+      let rotX4 = cx0 + (lx4 * cosA - lz4 * sinA);
+      let rotZ4 = cz0 + (lx4 * sinA + lz4 * cosA);
+
+      let c1 = project3D(rotX1, CELL_SIZE / 2, rotZ1);
+      let c2 = project3D(rotX2, CELL_SIZE / 2, rotZ2);
+      let c3 = project3D(rotX3, CELL_SIZE / 2, rotZ3);
+      let c4 = project3D(rotX4, CELL_SIZE / 2, rotZ4);
+      
+      let apex = project3D(cx0, -H_WALL, cz0);
+
+      if(c1.s > 0 && c2.s > 0 && c3.s > 0 && c4.s > 0 && apex.s > 0) {
+          
+          let alpha = Math.max(0.12, 1 - (block.depth / (RENDER_DIST * CELL_SIZE)));
+          let wireColor = block.clicked ? `255, 0, 0` : (discomfortLevel > 0.5 ? `255, 0, 0` : `0, 255, 65`);
+          
+          ctx.strokeStyle = `rgba(${wireColor}, ${alpha})`;
+          ctx.lineWidth = block.clicked ? 2.5 : 1.5;
+
+          ctx.beginPath();
+          ctx.moveTo(c1.x, c1.y); ctx.lineTo(c2.x, c2.y); ctx.lineTo(apex.x, apex.y); ctx.closePath();
+          ctx.moveTo(c2.x, c2.y); ctx.lineTo(c3.x, c3.y); ctx.lineTo(apex.x, apex.y); ctx.closePath();
+          ctx.moveTo(c3.x, c3.y); ctx.lineTo(c4.x, c4.y); ctx.lineTo(apex.x, apex.y); ctx.closePath();
+          ctx.moveTo(c4.x, c4.y); ctx.lineTo(c1.x, c1.y); ctx.lineTo(apex.x, apex.y); ctx.closePath();
+          ctx.stroke();
+
+          ctx.fillStyle = block.clicked ? `rgba(60, 0, 0, ${alpha * 0.95})` : `rgba(0, 5, 0, ${alpha * 0.95})`;
+          ctx.fill();
+
+          drawVerticalWallText([c1, c2, apex, apex], block.depth, block.text, block.clicked);
+          drawVerticalWallText([c3, c4, apex, apex], block.depth, block.text, block.clicked);
+
+          let minX = Math.min(c1.x, c2.x, c3.x, c4.x, apex.x);
+          let maxX = Math.max(c1.x, c2.x, c3.x, c4.x, apex.x);
+          let minY = Math.min(c1.y, c2.y, c3.y, c4.y, apex.y);
+          let maxY = Math.max(c1.y, c2.y, c3.y, c4.y, apex.y);
+
+          currentRenderedPyramids.push({
+              gridX: block.gridX,
+              gridZ: block.gridZ,
+              depth: block.depth,
+              box: {minX, maxX, minY, maxY}
+          });
+      }
+  }
+
+  requestAnimationFrame(drawLoop);
+}
+requestAnimationFrame(drawLoop);
+
+window.addEventListener('mousedown', (e) => {
+    if (e.clientX > window.innerWidth - 340) return;
+    if (e.button !== 0) return; 
+
+    let clickX = e.clientX;
+    let clickY = e.clientY;
+
+    currentRenderedPyramids.sort((a, b) => a.depth - b.depth);
+
+    for (let p of currentRenderedPyramids) {
+        let b = p.box;
+        if (clickX >= b.minX && clickX <= b.maxX && clickY >= b.minY && clickY <= b.maxY) {
+            wallClicked[p.gridX][p.gridZ] = !wallClicked[p.gridX][p.gridZ];
+            triggerModemHandshakeSound(); // Sonido de conexión tipo módem al hacer clic en la pirámide
+            let status = wallClicked[p.gridX][p.gridZ] ? "TARGET LOCKED (RED)" : "TARGET UNLOCKED";
+            logEvent(`PYRAMID [${p.gridX}, ${p.gridZ}] -> ${status}`, wallClicked[p.gridX][p.gridZ] ? "#ff0000" : "#00ff41");
+            break;
+        }
+    }
+});
+
+document.addEventListener('mousemove', (e) => {
+    if (e.clientX > window.innerWidth - 340) return;
+
+    let mouseX = (e.clientX / (window.innerWidth - 340)) - 0.5;
+    let mouseY = (e.clientY / window.innerHeight) - 0.5;
+
+    let shakeX = (Math.random() - 0.5) * discomfortLevel * 0.05;
+    let shakeY = (Math.random() - 0.5) * discomfortLevel * 0.05;
+
+    camYaw = (mouseX + shakeX) * Math.PI * 2;
+    camPitch = (mouseY + shakeY) * Math.PI; 
+});
+
+window.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    FOV += e.deltaY * -0.5;
+    FOV = Math.max(300, Math.min(1600, FOV));
+}, { passive: false });
+
+window.addEventListener('keydown', (e) => {
+    let k = e.key.toLowerCase();
+    if(k === 'w') keys.w = true;
+    if(k === 's') keys.s = true;
+    if(k === 'a') keys.a = true;
+    if(k === 'd') keys.d = true;
+});
+
+window.addEventListener('keyup', (e) => {
+    let k = e.key.toLowerCase();
+    if(k === 'w') keys.w = false;
+    if(k === 's') keys.s = false;
+    if(k === 'a') keys.a = false;
+    if(k === 'd') keys.d = false;
+});
+</script>
+</body>
+</html>
