@@ -19,25 +19,10 @@
             height: 100vh;
             display: block;
         }
-        #click-prompt {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: #fff;
-            font-size: 1.5rem;
-            text-align: center;
-            pointer-events: none;
-            background: rgba(0,0,0,0.7);
-            padding: 20px;
-            border-radius: 10px;
-            transition: opacity 0.5s ease;
-        }
     </style>
 </head>
 <body>
 
-    <div id="click-prompt">Haz clic en la pantalla para activar el Audio y los Visuales<br><small style="font-size:1rem; opacity:0.7;">(Presiona ESPACIO para congelar/mover el flujo)</small></div>
     <canvas id="shadertoy-canvas"></canvas>
 
     <script id="vertex-shader" type="x-shader/x-vertex">
@@ -52,7 +37,7 @@
 
         uniform vec3 iResolution;
         uniform float iTime;
-        uniform sampler2D iChannel0; // Entrada simulada del teclado
+        uniform sampler2D iChannel0;
 
         const float TAU = 6.283185307179586476925286766559;
         
@@ -61,15 +46,17 @@
         void mainImage( out vec4 fragColor, in vec2 fragCoord )
         {
             vec2 uv = (fragCoord.xy / iResolution.xy) - .5;
-            // texelFetch emulado leyendo desde iChannel0
             uv.x += iTime - iTime * texture2D(iChannel0, vec2(32.0/256.0, 2.0/3.0)).x;
             
-            fragColor = vec4(
-                sin(K + sin(iTime / 1.3) * 6.),
-                sin(K + sin(iTime / 1.6) * 4.),
-                sin(K + sin(iTime) * 2.),
-                1.
-            );
+            float pattern = sin(K + sin(iTime / 1.3) * 6.);
+            
+            // Paleta exclusiva de verde terminal y estorbo/destellos en blanco puro
+            vec3 col = mix(vec3(0.0, 0.15, 0.0), vec3(0.0, 0.9, 0.2), pattern);
+            if (pattern > 0.65) {
+                col = vec3(1.0, 1.0, 1.0); // Estorbo blanco
+            }
+            
+            fragColor = vec4(col, 1.0);
         }
 
         void main() {
@@ -78,10 +65,8 @@
     </script>
 
     <script>
-        // --- CONFIGURACIÓN DE AUDIO SINTÉTICO (MAIN SOUND) ---
-        // Traducido fielmente de GLSL a JavaScript para ejecución nativa en la Web Audio API
-        const TEMPO = 140.0;
-        const VOLUME = 0.1;
+        const TEMPO = 180.0;
+        const VOLUME = 0.25;
         const BYTEBEAT_ONLY = false;
 
         const TAU = 6.283185307179586;
@@ -113,76 +98,72 @@
         function midi(n) { return 13.75 * Math.pow(2, (n - 9.0) / 12.0); }
 
         function bytebeat(time) {
-            let t = Math.floor(time * (7200.0 + 3.0 * time));
-            let sig = ((t & t % (950 - t % 16)) << (5 + 3 * Math.floor(Math.sin(time * 12.0))));
-            return lim(2.0 * (sig / 128.0) - 1.0);
+            let t = Math.floor(time * (14400.0 + (Math.sin(time * 3.0) * 7000.0)));
+            let sig = ((t * (t >> 9 | t >> 13)) ^ (t >> 3));
+            return lim(2.0 * ((sig & 255) / 128.0) - 1.0);
         }
 
         function bass(t, tt) {
-            let s = squa(t * midi(32.0 - nv(pwm(tt, 1.0 / 7.0))));
-            for (let i = 0; i < 4; i++) {
-                t += 0.0008 * Math.sin(tt);
-                s += squa(t * midi(32.0 - nv(pwm(tt, 1.0 / 7.0))));
+            let modChaos = Math.sin(t * 8.0) * 15.0;
+            let s = squa(t * midi(24.0 + modChaos - nv(pwm(tt, 1.0 / 3.0))));
+            for (let i = 0; i < 6; i++) {
+                t += 0.003 * Math.sin(tt * i);
+                s += sawt(t * midi(18.0 + (i * 4.0)));
             }
-            s *= mpls(fract(tt * 2.0));
-            return s;
+            s *= mpls(fract(tt * 4.0), 5.0, 100.0);
+            return s * 1.5;
         }
 
         function snare(t) {
-            let s = noiz(t, 0.75) * mpls(fract(t / 2.0), 2.5, 25.0);
-            s += noiz(t, 0.85) * mpls(fract(t / 2.0), 2.5, 25.0);
-            return lim(s) / 2.0;
+            let s = noiz(t * 3.5, 0.9) * mpls(fract(t * 3.0), 1.5, 50.0);
+            s += noiz(t * 1.2, 0.4) * mpls(fract(t), 0.5, 120.0);
+            return lim(s) * 1.2;
         }
 
         function kick(t) {
             if (t < 0.0) return 0.0;
-            let s = sine(midi(39.0) * t / 1.5) + tria(midi(42.5) * t / 2.0);
-            s *= mpls(fract(t / 2.0), 1.0, 32.0) * 1.4;
-            s += sine(t * 55.0) * mpls(fract(t / 2.0), 4.0, 170.0) * 0.6;
+            let pitchWarp = 55.0 + Math.sin(t * 40.0) * 30.0;
+            let s = sine(pitchWarp * t) + tria(midi(30.0) * t * 1.5);
+            s *= mpls(fract(t * 3.0), 0.5, 80.0) * 2.0;
             return lim(s);
         }
 
         function drums(t, tt) {
             let s = 0.0;
-            s += kick(fract(tt * 2.0)) * 0.7;
-            s += snare(fract(tt * 2.0 - 0.666));
+            s += kick(fract(tt * 4.0)) * 0.9;
+            s += snare(fract(tt * 2.5 + 0.3)) * 0.8;
             return s;
         }
 
         function mainSound(samp, t) {
             let tt = t * TEMPO / 120.0;
             let s = 0.0;
-            s += bytebeat(t) * 0.4;
+            s += bytebeat(t) * 0.6;
             if (!BYTEBEAT_ONLY) {
-                s += bass(t, tt) * 0.28;
-                s += drums(t, tt) * 0.56;
+                s += bass(t, tt) * 0.45;
+                s += drums(t, tt) * 0.7;
             }
+            s = Math.sin(s * 4.5); 
             let finalVal = lim(s) * VOLUME;
-            return [finalVal, finalVal]; // Estéreo Izquierda/Derecha
+            return [finalVal, finalVal]; 
         }
 
-        // --- LÓGICA DE WEBGL Y AUDIO CONTEXT ---
         const canvas = document.getElementById('shadertoy-canvas');
         const gl = canvas.getContext('webgl');
-        const promptDiv = document.getElementById('click-prompt');
 
         let audioCtx = null;
-        let isInitialized = false;
         let spacePressed = false; 
-        let spaceStateValue = 0.0; // Envia 0 a iChannel0 (moverse), o 1 (detenerse)
+        let spaceStateValue = 0.0; 
 
-        // Textura simulando el iChannel0 de Teclado de Shadertoy
         let keyboardTexture;
-        let keyboardData = new Uint8Array(256 * 3); // Fila 2 guarda el estado
+        let keyboardData = new Uint8Array(256 * 3); 
 
         function updateKeyboardTexture() {
             gl.bindTexture(gl.TEXTURE_2D, keyboardTexture);
-            // El shader busca en ivec2(32, 2). Mapeamos el valor ahí.
             keyboardData[(2 * 256 + 32) * 3] = spaceStateValue * 255; 
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, 256, 3, 0, gl.RGB, gl.UNSIGNED_BYTE, keyboardData);
         }
 
-        // Escucha la barra espaciadora
         window.addEventListener('keydown', (e) => {
             if (e.code === "Space") {
                 e.preventDefault();
@@ -191,13 +172,47 @@
             }
         });
 
-        // Inicialización tras interacción del usuario
-        window.addEventListener('click', () => {
-            if (isInitialized) return;
-            isInitialized = true;
-            promptDiv.style.opacity = 0;
+        const vsSource = document.getElementById('vertex-shader').text;
+        const fsSource = document.getElementById('fragment-shader').text;
 
-            // Arrancar Audio
+        const vertexShader = gl.createShader(gl.VERTEX_SHADER);
+        gl.shaderSource(vertexShader, vsSource);
+        gl.compileShader(vertexShader);
+
+        const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+        gl.shaderSource(fragmentShader, fsSource);
+        gl.compileShader(fragmentShader);
+
+        const program = gl.createProgram();
+        gl.attachShader(program, vertexShader);
+        gl.attachShader(program, fragmentShader);
+        gl.linkProgram(program);
+        gl.useProgram(program);
+
+        const positionBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+            -1, -1,  1, -1, -1,  1,
+            -1,  1,  1, -1,  1,  1,
+        ]), gl.STATIC_DRAW);
+
+        const positionLocation = gl.getAttribLocation(program, 'position');
+        gl.enableVertexAttribArray(positionLocation);
+        gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+
+        keyboardTexture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, keyboardTexture);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+        const resolutionLocation = gl.getUniformLocation(program, 'iResolution');
+        const timeLocation = gl.getUniformLocation(program, 'iTime');
+
+        let startTime = performance.now();
+
+        function initAudioAndRun() {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             const bufferSize = 4096;
             const scriptNode = audioCtx.createScriptProcessor(bufferSize, 0, 2);
@@ -218,56 +233,10 @@
             };
 
             scriptNode.connect(audioCtx.destination);
-            startTime = performance.now();
             requestAnimationFrame(render);
-        });
-
-        // Setup de WebGL
-        const vsSource = document.getElementById('vertex-shader').text;
-        const fsSource = document.getElementById('fragment-shader').text;
-
-        const vertexShader = gl.createShader(gl.VERTEX_SHADER);
-        gl.shaderSource(vertexShader, vsSource);
-        gl.compileShader(vertexShader);
-
-        const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
-        gl.shaderSource(fragmentShader, fsSource);
-        gl.compileShader(fragmentShader);
-
-        const program = gl.createProgram();
-        gl.attachShader(program, vertexShader);
-        gl.attachShader(program, fragmentShader);
-        gl.linkProgram(program);
-        gl.useProgram(program);
-
-        // Crear Buffer de posición
-        const positionBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-            -1, -1,  1, -1, -1,  1,
-            -1,  1,  1, -1,  1,  1,
-        ]), gl.STATIC_DRAW);
-
-        const positionLocation = gl.getAttribLocation(program, 'position');
-        gl.enableVertexAttribArray(positionLocation);
-        gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
-
-        // Crear textura de teclado para iChannel0
-        keyboardTexture = gl.createTexture();
-        gl.bindTexture(gl.TEXTURE_2D, keyboardTexture);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-
-        const resolutionLocation = gl.getUniformLocation(program, 'iResolution');
-        const timeLocation = gl.getUniformLocation(program, 'iTime');
-
-        let startTime = 0;
+        }
 
         function render() {
-            if (!isInitialized) return;
-
             if (canvas.width !== window.innerWidth || canvas.height !== window.innerHeight) {
                 canvas.width = window.innerWidth;
                 canvas.height = window.innerHeight;
@@ -279,7 +248,6 @@
             gl.uniform3f(resolutionLocation, canvas.width, canvas.height, 1.0);
             gl.uniform1f(timeLocation, currentTime);
 
-            // Actualizar canal del teclado interactivo
             updateKeyboardTexture();
 
             gl.clear(gl.COLOR_BUFFER_BIT);
@@ -287,6 +255,10 @@
 
             requestAnimationFrame(render);
         }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initAudioAndRun();
+        });
     </script>
 </body>
 </html>

@@ -13,14 +13,6 @@
             overflow-x: hidden;
             min-height: 100vh;
         }
-        #boot-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: #010201; color: #22ff55;
-            display: flex; align-items: center; justify-content: center;
-            z-index: 9999; font-size: 20px; cursor: pointer;
-            text-shadow: 0 0 10px #22ff55; transition: opacity 0.5s ease;
-        }
-        .blink-text { animation: blink 1s step-end infinite; }
         body::before {
             content: " "; display: block; position: fixed;
             top: 0; left: 0; bottom: 0; right: 0;
@@ -56,10 +48,6 @@
 </head>
 <body>
 
-    <div id="boot-screen">
-        <span class="blink-text">>>> CLICK TO INITIALIZE MANIFESTO <<<</span>
-    </div>
-
     <div id="hud-top">
         <span id="status-indicator">STATUS: INERTIA</span>
         <span>USER: MEAT_PUPPET</span>
@@ -68,13 +56,12 @@
     <div id="terminal-abyss"><span id="output-stream"></span><span class="cursor"></span></div>
 
     <script>
-        const bootScreen = document.getElementById('boot-screen');
         const abyss = document.getElementById('output-stream');
         const statusIndicator = document.getElementById('status-indicator');
         
         window.speechSynthesis.cancel();
         
-        let audioEnabled = false;
+        let audioEnabled = true;
         let voices = [];
 
         window.speechSynthesis.onvoiceschanged = () => {
@@ -128,53 +115,43 @@
             let visualLine = "";
             sentencesWritten++;
 
-            // Cambiar de modo de lectura cada 6 frases
             if (sentencesWritten % 6 === 0) {
                 const modes = ["normal", "prose", "poetry", "staircase", "block"];
                 mode = modes[Math.floor(Math.random() * modes.length)];
                 visualLine += "\n\n"; 
-                stairIndent = 0; // Reiniciar la sangría de la escalera
+                stairIndent = 0; 
             }
 
             let currentAphorism = aphorisms[Math.floor(Math.random() * aphorisms.length)];
             let speechLine = currentAphorism; 
 
-            // Formateo visual puro
             switch(mode) {
                 case "prose":
-                    // Párrafos continuos sin saltos de línea (manifiesto)
                     visualLine += currentAphorism.trim() + "  ";
                     break;
                 case "poetry":
-                    // Poesía con márgenes erráticos
                     let padding = Math.floor(Math.random() * 25) + 5;
                     visualLine += " ".repeat(padding) + currentAphorism.trim() + "\n";
                     break;
                 case "staircase":
-                    // Descenso en escalera
                     visualLine += " ".repeat(stairIndent) + currentAphorism.trim() + "\n";
                     stairIndent += 6;
                     if (stairIndent > 40) stairIndent = 0;
                     break;
                 case "block":
-                    // Repetición obsesiva en una sola línea
                     let cleanAphorism = currentAphorism.trim();
                     visualLine += `${cleanAphorism} | ${cleanAphorism} | ${cleanAphorism}\n`;
-                    // La voz solo lo lee una vez para no saturar
                     break;
                 default:
-                    // Normal
                     visualLine += currentAphorism;
                     if (Math.random() > 0.5) visualLine += "\n";
                     break;
             }
 
-            // Mantenemos el marcador (NOT) rojo esporádico
             if (Math.random() > 0.85) {
                 visualLine = visualLine.replace("NOT", "<span class='err-tag'>N0T</span>");
             }
 
-            // La voz recibe el texto inmaculado
             speakPhrase(speechLine);
 
             return visualLine;
@@ -188,7 +165,6 @@
 
             let nextChar = currentString[charIndex];
             
-            // Procesamiento rápido de etiquetas HTML para que no las teclee letra por letra
             if (nextChar === '<') {
                 let tagEnd = currentString.indexOf('>', charIndex);
                 if (tagEnd !== -1) {
@@ -233,21 +209,14 @@
             setTimeout(typeEngine, typeSpeed);
         }
 
-        bootScreen.addEventListener('click', () => {
-            audioEnabled = true;
-            bootScreen.style.opacity = '0';
-            
-            setTimeout(() => {
-                bootScreen.style.display = 'none';
-                currentString = ">>> SYSTEM OVERRIDE INITIATED...\n\n";
-                
-                window.speechSynthesis.cancel();
-                let initVoice = new SpeechSynthesisUtterance("System override initiated"); 
-                initVoice.pitch = 0.1; initVoice.rate = 0.8;
-                window.speechSynthesis.speak(initVoice);
-                
-                typeEngine();
-            }, 500);
+        // Inicio automático al cargar la página
+        window.addEventListener('DOMContentLoaded', () => {
+            currentString = ">>> SYSTEM OVERRIDE INITIATED...\n\n";
+            window.speechSynthesis.cancel();
+            let initVoice = new SpeechSynthesisUtterance("System override initiated"); 
+            initVoice.pitch = 0.1; initVoice.rate = 0.8;
+            window.speechSynthesis.speak(initVoice);
+            typeEngine();
         });
 
     </script>
