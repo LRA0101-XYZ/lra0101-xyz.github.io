@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-select: none">
+<title>0x00_HYPER_DENSE_PARASITE_RESPONSIVE</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    background-color: #000000;
+    overflow: hidden;
+    user-select: none;
+    width: 100vw;
+    height: 100vh;
+    cursor: crosshair;
+  }
+
+  /* Lienzo de saturación total adaptativo */
+  #dense-grid {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    font-family: 'Consolas', Courier, monospace;
+    font-size: 0.85vw; 
+    line-height: 0.7;  
+    letter-spacing: -0.5px;
+    white-space: pre;
+    box-sizing: border-box;
+    padding: 2px;
+    color: #001100; 
+  }
+
+  @media (max-width: 1024px) { #dense-grid { font-size: 1.2vw; } }
+  @media (max-width: 768px) { #dense-grid { font-size: 1.6vw; letter-spacing: -0.2px; } }
+  @media (max-width: 480px) { #dense-grid { font-size: 2.3vw; letter-spacing: 0px; } }
+
+  .dim { color: #001600; }
+  .active-g { color: #00ff00; }
+  .active-G { color: #39ff14; text-shadow: 0 0 4px #39ff14; font-weight: bold; }
+  .active-w { color: #ffffff; text-shadow: 0 0 6px #ffffff; }
+  .active-r { color: #ff0000; }
+  .active-inv-r { background-color: #ff0000; color: #ffffff; font-weight: bold; }
+  .active-inv-g { background-color: #00ff00; color: #000000; font-weight: bold; }
+
+  body.flash-red { background-color: #ff0000 !important; }
+  body.flash-white { background-color: #ffffff !important; }
+</style>
+</head>
+<body>
+
+<pre id="dense-grid"></pre>
+
+<script>
+  const gridContainer = document.getElementById('dense-grid');
+  const GLYPHS = '᚛᚜ᚗᚖᚕᚔΞΨΩ██▓▒░┼╬═║╚╔▲▼◄►░▄■▓/\\*+:=--01XØ█'.split('');
+  const METRIC_PULSES = [50, 110, 30, 180, 60, 140, 80]; 
+  let pulsePointer = 0;
+  let state = 'feed'; 
+  let nextEvent = Date.now();
+
+  let ROWS = 0;
+  let COLS = 0;
+  let virtualMemory = [];
+
+  // --- MOTOR AUDIO: ALIASING CRUDO SIN FILTROS NI RESONANCIAS ---
+  let audioCtx = null;
+  let masterGain = null;
+  let grainInterval = null;
+
+  function initAudioEngine() {
+    if (audioCtx) return; 
+    
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    audioCtx = new AudioContext({ sampleRate: 44100 });
+    
+    masterGain = audioCtx.createGain();
+    masterGain.gain.setValueAtTime(0.25, audioCtx.currentTime); // Volumen general reducido y controlado para evitar saturación sucia
+
+    masterGain.connect(audioCtx.destination);
+
+    // Disparador de ráfagas secas binarias (Cada 16ms)
+    grainInterval = setInterval(triggerAcidGlitchGrain, 16);
+  }
+
+  // Buffer de ruido binario puro (valores 1 y -1 estricto para aliasing informático áspero)
+  function createAliasedNoiseBuffer(duration, downsampleFactor) {
+    const size = Math.floor(audioCtx.sampleRate * duration);
+    const buffer = audioCtx.createBuffer(1, size, audioCtx.sampleRate);
+    const data = buffer.getChannelData(0);
+    
+    let lastVal = Math.random() > 0.5 ? 1 : -1;
+    
+    for (let i = 0; i < size; i++) {
+      if (i % downsampleFactor === 0) {
+        lastVal = Math.random() > 0.5 ? 1 : -1;
+      }
+      data[i] = lastVal;
+    }
+    return buffer;
+  }
+
+  function triggerAcidGlitchGrain() {
+    if (!audioCtx || audioCtx.state === 'suspended') return;
+
+    const now = audioCtx.currentTime;
+    let grainDuration = 0.005 + Math.random() * 0.015;
+    let downsample = 3; 
+
+    if (state === 'spasm') {
+      grainDuration = 0.03 + Math.random() * 0.05;
+      downsample = Math.floor(6 + Math.random() * 10); // Clicks binarios colapsados muy agudos
+    } else if (state === 'static') {
+      grainDuration = 0.002 + Math.random() * 0.008;
+      downsample = 2; 
+    } else if (state === 'feed') {
+      grainDuration = 0.008 + Math.random() * 0.02;
+      downsample = Math.floor(3 + Math.random() * 4);
+    }
+
+    // 1. DISPARO BINARIO TOTALMENTE DIRECTO (SIN FILTRAR)
+    const noiseNode = audioCtx.createBufferSource();
+    noiseNode.buffer = createAliasedNoiseBuffer(grainDuration, downsample);
+    
+    const noiseGain = audioCtx.createGain();
+    
+    // Envolvente limpia de flancos rectos: cero resonancias espaciales
+    noiseGain.gain.setValueAtTime(0.2, now);
+    noiseGain.gain.setValueAtTime(0.0001, now + grainDuration);
+
+    noiseNode.connect(noiseGain);
+    noiseGain.connect(masterGain);
+
+    // 2. OSCILADOR CUADRADO SUB-ACIDO CRUDA
+    if (state === 'spasm' || Math.random() > 0.7) {
+      const subOsc = audioCtx.createOscillator();
+      const subGain = audioCtx.createGain();
+      
+      subOsc.type = 'square'; 
+      
+      let freqBase = state === 'spasm' ? (30 + Math.random() * 40) : (60 + Math.random() * 60);
+      subOsc.frequency.setValueAtTime(freqBase, now);
+      
+      if (Math.random() > 0.5) {
+        subOsc.frequency.setValueAtTime(freqBase * 3, now + grainDuration * 0.2); 
+      }
+
+      subGain.gain.setValueAtTime(0.25, now);
+      subGain.gain.setValueAtTime(0.0001, now + grainDuration * 0.6);
+
+      subOsc.connect(subGain);
+      subGain.connect(masterGain);
+
+      subOsc.start(now);
+      subOsc.stop(now + grainDuration + 0.002);
+    }
+
+    noiseNode.start(now);
+    noiseNode.stop(now + grainDuration + 0.002);
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    initAudioEngine();
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+  });
+  // -----------------------------------------------------------------
+
+  function setupResponsiveGrid() {
+    const computedStyle = window.getComputedStyle(gridContainer);
+    const fontSize = parseFloat(computedStyle.fontSize);
+    
+    const charWidth = fontSize * 0.55; 
+    const charHeight = fontSize * 0.70; 
+
+    COLS = Math.floor(window.innerWidth / charWidth);
+    ROWS = Math.floor(window.innerHeight / charHeight);
+
+    virtualMemory = [];
+    for (let r = 0; r < ROWS; r++) {
+      virtualMemory[r] = [];
+      for (let c = 0; c < COLS; c++) {
+        virtualMemory[r][c] = `<span class="dim">${GLYPHS[Math.floor(Math.random() * GLYPHS.length)]}</span>`;
+      }
+    }
+  }
+
+  setupResponsiveGrid();
+  window.addEventListener('resize', setupResponsiveGrid);
+
+  function rhythmEngine() {
+    const now = Date.now();
+
+    if (now >= nextEvent) {
+      const currentPulse = METRIC_PULSES[pulsePointer];
+      pulsePointer = (pulsePointer + 1) % METRIC_PULSES.length;
+      nextEvent = now + currentPulse;
+
+      const r = Math.random();
+      if (r < 0.45) {
+        state = 'feed'; 
+      } else if (r < 0.9) {
+        state = 'spasm'; 
+      } else {
+        state = 'static'; 
+      }
+
+      document.body.className = '';
+      if (state === 'spasm') {
+        if (Math.random() < 0.5) document.body.classList.add('flash-red');
+        else document.body.classList.add('flash-white');
+      }
+    }
+
+    updateScreen();
+    requestAnimationFrame(rhythmEngine);
+  }
+
+  function updateScreen() {
+    if (ROWS === 0 || COLS === 0) return;
+
+    if (state === 'spasm') {
+      const loops = Math.floor(ROWS * 0.7); 
+      for (let i = 0; i < loops; i++) {
+        let rR = Math.floor(Math.random() * ROWS);
+        let rC = Math.floor(Math.random() * (COLS - 10));
+        if(rC < 0) rC = 0;
+        const style = Math.random() < 0.5 ? 'active-inv-r' : 'active-r';
+        virtualMemory[rR][rC] = `<span class="${style}">█ERR_0x0${Math.floor(Math.random()*9)}█</span>`;
+      }
+    } 
+    else if (state === 'static') {
+      for (let r = 0; r < ROWS; r++) {
+        if (Math.random() < 0.15) {
+          for (let c = 0; c < COLS; c++) {
+            virtualMemory[r][c] = `<span class="dim">░</span>`;
+          }
+        }
+      }
+    } 
+    else if (state === 'feed') {
+      const bursts = Math.floor(ROWS * 0.15);
+      const segment = Math.floor(COLS * 0.18); 
+
+      for (let i = 0; i < bursts; i++) {
+        let rR = Math.floor(Math.random() * ROWS);
+        let startC = Math.floor(Math.random() * (COLS - segment));
+        if (startC < 0) startC = 0;
+        
+        let colorClass = 'active-g';
+        const randColor = Math.random();
+        if (randColor < 0.25) colorClass = 'active-G';
+        else if (randColor < 0.35) colorClass = 'active-w';
+        else if (randColor < 0.4) colorClass = 'active-inv-g';
+
+        for (let c = startC; c < startC + segment; c++) {
+          if (virtualMemory[rR] && c < COLS) {
+            virtualMemory[rR][c] = `<span class="${colorClass}">${GLYPHS[Math.floor(Math.random() * GLYPHS.length)]}</span>`;
+          }
+        }
+      }
+
+      const cools = Math.floor((ROWS * COLS) * 0.01);
+      for (let i = 0; i < cools; i++) {
+        let rR = Math.floor(Math.random() * ROWS);
+        let rC = Math.floor(Math.random() * COLS);
+        if (virtualMemory[rR]) {
+          virtualMemory[rR][rC] = `<span class="dim">${GLYPHS[Math.floor(Math.random() * GLYPHS.length)]}</span>`;
+        }
+      }
+    }
+
+    let finalHTML = '';
+    for (let r = 0; r < ROWS; r++) {
+      finalHTML += virtualMemory[r].join('') + '\n';
+    }
+    gridContainer.innerHTML = finalHTML;
+  }
+
+  requestAnimationFrame(rhythmEngine);
+</script>
+</body>
+</html>

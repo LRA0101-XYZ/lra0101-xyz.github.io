@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>CRITICAL_SYSTEM_MELTDOWN_0x00</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    background-color: #000000;
+    overflow: hidden;
+    user-select: none;
+    width: 100vw;
+    height: 100vh;
+    font-family: 'Consolas', 'Courier New', monospace;
+    color: #00ff00;
+  }
+
+  #error-matrix {
+    position: absolute;
+    width: 100vw;
+    height: 100vh;
+    left: 0;
+    top: 0;
+    white-space: pre-wrap;
+    word-break: break-all;
+    line-height: 1.1;
+    padding: 20px;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  .size-micro { font-size: 10px; color: #053a05; }
+  .size-normal { font-size: 14px; color: #00ff00; }
+  .size-glitch { font-size: 18px; color: #39ff14; font-weight: bold; text-shadow: 0 0 8px #39ff14; }
+
+  .corrupt-green { color: #000000; background-color: #00ff00; }
+  .corrupt-red { color: #ffffff; background-color: #ff0000; font-weight: bold; }
+  .corrupt-white { color: #000000; background-color: #ffffff; }
+  .red-text { color: #ff0000; }
+
+  body.hardware-flash-r { background-color: #ff0000 !important; filter: invert(1); }
+  body.hardware-flash-w { background-color: #ffffff !important; filter: contrast(10); }
+  body.hardware-flash-g { background-color: #00ff00 !important; }
+
+  #start-hint {
+    position: fixed; inset: 0; z-index: 9999; background: #000;
+    display: flex; align-items: center; justify-content: center;
+    color: #ff2020; font-size: 16px; letter-spacing: 4px; cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<div id="start-hint">[ CLICK TO INITIATE SYSTEM MELTDOWN ]</div>
+<div id="error-matrix"></div>
+
+<script>
+  const matrix = document.getElementById('error-matrix');
+  const startHint = document.getElementById('start-hint');
+  const CORRUPT_DATA = '01XØ█▓▒░▄▀■┼║╚╔╗╝═▲▼░▄■/\\*+:=--᚛ᚗᚖᚕᚔΞΨΩ[NULL][ERR]0x00F8'.split('');
+
+  let audioCtx, masterGain;
+  let audioInitialized = false;
+  let sysVoice = null;
+  let voiceSpoken = false;
+
+  // --- VOZ MASCULINA NATIVA ---
+  function initVoice() {
+    if (!('speechSynthesis' in window)) return;
+    const voices = window.speechSynthesis.getVoices();
+    sysVoice = voices.find(v => 
+      v.name.includes('David') || 
+      v.name.includes('Mark') || 
+      v.name.includes('George') || 
+      (v.name.toLowerCase().includes('male') && !v.name.toLowerCase().includes('female'))
+    ) || voices.find(v => v.lang.startsWith('es') || v.lang.startsWith('en'));
+  }
+  if (typeof speechSynthesis !== 'undefined') {
+    speechSynthesis.onvoiceschanged = initVoice;
+    initVoice();
+  }
+
+  function speakAlert(text) {
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    if (sysVoice) utterance.voice = sysVoice;
+    utterance.pitch = 0.55;
+    utterance.rate = 0.85;
+    utterance.volume = 1.0;
+    window.speechSynthesis.speak(utterance);
+  }
+
+  // --- MOTOR AUDIO PANOSYS (SÍNTESIS BITCRUSH & CORTOCIRCUITO) ---
+  function initAudio() {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    audioCtx = new AudioContext();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = 0.7;
+    masterGain.connect(audioCtx.destination);
+    audioInitialized = true;
+  }
+
+  function playGlitchBurst() {
+    if (!audioInitialized) return;
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    osc.type = Math.random() > 0.5 ? 'sawtooth' : 'square';
+    osc.frequency.setValueAtTime(100 + Math.random() * 3000, now);
+    
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.value = 800 + Math.random() * 2000;
+    filter.Q.value = 8;
+
+    const gain = audioCtx.createGain();
+    gain.gain.setValueAtTime(0.3, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+
+    osc.connect(filter).connect(gain).connect(masterGain);
+    osc.start(now);
+    osc.stop(now + 0.05);
+  }
+
+  function playHardwareBuzz() {
+    if (!audioInitialized) return;
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(50 + Math.random() * 30, now);
+
+    const gain = audioCtx.createGain();
+    gain.gain.setValueAtTime(0.6, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+    osc.connect(gain).connect(masterGain);
+    osc.start(now);
+    osc.stop(now + 0.13);
+  }
+
+  // --- MÁQUINA DE ESTADOS Y RENDER ---
+  let systemState = 'corrupting';
+  let stateTimer = Date.now();
+  let nextStateDuration = 3000;
+
+  function generateSystemGarbage() {
+    let chunk = '';
+    const sizes = ['size-micro', 'size-normal', 'size-glitch'];
+    const currentSize = sizes[Math.floor(Math.random() * sizes.length)];
+    
+    let styleClass = currentSize;
+    const randStyle = Math.random();
+    if (randStyle < 0.05) styleClass += ' corrupt-red';
+    else if (randStyle < 0.1) styleClass += ' corrupt-green';
+    else if (randStyle < 0.13) styleClass += ' corrupt-white';
+    else if (randStyle < 0.25) styleClass += ' red-text';
+
+    chunk += `<span class="${styleClass}">`;
+    const length = Math.floor(Math.random() * 40) + 10;
+    for (let i = 0; i < length; i++) {
+      if (Math.random() < 0.05) {
+        chunk += Math.random() < 0.5 ? '\n' : '   ';
+      } else {
+        chunk += CORRUPT_DATA[Math.floor(Math.random() * CORRUPT_DATA.length)];
+      }
+    }
+    chunk += '</span>';
+    return chunk;
+  }
+
+  function loop() {
+    const now = Date.now();
+
+    if (now - stateTimer >= nextStateDuration) {
+      stateTimer = now;
+      if (systemState === 'corrupting') {
+        systemState = 'fatal_freeze';
+        nextStateDuration = Math.floor(Math.random() * 400) + 900;
+        
+        if (!voiceSpoken && audioInitialized) {
+          speakAlert("FATAL ERROR. MEMORY OVERFLOW. SYSTEM TERMINATED.");
+          voiceSpoken = true;
+        }
+      } else {
+        systemState = 'corrupting';
+        matrix.innerHTML = '';
+        nextStateDuration = Math.floor(Math.random() * 1500) + 2500;
+      }
+    }
+
+    if (systemState === 'corrupting') {
+      document.body.className = '';
+      let batch = '';
+      for (let i = 0; i < 4; i++) {
+        batch += generateSystemGarbage();
+      }
+      matrix.insertAdjacentHTML('beforeend', batch);
+
+      if (Math.random() < 0.7) playGlitchBurst();
+
+      if (matrix.childNodes.length > 120) {
+        for (let i = 0; i < 20; i++) {
+          if (matrix.firstChild) matrix.removeChild(matrix.firstChild);
+        }
+      }
+    } 
+    else if (systemState === 'fatal_freeze') {
+      document.body.className = '';
+      const hardwareGlitch = Math.random();
+      
+      if (hardwareGlitch < 0.15) {
+        document.body.classList.add('hardware-flash-r');
+        playHardwareBuzz();
+      } else if (hardwareGlitch > 0.15 && hardwareGlitch < 0.30) {
+        document.body.classList.add('hardware-flash-w');
+        playHardwareBuzz();
+      } else if (hardwareGlitch > 0.30 && hardwareGlitch < 0.40) {
+        document.body.classList.add('hardware-flash-g');
+      }
+    }
+
+    requestAnimationFrame(loop);
+  }
+
+  startHint.addEventListener('click', () => {
+    initAudio();
+    startHint.style.display = 'none';
+    requestAnimationFrame(loop);
+  });
+</script>
+</body>
+</html>

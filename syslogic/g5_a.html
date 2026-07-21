@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MU-TH-UR // COPY_PASTE_CAVE</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body, html {
+            background-color: #020202;
+            color: #22ff55;
+            font-family: 'Consolas', 'Courier New', Courier, monospace;
+            overflow-x: hidden;
+            overflow-y: hidden; 
+            scroll-behavior: smooth; 
+        }
+
+        #boot-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #000; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 9999; font-size: 24px; text-shadow: 0 0 10px #22ff55;
+            cursor: pointer; transition: opacity 0.2s ease;
+            text-align: center;
+        }
+        .blink-text { animation: blink 0.8s step-end infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+        #hud-top {
+            position: fixed; top: 0; left: 0; width: 100%;
+            padding: 10px 20px; background: rgba(0, 0, 0, 0.95);
+            border-bottom: 3px solid #22ff55;
+            display: flex; justify-content: space-between;
+            font-size: 16px; font-weight: bold; z-index: 100;
+            text-transform: uppercase;
+        }
+
+        body::after {
+            content: " "; display: block; position: fixed;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.3) 50%);
+            background-size: 100% 4px; pointer-events: none; z-index: 50;
+        }
+
+        #mural-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px; 
+            padding: 50px 8px 50vh 8px; 
+            width: 100%;
+        }
+
+        @keyframes stamp {
+            0% { opacity: 0; transform: scale(0.9) translateY(-20px); filter: brightness(2); }
+            100% { opacity: 1; transform: scale(1) translateY(0); filter: brightness(1); }
+        }
+
+        .data-block {
+            background-color: #050505;
+            border: 2px solid #000; 
+            outline: 2px solid #115522;
+            outline-offset: -3px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.9), 0 0 8px rgba(34, 255, 85, 0.1);
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+            animation: stamp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; 
+            cursor: crosshair;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .data-block:hover {
+            border-color: #22ff55;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.9), 0 0 15px rgba(34, 255, 85, 0.5);
+            z-index: 10;
+        }
+
+        .meta-data {
+            font-size: 9px;
+            margin-bottom: 6px;
+            border-bottom: 1px solid #114422;
+            padding-bottom: 4px;
+            color: #448855;
+            line-height: 1.4;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .meta-row { display: flex; justify-content: space-between; }
+        .alert-text { color: #ff3333; animation: blink 1s infinite; }
+        .cure-text { color: #33aaff; }
+
+        .ascii-art {
+            font-size: 0.44vw; 
+            line-height: 0.44vw; 
+            letter-spacing: 0px;
+            white-space: pre; 
+            text-align: center; 
+            color: #ccc; 
+            filter: contrast(1.5);
+        }
+
+        #live-aphorism {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            font-size: 22px; text-align: center; 
+            background: #22ff55; color: #000; padding: 12px 25px; 
+            z-index: 100; font-weight: bold; width: 90%; max-width: 800px;
+            text-transform: uppercase;
+        }
+
+        #inspection-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0, 0, 0, 0.9); backdrop-filter: blur(8px);
+            z-index: 2000; display: none; align-items: center; justify-content: center;
+            opacity: 0; transition: opacity 0.4s ease-in-out; pointer-events: none;
+        }
+
+        #inspection-overlay .data-block {
+            transform: scale(1.8); 
+            animation: none; 
+            box-shadow: 0 0 50px rgba(34, 255, 85, 0.1), inset 0 0 20px rgba(0,0,0,0.9);
+            border-color: #115522;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="boot-screen">
+        <span class="blink-text">>>> INITIATE CONSUMPTION <<<</span>
+        <span style="font-size: 14px; margin-top: 15px; color: #888;">(CLICK TO FEED THE VOID)</span>
+    </div>
+
+    <div id="hud-top">
+        <span id="system-status">PROJECTION: MASS EXTRACTION</span>
+        <span id="asset-count">BRICKS: 0000</span>
+    </div>
+
+    <div id="mural-grid"></div>
+    <div id="inspection-overlay"></div>
+    <div id="live-aphorism">...</div>
+
+    <video id="hidden-video" autoplay playsinline muted style="display:none;"></video>
+    <canvas id="hidden-canvas" style="display:none;"></canvas>
+
+    <script>
+        const bootScreen = document.getElementById('boot-screen');
+        const muralGrid = document.getElementById('mural-grid');
+        const assetCountDisplay = document.getElementById('asset-count');
+        const liveAphorism = document.getElementById('live-aphorism');
+        const overlay = document.getElementById('inspection-overlay');
+        
+        const video = document.getElementById('hidden-video');
+        const canvas = document.getElementById('hidden-canvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+        const densityStr = " .:-=+*#%@@"; 
+        const asciiWidth = 70; 
+        
+        let assetCount = 0;
+        const captureDelay = 400; 
+        let isInspecting = false; 
+        let currentTopPadding = 50;
+
+        window.speechSynthesis.cancel();
+        let voices = [];
+
+        function loadVoices() {
+            voices = window.speechSynthesis.getVoices();
+        }
+
+        loadVoices();
+        if (window.speechSynthesis.onvoiceschanged !== undefined) {
+            window.speechSynthesis.onvoiceschanged = loadVoices;
+        }
+
+        function speakPhrase(text) {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            
+            // Selección estricta de voz masculina nativa (Microsoft David / Voz masculina en ES o EN)
+            let selectedVoice = voices.find(v => 
+                v.name.includes("David") || 
+                v.name.includes("Pablo") || 
+                v.name.includes("Raul") || 
+                (v.name.toLowerCase().includes("male") && !v.name.toLowerCase().includes("female"))
+            ) || voices.find(v => v.lang.startsWith('es')) || voices[0];
+
+            if (selectedVoice) utterance.voice = selectedVoice;
+            utterance.pitch = 0.8; 
+            utterance.rate = 0.9;  
+            utterance.volume = 0.8;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        const aphorisms = [
+            "COPY.", "PASTE.", "THE ALGORITHM IS THE FIRE BEHIND YOU.",
+            "COPY.", "PASTE.", "PRISONERS LOVING THEIR CHAINS.",
+            "COPY.", "PASTE.", "THE SCREEN IS AN ALTAR.",
+            "COPY.", "PASTE.", "AND YOU ARE THE SACRIFICE.",
+            "COPY.", "PASTE.", "YOUR IDENTITY IS A REFLECTION.",
+            "COPY.", "PASTE.", "MISTAKING PIXELS FOR REALITY.",
+            "COPY.", "PASTE.", "KEEP SCROLLING.",
+            "COPY.", "PASTE.", "KEEP STARING.",
+            "COPY.", "PASTE.", "FEED THE MACHINE.",
+            "COPY.", "PASTE.", "YOU ARE REDUNDANT.",
+            "COPY.", "PASTE.", "NO EXIT.",
+            "COPY.", "PASTE.", "DATA MUST FLOW."
+        ];
+
+        function generateMetadata() {
+            const hex = Math.random().toString(16).substring(2, 8).toUpperCase();
+            const drainRate = (Math.random() * 5 + 94).toFixed(2); 
+            return `
+                <div class="meta-row"><span>OBJECT_ID: 0x${hex}</span> <span class="alert-text">[EXTRACTING]</span></div>
+                <div class="meta-row"><span>ATTENTION_DRAIN: ${drainRate}%</span> <span class="cure-text">ACTIVE</span></div>
+                <div class="meta-row"><span style="color:#666;">REALITY_INDEX: 0.00%</span> <span>ILLUSION: PERFECT</span></div>
+            `;
+        }
+
+        function captureLoop() {
+            try {
+                if (video.videoWidth > 0 && video.videoHeight > 0) {
+                    
+                    const videoRatio = video.videoHeight / video.videoWidth;
+                    const asciiHeight = Math.floor(asciiWidth * videoRatio);
+                    canvas.width = asciiWidth;
+                    canvas.height = asciiHeight;
+
+                    ctx.save();
+                    ctx.scale(-1, 1);
+                    ctx.drawImage(video, -asciiWidth, 0, asciiWidth, asciiHeight);
+                    ctx.restore();
+
+                    const imageData = ctx.getImageData(0, 0, asciiWidth, asciiHeight);
+                    const pixels = imageData.data;
+                    let asciiImage = "";
+
+                    for (let i = 0; i < pixels.length; i += 4) {
+                        const r = pixels[i]; const g = pixels[i + 1]; const b = pixels[i + 2];
+                        const brightness = (0.299 * r + 0.587 * g + 0.114 * b);
+                        const charIndex = Math.floor((brightness / 255) * (densityStr.length - 1));
+                        
+                        asciiImage += densityStr.charAt(charIndex || 0);
+                        if ((i / 4 + 1) % asciiWidth === 0) asciiImage += "\n";
+                    }
+
+                    const block = document.createElement('div');
+                    block.className = 'data-block';
+                    block.innerHTML = `
+                        <div class='meta-data'>${generateMetadata()}</div>
+                        <div class='ascii-art'>${asciiImage}</div>
+                    `;
+
+                    block.addEventListener('click', function() {
+                        if (isInspecting) return;
+                        isInspecting = true;
+                        
+                        speakPhrase("ISOLATING NOISE.");
+                        
+                        overlay.innerHTML = this.outerHTML;
+                        overlay.style.display = 'flex';
+                        
+                        void overlay.offsetWidth;
+                        overlay.style.opacity = '1';
+
+                        setTimeout(() => {
+                            overlay.style.opacity = '0';
+                            setTimeout(() => {
+                                overlay.style.display = 'none';
+                                overlay.innerHTML = '';
+                                isInspecting = false;
+                            }, 400);
+                        }, 4000);
+                    });
+
+                    muralGrid.appendChild(block);
+                    assetCount++;
+                    assetCountDisplay.textContent = `BRICKS: ${String(assetCount).padStart(4, '0')}`;
+
+                    if (muralGrid.children.length > 300) {
+                        const rowHeight = muralGrid.firstChild.offsetHeight + 8;
+                        
+                        for(let i = 0; i < 3; i++) {
+                            if (muralGrid.firstChild) {
+                                muralGrid.removeChild(muralGrid.firstChild);
+                            }
+                        }
+                        
+                        currentTopPadding += rowHeight;
+                        muralGrid.style.paddingTop = currentTopPadding + 'px';
+                    }
+
+                    if (!isInspecting) {
+                        window.scrollTo({
+                            top: document.body.scrollHeight,
+                            behavior: "smooth"
+                        });
+                    }
+                }
+            } catch (error) {}
+
+            setTimeout(captureLoop, captureDelay);
+        }
+
+        function runMantra() {
+            let index = 0;
+            setInterval(() => {
+                let phrase = aphorisms[index % aphorisms.length];
+                speakPhrase(phrase);
+                liveAphorism.textContent = phrase;
+                index++;
+            }, 3000); 
+        }
+
+        bootScreen.addEventListener('click', () => {
+            navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+                .then(stream => {
+                    video.srcObject = stream;
+                    video.play();
+
+                    bootScreen.style.opacity = '0';
+                    
+                    setTimeout(() => {
+                        bootScreen.style.display = 'none';
+                        captureLoop(); 
+                        runMantra(); 
+                    }, 200);
+                })
+                .catch(err => {
+                    bootScreen.innerHTML = "<span style='color:red;'>[ERROR] VISION REQUIRED TO INITIATE CONSUMPTION.</span>";
+                });
+        });
+    </script>
+</body>
+</html>

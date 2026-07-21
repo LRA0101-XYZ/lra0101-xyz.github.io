@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>0x00_SYS_COLONIZATION</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    background-color: #000000;
+    overflow: hidden;
+    user-select: none;
+    width: 100vw;
+    height: 100vh;
+    cursor: crosshair;
+  }
+
+  /* Grid invisible responsivo que cubre toda la pantalla */
+  #grid-container {
+    display: grid;
+    width: 100vw;
+    height: 100vh;
+    box-sizing: border-box;
+    padding: 10px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 1.1vw;
+    line-height: 1;
+    overflow: hidden;
+  }
+
+  @media (max-width: 768px) {
+    #grid-container {
+      font-size: 2.2vw;
+    }
+  }
+
+  /* Estilos de las celdas infectadas */
+  .cell {
+    color: #002200; 
+    white-space: pre;
+    transition: background 0.1s ease;
+  }
+
+  .v-low { color: #005500; } 
+  .v-mid { color: #00ff00; } 
+  .v-high { color: #39ff14; text-shadow: 0 0 3px #39ff14; font-weight: bold; } 
+  .v-alert { color: #ff0000; font-weight: bold; } 
+  .v-crit { color: #ff3333; background-color: #330000; font-weight: bold; } 
+  .v-data { color: #ffffff; text-shadow: 0 0 5px #ffffff; } 
+  
+  .inv { background-color: #00ff00; color: #000000; }
+
+  .flash-r { background-color: #ff0000 !important; color: #ffffff !important; }
+  .flash-w { background-color: #ffffff !important; color: #000000 !important; }
+</style>
+</head>
+<body>
+
+<div id="grid-container"></div>
+
+<script>
+  const container = document.getElementById('grid-container');
+  
+  const CHARS = '01XØ█▓▒░▄▀■┼║╚╔╗╝═▲▼/\\*+:'.split('');
+  const ERRORS = ["[KERNEL_PANIC]", "[MEM_OVFL_0x0F]", "[SYS_HALTED]", "[SYS_MUTATION]", "[DISCONNECT]"];
+
+  let rows = 40;
+  let cols = 80;
+  let cells = [];
+
+  // --- MOTOR AUDIO: NOISE ATENUADO FIJO + BIPS CRUSHED ULTRA-DOMINANTES ---
+  let audioCtx = null;
+  let masterGain = null;
+  let discontinuousNoiseNode = null;
+  let discontinuousNoiseGain = null;
+  let noiseGateOsc = null;
+
+  const FIXED_PITCHES = [3141, 5926, 1273, 4321, 7119, 854, 9821];
+
+  function initAudioEngine() {
+    if (audioCtx) return;
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    audioCtx = new AudioContext({ sampleRate: 44100 });
+    
+    masterGain = audioCtx.createGain();
+    masterGain.gain.setValueAtTime(0.3, audioCtx.currentTime); 
+    masterGain.connect(audioCtx.destination);
+
+    // CLIP NOISE CONTROLADO (Atenuación radical forzada de raíz)
+    const bufferSize = audioCtx.sampleRate * 2;
+    const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const data = noiseBuffer.getChannelData(0);
+    
+    let lastVal = Math.random() > 0.5 ? 1 : -1;
+    for (let i = 0; i < bufferSize; i++) {
+      if (i % 6 === 0) { 
+        const rawNoise = Math.random() * 2 - 1;
+        lastVal = Math.round(rawNoise * 2) / 2; 
+      }
+      data[i] = lastVal;
+    }
+
+    discontinuousNoiseNode = audioCtx.createBufferSource();
+    discontinuousNoiseNode.buffer = noiseBuffer;
+    discontinuousNoiseNode.loop = true;
+
+    discontinuousNoiseGain = audioCtx.createGain();
+    // Volado a un nivel residual casi imperceptible
+    discontinuousNoiseGain.gain.setValueAtTime(0.005, audioCtx.currentTime);
+
+    // Compuerta síncrona
+    noiseGateOsc = audioCtx.createOscillator();
+    const gateGain = audioCtx.createGain();
+    noiseGateOsc.type = 'square';
+    noiseGateOsc.frequency.setValueAtTime(6, audioCtx.currentTime); 
+    gateGain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+    
+    noiseGateOsc.connect(gateGain);
+    gateGain.connect(discontinuousNoiseGain.gain); 
+
+    discontinuousNoiseNode.connect(discontinuousNoiseGain);
+    discontinuousNoiseGain.connect(masterGain);
+    
+    discontinuousNoiseNode.start(0);
+    noiseGateOsc.start(0);
+  }
+
+  function createBitcrushedSquareBuffer(frequency, duration, bits, downsample, amplitude) {
+    const size = Math.floor(audioCtx.sampleRate * duration);
+    const buffer = audioCtx.createBuffer(1, size, audioCtx.sampleRate);
+    const data = buffer.getChannelData(0);
+    
+    const periodSamples = audioCtx.sampleRate / frequency;
+    let currentSampleValue = 0;
+
+    for (let i = 0; i < size; i++) {
+      if (i % downsample === 0) {
+        const phase = (i % periodSamples) / periodSamples;
+        const rawSquare = phase < 0.5 ? 1.0 : -1.0;
+        const step = Math.pow(2, bits - 1);
+        currentSampleValue = Math.round(rawSquare * step) / step * amplitude;
+      }
+      data[i] = currentSampleValue;
+    }
+    return buffer;
+  }
+
+  function triggerColonizationGlitch(ratioInfected, isPanic = false) {
+    if (!audioCtx || audioCtx.state === 'suspended') return;
+
+    const now = audioCtx.currentTime;
+
+    // Frecuencia de la compuerta muta, pero volumen de ruido congelado abajo de forma estricta
+    if (noiseGateOsc) {
+      noiseGateOsc.frequency.setValueAtTime(6 + (ratioInfected * 50), now);
+    }
+
+    if (isPanic) {
+      for (let i = 0; i < 12; i++) {
+        const panicSource = audioCtx.createBufferSource();
+        const panicGain = audioCtx.createGain();
+        const freq = FIXED_PITCHES[i % FIXED_PITCHES.length] * 0.12;
+        
+        panicSource.buffer = createBitcrushedSquareBuffer(freq, 0.5, 2, 16, 0.4);
+        
+        panicGain.gain.setValueAtTime(1.0, now);
+        panicGain.gain.linearRampToValueAtTime(0.0001, now + 0.5);
+        
+        panicSource.connect(panicGain);
+        panicGain.connect(masterGain);
+        panicSource.start(now);
+        panicSource.stop(now + 0.51);
+      }
+      return;
+    }
+
+    // ACUMULACIÓN DE BIPS IMPLACABLES A ALTO VOLUMEN
+    const burstCount = 1 + Math.floor(ratioInfected * 7); 
+
+    for (let i = 0; i < burstCount; i++) {
+      const timeOffset = now + (i * 0.003); 
+      const grainDuration = 0.005 + (Math.random() * 0.025);
+      
+      const rawFreq = FIXED_PITCHES[Math.floor(Math.random() * FIXED_PITCHES.length)];
+      
+      // Amplitud mucho más alta para los bips para dominar la mezcla
+      const aggressiveAmplitude = 0.15 + (Math.random() * 0.23);
+
+      const currentBits = ratioInfected > 0.5 ? 2 : 3; 
+      const downsampleFactor = Math.floor(3 + (ratioInfected * 15)); 
+
+      const crushSource = audioCtx.createBufferSource();
+      crushSource.buffer = createBitcrushedSquareBuffer(rawFreq, grainDuration, currentBits, downsampleFactor, aggressiveAmplitude);
+
+      const grainGain = audioCtx.createGain();
+      grainGain.gain.setValueAtTime(1.0, timeOffset);
+      grainGain.gain.setValueAtTime(0.0001, timeOffset + grainDuration);
+
+      crushSource.connect(grainGain);
+      grainGain.connect(masterGain);
+      
+      crushSource.start(timeOffset);
+      crushSource.stop(timeOffset + grainDuration + 0.001);
+    }
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    initAudioEngine();
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+  });
+  // ---------------------------------------------------------------------
+
+  function initGrid() {
+    container.innerHTML = '';
+    cells = [];
+    
+    const fontSize = parseFloat(window.getComputedStyle(container).fontSize);
+    cols = Math.floor(container.clientWidth / (fontSize * 0.6));
+    rows = Math.floor(container.clientHeight / fontSize);
+
+    container.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+
+    for (let i = 0; i < rows * cols; i++) {
+      const cell = document.createElement('span');
+      cell.className = 'cell';
+      cell.textContent = CHARS[Math.floor(Math.random() * CHARS.length)];
+      container.appendChild(cell);
+      cells.push({
+        element: cell,
+        infected: false,
+        level: 0
+      });
+    }
+  }
+
+  function colonize() {
+    const infectionSpeed = Math.floor(cells.length * 0.005) + 1; 
+    const totalInfected = cells.filter(c => c.infected).length;
+    const ratioInfected = totalInfected / cells.length;
+
+    triggerColonizationGlitch(ratioInfected, false);
+
+    for (let k = 0; k < infectionSpeed; k++) {
+      let targetIndex;
+
+      if (Math.random() < 0.05 || !cells.some(c => c.infected)) {
+        targetIndex = Math.floor(Math.random() * cells.length);
+      } else {
+        const infectedIndices = cells.map((c, i) => c.infected ? i : null).filter(v => v !== null);
+        const baseIndex = infectedIndices[Math.floor(Math.random() * infectedIndices.length)];
+        
+        const directions = [-1, 1, -cols, cols];
+        const move = directions[Math.floor(Math.random() * directions.length)];
+        targetIndex = baseIndex + move;
+
+        if (targetIndex < 0 || targetIndex >= cells.length) {
+          targetIndex = Math.floor(Math.random() * cells.length);
+        }
+      }
+
+      const cell = cells[targetIndex];
+      cell.infected = true;
+      cell.level = Math.min(cell.level + 1, 5); 
+
+      cell.element.textContent = CHARS[Math.floor(Math.random() * CHARS.length)];
+      cell.element.className = 'cell'; 
+      
+      const rand = Math.random();
+      if (rand < 0.4) cell.element.classList.add('v-mid');
+      else if (rand < 0.6) cell.element.classList.add('v-high');
+      else if (rand < 0.75) cell.element.classList.add('v-alert');
+      else if (rand < 0.85) cell.element.classList.add('v-data');
+      else cell.element.classList.add('v-crit');
+
+      if (Math.random() < 0.08) {
+        cell.element.classList.add(Math.random() < 0.5 ? 'flash-r' : 'flash-w');
+        setTimeout(() => cell.element.classList.remove('flash-r', 'flash-w'), 60);
+      }
+
+      if (cell.level >= 3 && Math.random() < 0.02 && targetIndex < cells.length - 15) {
+        const msg = ERRORS[Math.floor(Math.random() * ERRORS.length)];
+        for (let i = 0; i < msg.length; i++) {
+          if (cells[targetIndex + i]) {
+            cells[targetIndex + i].element.textContent = msg[i];
+            cells[targetIndex + i].element.className = 'cell v-crit';
+            cells[targetIndex + i].infected = true;
+          }
+        }
+      }
+    }
+
+    if (ratioInfected > 0.98) {
+      triggerColonizationGlitch(ratioInfected, true); 
+      document.body.style.backgroundColor = '#ff0000';
+      setTimeout(() => {
+        document.body.style.backgroundColor = '#000000';
+        initGrid();
+      }, 400);
+    }
+
+    setTimeout(colonize, Math.floor(Math.random() * 20) + 20);
+  }
+
+  window.addEventListener('resize', initGrid);
+  initGrid();
+  setTimeout(colonize, 1000);
+</script>
+</body>
+</html>

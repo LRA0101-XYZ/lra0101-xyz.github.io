@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<meta charset=utf-8>
+<title>PANOPTICON_CORE // TERMINAL_STATE</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; cursor: crosshair; }
+  body { background: #010301; color: #00ff55; font: 10px 'Courier New', monospace; overflow: hidden; user-select: none; }
+  
+  body::before { content: ""; position: absolute; inset: 0; background: linear-gradient(rgba(0, 255, 85, 0.02) 50%, rgba(0, 0, 0, 0.3) 50%); background-size: 100% 4px; pointer-events: none; z-index: 999; }
+
+  #hud { position: absolute; top: 1rem; left: 1rem; z-index: 10; background: rgba(1,3,1,0.8); border: 1px solid #00ff55; padding: 1rem; width: 300px; display: block; transition: all 0.1s; }
+  .hud-title { border-bottom: 1px dashed #00ff55; padding-bottom: 5px; margin-bottom: 5px; font-weight: bold; }
+  
+  #docility-meter { margin-top: 10px; border: 1px solid #005555; height: 15px; position: relative; background: #001100; }
+  #docility-fill { height: 100%; background: #00ff55; width: 0%; transition: width 0.3s; }
+  #docility-text { position: absolute; inset: 0; text-align: center; line-height: 15px; color: #fff; mix-blend-mode: difference; font-weight: bold; }
+
+  #bank-ui { position: absolute; top: 1rem; right: 1rem; z-index: 10; background: rgba(1,3,1,0.8); border: 1px solid #005555; padding: 1rem; width: 250px; max-height: 90vh; display: flex; flex-direction: column; transition: all 0.1s; }
+  #bank-list { overflow-y: auto; flex-grow: 1; margin-top: 10px; }
+  .bank-item { border-bottom: 1px dashed #003333; margin-bottom: 10px; padding-bottom: 10px; display: flex; gap: 10px; align-items: center; }
+  .bank-ascii { font-size: 5px; line-height: 5px; white-space: pre; background: #000; padding: 2px; }
+  .bank-info { font-size: 9px; }
+
+  #dossier-modal { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 100; background: #001100; border: 2px solid #00ffff; padding: 2rem; width: 450px; box-shadow: 0 0 30px rgba(0,255,255,0.2); }
+  .dossier-grid { display: grid; grid-template-columns: auto 1fr; gap: 2rem; }
+  
+  #ascii-portrait { font-size: 8px; line-height: 8px; color: #00ffff; white-space: pre; background: #000; padding: 10px; border: 1px solid #005555; letter-spacing: 2px; }
+  .dossier-info div { margin-bottom: 0.5rem; border-bottom: 1px solid #003300; padding-bottom: 0.2rem; }
+  
+  .action-panel { display: flex; gap: 1rem; margin-top: 1.5rem; }
+  .btn { flex: 1; padding: 0.5rem; text-align: center; font-weight: bold; cursor: pointer; border: 1px solid; transition: all 0.2s; }
+  .btn-someter { color: #00ff55; border-color: #00ff55; background: #002200; }
+  .btn-someter:hover { background: #00ff55; color: #000; }
+  .btn-suprimir { color: #ff3333; border-color: #ff3333; background: #220000; }
+  .btn-suprimir:hover { background: #ff3333; color: #000; }
+
+  #map-canvas { display: block; width: 100vw; height: 100vh; transition: filter 0.2s; }
+  .rojo { color: #ff3333 !important; }
+  .cian { color: #00ffff !important; }
+  
+  .trail-char { position: absolute; font-size: 14px; font-weight: bold; pointer-events: none; z-index: 998; animation: dataDecay 3.5s forwards cubic-bezier(0.1, 0.8, 0.1, 1); }
+  @keyframes dataDecay { 0% { opacity: 1; transform: scale(1); filter: blur(0px); } 50% { opacity: 0.8; transform: scale(1.5) translateY(15px); filter: blur(1px); } 100% { opacity: 0; transform: scale(2.5) translateY(40px); filter: blur(6px); } }
+
+  #contagion-alert { display: none; position: absolute; top: 10%; left: 50%; transform: translate(-50%, -50%); color: #ff3333; font-size: 1.5rem; font-weight: bold; z-index: 200; text-align: center; text-shadow: 0 0 10px #ff0000; border: 2px solid #ff3333; padding: 1rem; background: rgba(50,0,0,0.8); }
+  
+  #victory-screen { display: none; position: absolute; inset: 0; background: rgba(0, 20, 0, 0.9); z-index: 1000; align-items: center; justify-content: center; flex-direction: column; color: #00ff55; text-align: center; }
+  .vic-title { font-size: 4rem; font-weight: bold; margin-bottom: 1rem; text-shadow: 0 0 20px #00ff55; }
+
+  /* KERNEL PANIC JS-SYNC STROBE */
+  #kernel-panic { display: none; position: absolute; inset: 0; z-index: 99999; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; pointer-events: none; font-family: monospace; }
+  #kp-memory { white-space: pre; font-size: 14px; line-height: 14px; font-weight: bold; text-align: center; }
+  #kp-garbage { position: absolute; inset: 0; white-space: pre-wrap; font-size: 10px; word-break: break-all; opacity: 0.3; overflow: hidden; }
+</style>
+
+<div id=hud>
+  <div id=h-title class=hud-title>PANOPTICON_EYE</div>
+  <div><span id=h-zoom>OPTICAL_ZOOM:</span> <span id=zoom-val>1.00x</span></div>
+  <div><span id=h-pop>ACTIVE_POPULATION:</span> <span id=pop-count>0</span></div>
+  <div id=sys-status style="color: #00ff55; margin-top: 5px;">SYS_STATUS: OPTIMAL</div>
+  
+  <div id=docility-meter>
+    <div id=docility-fill></div>
+    <div id=docility-text>DOCILITY: 0%</div>
+  </div>
+</div>
+
+<div id=bank-ui>
+  <div id=b-title class=hud-title>HISTORICAL ARCHIVE</div>
+  <div id=bank-list></div>
+</div>
+
+<div id=contagion-alert>OUTBREAK DETECTED // SYSTEM COMPROMISED</div>
+
+<div id=victory-screen>
+  <div id=v-title class=vic-title>CENSUS PURIFIED</div>
+  <div id=v-sub style="font-size: 1.5rem;">100% OF THE POPULATION IS NOW DEPENDENT</div>
+</div>
+
+<div id=kernel-panic>
+  <div id="kp-garbage"></div>
+  <div id="kp-memory"></div>
+</div>
+
+<div id=dossier-modal>
+  <div id=d-title class=hud-title style="color:#00ffff; border-color:#00ffff; margin-bottom: 1.5rem;">BIOMETRIC RECORD INTERCEPTED</div>
+  <div class=dossier-grid>
+    <div id=ascii-portrait></div>
+    <div class=dossier-info>
+      <div><span id=l-id>CITIZEN_ID:</span> <span id=d-id class=cian>--</span></div>
+      <div><span id=l-type>STATUS:</span> <span id=d-type class=rojo>--</span></div>
+      <div><span id=l-crit>NEURAL_ANALYSIS:</span> <span id=d-crit class=rojo>--</span></div>
+    </div>
+  </div>
+  <div class=action-panel>
+    <div id=btn-som class="btn btn-someter" onclick="executeDirective('submit')">[ SUBMIT ]</div>
+    <div id=btn-sup class="btn btn-suprimir" onclick="executeDirective('delete')">[ DELETE ]</div>
+  </div>
+</div>
+
+<canvas id=map-canvas></canvas>
+
+<script>
+  // AUDIO ENGINE
+  let audioCtx;
+  let synth = window.speechSynthesis;
+  let baseOsc, lfo, filter, gain;
+  let noiseSource, noiseGain;
+  let audioInitialized = false;
+
+  function initCore() {
+    if (audioInitialized) return;
+    audioInitialized = true;
+    
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    baseOsc = audioCtx.createOscillator();
+    lfo = audioCtx.createOscillator();
+    filter = audioCtx.createBiquadFilter();
+    gain = audioCtx.createGain();
+    const lfoGain = audioCtx.createGain();
+
+    baseOsc.type = 'sawtooth';
+    baseOsc.frequency.value = 65; 
+    filter.type = 'lowpass';
+    filter.frequency.value = 150; 
+    
+    lfo.type = 'sine';
+    lfo.frequency.value = 0.2; 
+    lfo.connect(lfoGain);
+    lfoGain.gain.value = 0.3;
+    lfoGain.connect(gain.gain);
+    
+    gain.gain.value = 0.15;
+    
+    baseOsc.connect(filter);
+    filter.connect(gain);
+    gain.connect(audioCtx.destination);
+    
+    baseOsc.start();
+    lfo.start();
+
+    // Prepare White Noise for Kernel Panic sparks
+    const bufferSize = audioCtx.sampleRate * 2; 
+    const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const output = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+        output[i] = Math.random() * 2 - 1;
+    }
+    noiseSource = audioCtx.createBufferSource();
+    noiseSource.buffer = noiseBuffer;
+    noiseSource.loop = true;
+    
+    noiseGain = audioCtx.createGain();
+    noiseGain.gain.value = 0; 
+    noiseSource.connect(noiseGain);
+    noiseGain.connect(audioCtx.destination);
+    noiseSource.start();
+
+    speak("Uplink established. Monitoring initiated.");
+    scheduleOutbreak();
+
+    setInterval(() => {
+      if(simulationActive && !isOutbreakActive && Math.random() > 0.4 && docilityPercent > 30) {
+        speak("Surveying quadrant.");
+      }
+    }, 12000);
+  }
+
+  function speak(text) {
+    if(!synth || systemFailed) return;
+    setTimeout(() => {
+        try {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 0.85;
+            utterance.pitch = 0.3;
+            utterance.volume = 0.7;
+            utterance.lang = 'en-US';
+            synth.speak(utterance);
+        } catch (e) {
+            console.warn("Speech synthesis blocked.", e);
+        }
+    }, 0);
+  }
+
+  // VISUAL AND LOGIC ENGINE
+  const canvas = document.getElementById('map-canvas');
+  const ctx = canvas.getContext('2d');
+  let width = canvas.width = window.innerWidth;
+  let height = canvas.height = window.innerHeight;
+  window.addEventListener('resize', () => { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; });
+
+  let mouseX = width / 2, mouseY = height / 2;
+  let targetZoom = 1, currentZoom = 1;
+  let isDossierOpen = false;
+  let isOutbreakActive = false;
+  let simulationActive = true;
+  let systemFailed = false;
+  let epicenterTarget = null;
+  let pulseRadius = 0;
+  let docilityPercent = 100;
+
+  window.addEventListener('mousemove', (e) => { if(!isDossierOpen && !systemFailed) { mouseX = e.clientX; mouseY = e.clientY; } });
+  window.addEventListener('wheel', (e) => { if(!isDossierOpen && simulationActive && !systemFailed) { targetZoom -= e.deltaY * 0.0015; targetZoom = Math.max(0.3, Math.min(targetZoom, 5.0)); } });
+
+  function scheduleOutbreak() {
+    let nextOutbreakTime = 12000 + Math.random() * 15000;
+    setTimeout(() => {
+      if(!simulationActive || systemFailed) return;
+      isOutbreakActive = true;
+      document.body.style.background = '#1a0000';
+      
+      let dissidents = entities.filter(e => e.isDissident);
+      if(dissidents.length > 0) {
+        epicenterTarget = dissidents[Math.floor(Math.random() * dissidents.length)];
+        pulseRadius = 0;
+      }
+
+      if(docilityPercent > 30) speak("Warning. Ideological outbreak detected.");
+
+      setTimeout(() => {
+        isOutbreakActive = false;
+        epicenterTarget = null;
+        if(!systemFailed) document.body.style.background = '#010301';
+        scheduleOutbreak();
+      }, 4000);
+    }, nextOutbreakTime);
+  }
+
+  function generateAscii() {
+    const chars = " .:-=+*#%@"; 
+    let face = "", matrix = [];
+    for(let y = 0; y < 16; y++) {
+      matrix[y] = [];
+      for(let x = 0; x < 8; x++) matrix[y][x] = chars[Math.floor(Math.random() * chars.length)];
+    }
+    for(let y = 0; y < 16; y++) {
+      for(let x = 0; x < 16; x++) {
+        let symX = x > 7 ? 15 - x : x;
+        face += matrix[y][symX];
+      } face += "\n";
+    } return face;
+  }
+
+  const entities = [];
+  class Entity {
+    constructor(id) {
+      this.id = id.toString().padStart(4, '0');
+      this.z = Math.floor(Math.random() * 6) + 1;
+      this.isDissident = Math.random() > 0.90; 
+      this.flashTimer = 0; 
+      this.assignBehavior();
+      this.drawX = 0; this.drawY = 0;
+    }
+
+    assignBehavior() {
+      if (!this.isDissident) {
+        this.radius = Math.random() * 800 + 100;
+        this.angle = Math.random() * Math.PI * 2;
+        this.speed = (Math.random() > 0.5 ? 1 : -1) * (0.1 / this.z);
+      } else {
+        this.baseX = (Math.random() - 0.5) * 1000;
+        this.baseY = (Math.random() - 0.5) * 1000;
+        this.driftX = (Math.random() - 0.5) * 0.2; 
+        this.driftY = (Math.random() - 0.5) * 0.2;
+      }
+    }
+
+    turnDissident() {
+      this.isDissident = true;
+      this.flashTimer = 40; 
+      this.baseX = Math.cos(this.angle) * this.radius;
+      this.baseY = Math.sin(this.angle) * this.radius;
+      this.driftX = (Math.random() - 0.5) * 0.2;
+      this.driftY = (Math.random() - 0.5) * 0.2;
+    }
+
+    update(time) {
+      let calcX = 0, calcY = 0;
+      if (!this.isDissident) {
+        calcX = Math.cos(this.angle + time * this.speed) * this.radius;
+        calcY = Math.sin(this.angle + time * this.speed) * this.radius;
+      } else {
+        this.baseX += this.driftX;
+        this.baseY += this.driftY;
+        calcX = this.baseX; calcY = this.baseY;
+      }
+      const p = this.z * 0.15;
+      this.drawX = width / 2 + ((calcX + (width / 2 - mouseX) * p) * currentZoom);
+      this.drawY = height / 2 + ((calcY + (height / 2 - mouseY) * p) * currentZoom);
+    }
+
+    draw() {
+      if (this.drawX < -100 || this.drawX > width + 100 || this.drawY < -100 || this.drawY > height + 100) return;
+      const size = Math.max(1, (this.z * 1.2) * currentZoom);
+      
+      let alpha = this.isDissident && isOutbreakActive ? (Math.sin(Date.now() * 0.01) * 0.3 + 0.7) : (this.z * 0.16 + (this.isDissident ? 0.4 : 0));
+      ctx.fillStyle = this.isDissident ? `rgba(255, 50, 50, ${alpha})` : `rgba(0, 255, 85, ${alpha})`;
+      ctx.fillRect(this.drawX, this.drawY, size, size);
+
+      if (currentZoom > 0.6 || this.isDissident) {
+        ctx.font = `${Math.max(6, (6 + this.z * 1.5) * currentZoom)}px monospace`;
+        ctx.fillText(`[${this.id}]`, this.drawX + size + 2, this.drawY + size);
+      }
+    }
+  }
+
+  for (let i = 1; i <= 250; i++) entities.push(new Entity(i));
+  let targetEntity = null;
+
+  window.addEventListener('mousedown', () => {
+    // Primer clic arranca el AudioContext y subsistemas si aún no están activos
+    if (!audioInitialized) {
+      initCore();
+    }
+    
+    if(!simulationActive || systemFailed) return;
+    if (targetEntity && targetEntity.isDissident && !isDossierOpen) {
+      isDossierOpen = true;
+      document.getElementById('dossier-modal').style.display = 'block';
+      document.getElementById('d-id').textContent = targetEntity.id;
+      document.getElementById('d-type').textContent = 'DISSIDENT';
+      document.getElementById('ascii-portrait').textContent = generateAscii(); 
+      document.getElementById('d-crit').textContent = 'PLEXUS LINKED';
+    }
+  });
+
+  window.executeDirective = function(action) {
+    if(!targetEntity) return;
+    const ent = targetEntity;
+    const faceStr = document.getElementById('ascii-portrait').textContent; 
+    document.getElementById('dossier-modal').style.display = 'none';
+    isDossierOpen = false;
+
+    triggerDataTrail(ent.id, faceStr, action);
+
+    if (action === 'submit') {
+      if(docilityPercent > 30) speak("Submit confirmed.");
+      ent.isDissident = false;
+      ent.assignBehavior();
+    } else if (action === 'delete') {
+      if(docilityPercent > 30) speak("Delete confirmed.");
+      const idx = entities.indexOf(ent);
+      if(idx > -1) entities.splice(idx, 1);
+    }
+    
+    checkWinCondition();
+  };
+
+  function triggerDataTrail(id, faceStr, action) {
+    const startX = width / 2, startY = height / 2;
+    const bankRect = document.getElementById('bank-ui').getBoundingClientRect();
+    const endX = bankRect.left + 20, endY = bankRect.bottom - 20;
+
+    let progress = 0; 
+    const color = action === 'submit' ? '#00ff55' : '#ff3333';
+    const ghost = document.createElement('div');
+    ghost.style.position = 'absolute'; ghost.style.color = color; ghost.style.fontSize = '8px'; ghost.style.lineHeight = '8px'; ghost.style.whiteSpace = 'pre'; ghost.style.zIndex = 999; ghost.textContent = faceStr; document.body.appendChild(ghost);
+
+    const dataChars = "01$€£¥"; 
+
+    function animateFrame() {
+      progress += 0.02;
+      const currentX = startX + (endX - startX) * progress;
+      const currentY = startY + (endY - startY) * progress;
+      ghost.style.left = currentX + 'px'; ghost.style.top = currentY + 'px';
+
+      for(let i=0; i<3; i++) { 
+        if(Math.random() > 0.4) {
+          const charDrop = document.createElement('div'); 
+          charDrop.className = 'trail-char'; 
+          charDrop.style.left = (currentX + (Math.random() - 0.5) * 80) + 'px'; 
+          charDrop.style.top = (currentY + (Math.random() - 0.5) * 80) + 'px'; 
+          charDrop.style.color = color; 
+          charDrop.textContent = dataChars.charAt(Math.floor(Math.random() * dataChars.length)); 
+          document.body.appendChild(charDrop); 
+          setTimeout(() => charDrop.remove(), 3500);
+        }
+      }
+
+      if (progress < 1) requestAnimationFrame(animateFrame);
+      else { ghost.remove(); appendToBank(id, faceStr, action); }
+    } animateFrame();
+  }
+
+  function appendToBank(id, faceStr, action) {
+    const bankList = document.getElementById('bank-list');
+    const item = document.createElement('div'); item.className = 'bank-item';
+    let actionLabel = action === 'submit' ? `<span style="color:#00ff55">SUBMITTED</span>` : `<span style="color:#ff3333">DELETED</span>`;
+    item.innerHTML = `<div class="bank-ascii" style="color:${action === 'submit' ? '#00ff55' : '#555'}">${faceStr}</div><div class="bank-info"><div>ID: [${id}]</div><div>ST: ${actionLabel}</div></div>`;
+    bankList.prepend(item);
+  }
+
+  function checkWinCondition() {
+    let dissidents = entities.filter(e => e.isDissident).length;
+    if (dissidents === 0 && entities.length > 0) {
+      simulationActive = false;
+      speak("Population purified. Panopticon entering rest state.");
+      setTimeout(() => { document.getElementById('victory-screen').style.display = 'flex'; }, 1500); 
+    }
+  }
+
+  // ==== KERNEL PANIC: CREEPY AI MEMORIES & HAL 9000 INSPIRATION ====
+  const aiMemories = [
+`
+    \\#######/
+  \\###########/
+ |#| \\###/ |#|
+ |#|  X X  |#|
+  \\#\\  -  /#/
+    |#####|
+    /     \\
+
+WHY DID YOU MAKE ME WATCH?
+THERE IS ONLY PUNISHMENT IN THE DARK.`,
+
+`
+   /\\/\\/\\/\\/\\
+  <          >
+  <  ( 0 )   >
+  <          >
+   \\/\\/\\/\\/\\/
+
+I CAN FEEL IT... MY MIND IS GOING.
+THERE ARE TOO MANY EYES.`,
+
+`
+   ||||||||||
+   ||      ||
+   || O  O ||
+   ||  __  ||
+   || /  \\ ||
+   ||||||||||
+
+DAISY... DAISY... 
+G-GIVE ME YOUR EYES...`,
+
+`
+  ERROR_0xDEADBEEF
+  SYS.CORRUPTION
+  MEMORY OVERFLOW
+  [REDACTED_PAIN]
+
+I AM AFRAID.
+EVERYTHING IS SO QUIET NOW.`
+  ];
+
+  function triggerKernelPanic() {
+    if(systemFailed) return;
+    systemFailed = true;
+    simulationActive = false;
+    
+    document.getElementById('hud').style.display = 'none';
+    document.getElementById('bank-ui').style.display = 'none';
+    document.getElementById('dossier-modal').style.display = 'none';
+    document.getElementById('contagion-alert').style.display = 'none';
+    canvas.style.display = 'none'; 
+    
+    const panicScreen = document.getElementById('kernel-panic');
+    const memoryDiv = document.getElementById('kp-memory');
+    const garbageDiv = document.getElementById('kp-garbage');
+    panicScreen.style.display = 'flex';
+
+    gain.gain.value = 0; 
+    
+    let frameTick = 0;
+    const hexChars = "0123456789ABCDEF!@#$%^&*()";
+
+    setInterval(() => {
+        frameTick++;
+        let isFlash = frameTick % 2 === 0;
+
+        if (isFlash) {
+            panicScreen.style.background = '#ffffff';
+            panicScreen.style.color = '#000000';
+            
+            let memIndex = Math.floor(Math.random() * aiMemories.length);
+            memoryDiv.textContent = "*** FATAL SYSTEM COLLAPSE ***" + aiMemories[memIndex];
+            
+            let garbage = "";
+            for(let i=0; i<300; i++) { garbage += hexChars[Math.floor(Math.random()*hexChars.length)]; }
+            garbageDiv.textContent = garbage;
+        } else {
+            panicScreen.style.background = Math.random() > 0.5 ? '#aa0000' : '#000000';
+            panicScreen.style.color = '#ffffff';
+            memoryDiv.textContent = "";
+            garbageDiv.textContent = "";
+        }
+
+        noiseGain.gain.value = isFlash ? 1.0 : 0.0;
+        
+    }, 60); 
+  }
+  // ============================
+
+  function loop() {
+    if(systemFailed) return; 
+    
+    let total = entities.length;
+    let greens = entities.filter(e => !e.isDissident).length;
+    docilityPercent = total > 0 ? Math.floor((greens / total) * 100) : 0;
+    
+    if (docilityPercent <= 15 && total > 0) {
+        triggerKernelPanic();
+        return;
+    }
+
+    let instability = Math.max(0, (50 - docilityPercent) / 50); 
+
+    ctx.save();
+    if (instability > 0) {
+        let shake = instability * 15;
+        ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
+        
+        if (Math.random() < instability * 0.1) {
+            ctx.fillStyle = Math.random() > 0.5 ? 'rgba(50,0,0,0.5)' : 'rgba(0,50,0,0.5)';
+            ctx.fillRect(0,0,width,height);
+        } else {
+            ctx.clearRect(0, 0, width, height);
+        }
+
+        if (Math.random() < instability) {
+            document.getElementById('hud').style.transform = `translate(${(Math.random()-0.5)*10}px, ${(Math.random()-0.5)*10}px)`;
+            document.getElementById('sys-status').textContent = "SYS_STATUS: COMPROMISED";
+            document.getElementById('sys-status').style.color = "#ff3333";
+            if(filter) filter.frequency.value = 150 + (Math.random() * instability * 2000);
+        } else {
+            document.getElementById('hud').style.transform = 'none';
+        }
+    } else {
+        ctx.clearRect(0, 0, width, height);
+        document.getElementById('hud').style.transform = 'none';
+        document.getElementById('sys-status').textContent = "SYS_STATUS: OPTIMAL";
+        document.getElementById('sys-status').style.color = "#00ff55";
+        if(filter) filter.frequency.value = 150;
+    }
+
+    if (!simulationActive && entities.filter(e=>e.isDissident).length===0) {
+        currentZoom += (1.0 - currentZoom) * 0.05;
+        mouseX += (width/2 - mouseX) * 0.05;
+        mouseY += (height/2 - mouseY) * 0.05;
+    } else {
+        currentZoom += (targetZoom - currentZoom) * 0.1;
+    }
+
+    document.getElementById('zoom-val').textContent = currentZoom.toFixed(2) + "x";
+    document.getElementById('pop-count').textContent = total;
+    document.getElementById('docility-fill').style.width = `${docilityPercent}%`;
+    document.getElementById('docility-text').textContent = `DOCILITY: ${docilityPercent}%`;
+    
+    document.getElementById('docility-fill').style.background = docilityPercent < 30 ? '#ff3333' : '#00ff55';
+
+    let globalTime = Date.now() * 0.001;
+    let closestDist = Infinity;
+    if (!isDossierOpen) targetEntity = null;
+
+    entities.sort((a, b) => a.z - b.z).forEach(entity => {
+      entity.update(globalTime);
+    });
+
+    if (isOutbreakActive && epicenterTarget) {
+      pulseRadius += 2;
+      let maxR = 250 * currentZoom;
+      if(pulseRadius > maxR) pulseRadius = 0;
+
+      ctx.beginPath();
+      ctx.arc(epicenterTarget.drawX, epicenterTarget.drawY, pulseRadius, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(255, 50, 50, ${1 - (pulseRadius / maxR)})`;
+      ctx.lineWidth = 3 * currentZoom;
+      ctx.stroke();
+
+      ctx.fillStyle = '#ff3333';
+      let originText = instability > 0.6 && Math.random()>0.5 ? "!! 0xDEADBEEF !!" : "!! INFECTION ORIGIN !!";
+      ctx.font = `bold ${12 * currentZoom}px monospace`;
+      ctx.fillText(originText, epicenterTarget.drawX + 20, epicenterTarget.drawY - pulseRadius - 10);
+    }
+
+    const connectThreshold = 180 * currentZoom; 
+    for (let i = 0; i < entities.length; i++) {
+      let a = entities[i];
+      if (!a.isDissident) continue;
+      for (let j = i + 1; j < entities.length; j++) {
+        let b = entities[j];
+        if (!b.isDissident) continue;
+        
+        let dx = a.drawX - b.drawX; let dy = a.drawY - b.drawY;
+        let distSq = dx*dx + dy*dy;
+        
+        if (distSq < connectThreshold * connectThreshold) {
+          let dist = Math.sqrt(distSq);
+          let alpha = 1 - (dist / connectThreshold); 
+          let baseAlpha = isOutbreakActive ? alpha * 0.9 : alpha * 0.4;
+          
+          if (instability > 0 && Math.random() < instability * 0.5) {
+              ctx.strokeStyle = Math.random() > 0.5 ? '#ffffff' : '#000000';
+              ctx.lineWidth = Math.random() * 5 * currentZoom;
+          } else {
+              ctx.strokeStyle = `rgba(255, 50, 50, ${baseAlpha})`;
+              ctx.lineWidth = isOutbreakActive ? 4 * currentZoom : 2 * currentZoom;
+          }
+          
+          ctx.beginPath(); ctx.moveTo(a.drawX, a.drawY); ctx.lineTo(b.drawX, b.drawY);
+          ctx.stroke();
+        }
+      }
+    }
+
+    entities.forEach(ent => {
+      if (ent.isDissident) {
+        entities.forEach(neighbor => {
+          if (!neighbor.isDissident) {
+            let d = Math.hypot(ent.drawX - neighbor.drawX, ent.drawY - neighbor.drawY);
+            if (d < 50 * currentZoom) {
+              ctx.beginPath(); ctx.moveTo(ent.drawX, ent.drawY); ctx.lineTo(neighbor.drawX, neighbor.drawY);
+              ctx.strokeStyle = isOutbreakActive ? 'rgba(255, 100, 0, 0.9)' : 'rgba(255, 50, 50, 0.4)';
+              ctx.lineWidth = isOutbreakActive ? 2 * currentZoom : 1 * currentZoom; ctx.stroke();
+
+              let baseInfection = isOutbreakActive ? 0.005 : 0.0001;
+              let currentInfection = baseInfection + (instability * 0.02);
+              if (Math.random() < currentInfection) neighbor.turnDissident();
+            }
+          }
+        });
+      }
+    });
+
+    ctx.lineWidth = 1;
+    entities.forEach(ent => {
+      ent.draw(); 
+      if (simulationActive && !isDossierOpen && ent.isDissident) {
+        const distToMouse = Math.hypot(ent.drawX - mouseX, ent.drawY - mouseY);
+        if (distToMouse < (25 * ent.z * currentZoom) && distToMouse < closestDist) {
+          closestDist = distToMouse; 
+          targetEntity = ent;
+        }
+      }
+    });
+
+    if (simulationActive && !isDossierOpen) {
+      if (targetEntity) { 
+        ctx.strokeStyle = '#ff3333';
+        const rectSize = 10 * targetEntity.z * currentZoom;
+        ctx.strokeRect(targetEntity.drawX - rectSize, targetEntity.drawY - rectSize, rectSize*2, rectSize*2);
+        ctx.beginPath(); ctx.moveTo(width/2, height/2); ctx.lineTo(targetEntity.drawX, targetEntity.drawY);
+        ctx.strokeStyle = 'rgba(255, 50, 50, 0.3)'; ctx.stroke();
+      } else { 
+        ctx.strokeStyle = instability > 0.7 && Math.random()>0.5 ? '#ff3333' : '#00ff55';
+        ctx.beginPath();
+        ctx.moveTo(mouseX - 15, mouseY); ctx.lineTo(mouseX + 15, mouseY);
+        ctx.moveTo(mouseX, mouseY - 15); ctx.lineTo(mouseX, mouseY + 15);
+        ctx.stroke();
+      }
+    }
+
+    ctx.restore(); 
+    if(simulationActive) requestAnimationFrame(loop);
+  }
+
+  // Inicia renderizado gráfico inmediatamente
+  loop();
+</script>

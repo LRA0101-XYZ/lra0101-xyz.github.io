@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>3D SCANNER - TOTAL BITCRUSH & WAVES</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;background:#000;overflow:hidden;cursor:crosshair;font-family:'Consolas', 'Courier New', monospace;}
+
+#sl{position:fixed;inset:0;z-index:900;pointer-events:none;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,0.15) 0,rgba(0,0,0,0.15) 1px,transparent 1px,transparent 3px);
+  animation:fl 0.07s steps(1) infinite;}
+@keyframes fl{ 0%{opacity:1}8%{opacity:.8}18%{opacity:1}32%{opacity:.88}47%{opacity:1}55%{opacity:.75}66%{opacity:1}77%{opacity:.9}88%{opacity:1}100%{opacity:.94} }
+
+#vg{position:fixed;inset:0;z-index:899;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 50%,transparent 25%,rgba(0,0,0,.95) 100%);}
+
+#glitch-ov{position:fixed;inset:0;z-index:951;pointer-events:none;opacity:0;mix-blend-mode:screen;}
+
+#ansi-overlay {
+  position: fixed; inset: 0; z-index: 850; 
+  background: rgba(0, 5, 0, 0.95); color: #33ff55; 
+  font-size: 28px; line-height: 26px; letter-spacing: 6px;
+  font-weight: bold; overflow: hidden; opacity: 0; pointer-events: none;
+  white-space: pre-wrap; word-break: break-all;
+}
+
+.ansi-rgb-glitch { animation: rgbTear 0.05s infinite; }
+@keyframes rgbTear {
+  0%   { text-shadow:  6px 0 rgba(255,0,0,0.9), -6px 0 rgba(0,255,255,0.9); transform: scale(1.05) translate(3px, 2px); }
+  25%  { text-shadow: -8px 3px rgba(255,0,0,0.9), 8px -3px rgba(0,255,0,0.9); transform: scale(1.02) translate(-4px, -1px); }
+  50%  { text-shadow:  5px -6px rgba(0,0,255,0.9), -5px 6px rgba(255,0,0,0.9); transform: scale(1.08) translate(5px, -3px); }
+  75%  { text-shadow: -6px 0 rgba(0,255,0,0.9),  6px 0 rgba(255,0,255,0.9); transform: scale(1.04) translate(-3px, 4px); }
+  100% { text-shadow:  4px 3px rgba(255,0,0,0.9), -4px -3px rgba(0,255,255,0.9); transform: scale(1.06) translate(2px, -2px); }
+}
+
+#c{position:absolute;top:0;left:0;width:100%;height:100%;z-index:10;}
+
+#shining-overlay {
+  position: fixed; top: 12%; left: 4%; width: calc(100% - 380px); height: 75%;
+  z-index: 50; pointer-events: none; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-start;
+}
+
+.shining-row { font-size: 30px; line-height: 1.1; font-weight: bold; letter-spacing: -0.5px; white-space: nowrap; text-transform: uppercase; width: 100%; opacity: 0.85; }
+.scroll-mode { animation: txtScroll 20s linear infinite; }
+@keyframes txtScroll { 0% { transform: translateY(0); } 100% { transform: translateY(-50%); } }
+.cursor-blink::after { content: '█'; animation: cBlink 0.4s step-end infinite; }
+@keyframes cBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+#panel{ position:fixed;right:0;top:0;bottom:0;width:360px; border-left:1px solid rgba(255,255,255,0.1); background:rgba(2,10,2,0.98); z-index:800; display:flex;flex-direction:column; }
+#panel-top{padding:20px 20px 0;border-bottom:1px solid rgba(255,255,255,0.08);flex-shrink:0;}
+.p-sys{font-size:10px;letter-spacing:4px;color:rgba(51,255,80,0.6);margin-bottom:12px;} 
+.p-title{font-size:14px;letter-spacing:3px;color:#fff;padding-bottom:15px;text-shadow: 0 0 5px #33ff55;} 
+
+#panel-content{flex:1;padding:0 20px;overflow:hidden;display:flex;flex-direction:column;justify-content:center;}
+
+#bbar{position:fixed;bottom:0;left:0;right:360px;height:40px;border-top:1px solid rgba(255,255,255,0.1);background:rgba(0,0,0,0.96);z-index:800;display:flex;align-items:center;padding:0 25px;gap:35px;} 
+.bb{font-size:11px;letter-spacing:2.5px;color:rgba(255,255,255,0.5);} 
+.bb span{color:#33ff55;margin-left:8px;font-weight:bold;}
+#topleft{position:fixed;top:0;left:0;right:360px;height:40px;border-bottom:1px solid rgba(255,255,255,0.1);background:rgba(0,0,0,0.96);z-index:800;display:flex;align-items:center;padding:0 25px;gap:35px;} 
+</style>
+</head>
+<body>
+
+<div id="sl"></div>
+<div id="vg"></div>
+<div id="glitch-ov"></div>
+<div id="ansi-overlay"></div>
+<div id="shining-overlay"></div>
+<canvas id="c"></canvas>
+
+<div id="topleft">
+  <div class="bb">DEEP SCAN <span>ADVANCED_SYNTH_CORE</span></div>
+  <div class="bb">STATUS <span>TOTAL_BITCRUSH</span></div>
+  <div class="bb hot" style="color:#ff2020">ANOMALIES <span id="cc">6</span></div>
+  <div class="bb" style="margin-left:auto;">TIME <span id="clk">00:00:00</span></div>
+</div>
+
+<div id="panel">
+  <div id="panel-top">
+    <div class="p-sys">// SYS.SCAN.MATRIX [ACTIVE]</div>
+    <div class="p-title">TARGET INTELLIGENCE</div>
+  </div>
+  <div id="panel-content">
+    <div id="tinfo" style="display:none;padding:14px 0;width:100%;"></div>
+  </div>
+</div>
+
+<div id="bbar">
+  <div class="bb">AZIMUTH <span id="swdeg">000°</span></div>
+  <div class="bb">ZOOM <span id="zoomui">1.0x</span></div>
+  <div class="bb">GAIN <span>+18dB</span></div>
+  <div class="bb" style="margin-left:auto;">ID <span id="selid">—</span></div>
+</div>
+
+<script>
+// --- MOTOR DE AUDIO (INICIALIZACIÓN AUTOMÁTICA DIRECTA) ---
+const AudioContext = window.AudioContext || window.webkitAudioContext;
+let audioCtx;
+let masterGain, compressor;
+
+let fmCarrier, fmModulator;
+let interferenceCarrier, interferenceModulator, interferenceModGain, interferenceFilter, interferenceGain;
+let audioInitialized = false;
+
+function makeDistortionCurve(amount) {
+  let k = typeof amount === 'number' ? amount : 50;
+  let n_samples = 44100;
+  let curve = new Float32Array(n_samples);
+  let deg = Math.PI / 180;
+  for (let i = 0; i < n_samples; ++i) {
+    let x = i * 2 / n_samples - 1;
+    curve[i] = (3 + k) * x * 20 * deg / (Math.PI + k * Math.abs(x));
+  }
+  return curve;
+}
+
+// Inicialización instantánea al cargar el DOM (Sin pantallas previas de bloqueo)
+window.addEventListener('DOMContentLoaded', () => {
+  if (!audioInitialized) {
+    audioCtx = new AudioContext();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    
+    compressor = audioCtx.createDynamicsCompressor();
+    compressor.threshold.value = -8; compressor.knee.value = 10; compressor.ratio.value = 15;
+    compressor.attack.value = 0.002; compressor.release.value = 0.15;
+
+    masterGain = audioCtx.createGain(); masterGain.gain.value = 0.8; 
+    masterGain.connect(compressor); compressor.connect(audioCtx.destination);
+
+    startGrayNoiseWaves();
+    startFMDDrone();
+    startInterferenceSynth(); 
+    startTrajectorySynths();
+    
+    audioInitialized = true;
+    setTimeout(scheduleNextGlitch, 2000);
+  }
+});
+
+function startGrayNoiseWaves() {
+  let bufferSize = audioCtx.sampleRate * 2; 
+  let buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+  let output = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) { output[i] = (Math.random() * 2 - 1) * 0.2; }
+  let noiseNode = audioCtx.createBufferSource();
+  noiseNode.buffer = buffer; noiseNode.loop = true;
+  
+  let filter = audioCtx.createBiquadFilter(); filter.type = 'bandpass'; filter.frequency.value = 1200; filter.Q.value = 0.6;
+  let waveGain = audioCtx.createGain(); waveGain.gain.value = 0.2; 
+  let lfo = audioCtx.createOscillator(); lfo.type = 'sine'; lfo.frequency.value = 0.1; 
+  let lfoDepth = audioCtx.createGain(); lfoDepth.gain.value = 0.15; 
+  
+  lfo.connect(lfoDepth); lfoDepth.connect(waveGain.gain); lfo.start();
+  noiseNode.connect(filter); filter.connect(waveGain); waveGain.connect(masterGain); noiseNode.start();
+}
+
+function startFMDDrone() {
+  fmCarrier = audioCtx.createOscillator(); fmModulator = audioCtx.createOscillator();
+  let modGain = audioCtx.createGain();
+  fmCarrier.type = 'triangle'; fmCarrier.frequency.value = 45; 
+  fmModulator.type = 'sawtooth'; fmModulator.frequency.value = 180; 
+  modGain.gain.value = 350; 
+  fmModulator.connect(modGain); modGain.connect(fmCarrier.frequency); 
+
+  let droneFilter = audioCtx.createBiquadFilter(); droneFilter.type = 'bandpass'; droneFilter.frequency.value = 350; droneFilter.Q.value = 2.5;
+  let vol = audioCtx.createGain(); vol.gain.value = 0.12;
+  fmCarrier.connect(droneFilter); droneFilter.connect(vol); vol.connect(masterGain);
+  fmCarrier.start(); fmModulator.start();
+
+  setInterval(()=>{ if(audioCtx) droneFilter.frequency.setTargetAtTime(250 + Math.random()*700, audioCtx.currentTime, 1.5); }, 2500);
+}
+
+function startTrajectorySynths() {
+  TARGETS.forEach(tgt => {
+    const osc = audioCtx.createOscillator(); osc.type = tgt.color === 'red' ? 'sawtooth' : (tgt.color === 'green' ? 'square' : 'sine');
+    const panner = audioCtx.createStereoPanner(); const gain = audioCtx.createGain(); gain.gain.value = 0; 
+    const filter = audioCtx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 1000;
+    osc.connect(filter); filter.connect(panner); panner.connect(gain); gain.connect(masterGain);
+    osc.start(); tgt.audio = { osc, panner, gain };
+  });
+}
+
+function startInterferenceSynth() {
+  interferenceCarrier = audioCtx.createOscillator(); interferenceCarrier.type = 'sawtooth'; interferenceCarrier.frequency.value = 40; 
+  interferenceModulator = audioCtx.createOscillator(); interferenceModulator.type = 'square'; interferenceModulator.frequency.value = 10; 
+  interferenceModGain = audioCtx.createGain(); interferenceModGain.gain.value = 100; 
+  interferenceModulator.connect(interferenceModGain); interferenceModGain.connect(interferenceCarrier.frequency);
+  let dist = audioCtx.createWaveShaper(); dist.curve = makeDistortionCurve(60); 
+  interferenceFilter = audioCtx.createBiquadFilter(); interferenceFilter.type = 'lowpass'; interferenceFilter.frequency.value = 150; interferenceFilter.Q.value = 5;
+  interferenceGain = audioCtx.createGain(); interferenceGain.gain.value = 0; 
+  interferenceCarrier.connect(dist); dist.connect(interferenceFilter); interferenceFilter.connect(interferenceGain); interferenceGain.connect(masterGain);
+  interferenceCarrier.start(); interferenceModulator.start();
+}
+
+function playRadarPing() {
+  if(!audioInitialized) return;
+  const osc = audioCtx.createOscillator(); osc.type = 'sine'; osc.frequency.value = 650;
+  const env = audioCtx.createGain();
+  env.gain.setValueAtTime(0.001, audioCtx.currentTime); env.gain.linearRampToValueAtTime(0.12, audioCtx.currentTime + 0.05); env.gain.setTargetAtTime(0.001, audioCtx.currentTime + 0.1, 0.2);
+  osc.connect(env); env.connect(masterGain); osc.start(); osc.stop(audioCtx.currentTime + 0.8);
+}
+
+function playSolenoidClick() {
+  if(!audioInitialized) return;
+  const now = audioCtx.currentTime;
+  const latches = 3;
+  for (let i = 0; i < latches; i++) {
+    const offset = now + (i * 0.07); 
+    const fade = Math.pow(0.5, i); 
+    const osc = audioCtx.createOscillator(); 
+    osc.type = 'square'; 
+    osc.frequency.setValueAtTime(300, offset); 
+    osc.frequency.exponentialRampToValueAtTime(30, offset + 0.05); 
+    const env = audioCtx.createGain(); 
+    env.gain.setValueAtTime(0, offset); 
+    env.gain.linearRampToValueAtTime(1.2 * fade, offset + 0.01); 
+    env.gain.exponentialRampToValueAtTime(0.001, offset + 0.15); 
+    osc.connect(env).connect(masterGain); 
+    osc.start(offset); 
+    osc.stop(offset + 0.2);
+
+    const noiseBuffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.15, audioCtx.sampleRate);
+    const output = noiseBuffer.getChannelData(0);
+    for(let j=0; j<noiseBuffer.length; j++) output[j] = Math.random() * 2 - 1;
+    const noise = audioCtx.createBufferSource(); 
+    noise.buffer = noiseBuffer;
+    const noiseFilter = audioCtx.createBiquadFilter(); 
+    noiseFilter.type = 'bandpass'; 
+    noiseFilter.frequency.value = 900 + (i * 150); 
+    noiseFilter.Q.value = 10; 
+    const noiseEnv = audioCtx.createGain(); 
+    noiseEnv.gain.setValueAtTime(1.5 * fade, offset); 
+    noiseEnv.gain.exponentialRampToValueAtTime(0.001, offset + 0.2);
+    noise.connect(noiseFilter).connect(noiseEnv).connect(masterGain); 
+    noise.start(offset);
+  }
+}
+
+function createBitCrushCurve(bits) {
+    const levels = Math.pow(2, bits); const curve = new Float32Array(4096);
+    for (let i = 0; i < 4096; i++) { let x = (i * 2) / 4096 - 1; curve[i] = Math.round(x * levels) / levels; } return curve;
+}
+
+function playOrganicDecode(tgt) {
+  if(!audioInitialized) return;
+  const now = audioCtx.currentTime; const dur = 1.4;
+  const osc1 = audioCtx.createOscillator(); osc1.type = 'sawtooth';
+  let startFreq = tgt.color === 'red' ? 40 : (tgt.color === 'green' ? 600 : 1500);
+  osc1.frequency.setValueAtTime(startFreq, now); osc1.frequency.setTargetAtTime(startFreq * 3, now, 0.3);
+  const osc2 = audioCtx.createOscillator(); osc2.type = 'square'; osc2.frequency.setValueAtTime(10, now); osc2.frequency.setTargetAtTime(250, now, 0.4);
+  const rmGain = audioCtx.createGain(); rmGain.gain.setValueAtTime(0.001, now);
+  osc2.connect(rmGain.gain); osc1.connect(rmGain);
+  const crusher = audioCtx.createWaveShaper(); crusher.curve = createBitCrushCurve(4); 
+  const filter = audioCtx.createBiquadFilter(); filter.type = 'bandpass'; filter.frequency.setValueAtTime(5000, now); filter.frequency.setTargetAtTime(300, now, 0.2);
+  rmGain.connect(crusher); crusher.connect(filter);
+  const env = audioCtx.createGain(); env.gain.setValueAtTime(0.001, now); env.gain.linearRampToValueAtTime(0.7, now + 0.05); env.gain.setTargetAtTime(0.001, now + 0.1, 0.3); 
+  const panner = audioCtx.createStereoPanner(); panner.pan.value = Math.max(-1, Math.min(1, tgt.currentPos.wx / 450));
+  filter.connect(env); env.connect(panner); panner.connect(masterGain);
+  osc1.start(now); osc2.start(now); osc1.stop(now + dur); osc2.stop(now + dur);
+}
+
+function playTotalBitcrushFailure() {
+  if(!audioInitialized) return;
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator(); osc.type = 'square';
+  osc.frequency.setValueAtTime(100, now); osc.frequency.setTargetAtTime(8000, now, 0.05); osc.frequency.setTargetAtTime(10, now + 0.1, 0.02); 
+  const lfo = audioCtx.createOscillator(); lfo.type = 'square'; lfo.frequency.value = 180; 
+  const lfoGain = audioCtx.createGain(); lfoGain.gain.value = 5000; lfo.connect(lfoGain); lfoGain.connect(osc.frequency);
+  const crusher = audioCtx.createWaveShaper(); crusher.curve = createBitCrushCurve(1.5); 
+  const env = audioCtx.createGain(); env.gain.setValueAtTime(0.001, now); env.gain.linearRampToValueAtTime(1.5, now + 0.01); env.gain.exponentialRampToValueAtTime(0.001, now + 0.3); 
+  osc.connect(crusher); crusher.connect(env); env.connect(masterGain);
+  osc.start(now); lfo.start(now); osc.stop(now + 0.4); lfo.stop(now + 0.4);
+}
+
+// -------------------------------------------------------------
+
+const TARGETS=[
+  {id:'Ω-01',threat:'CRITICAL',color:'red',speed:0.0002,orbitR:0.6,orbitA:0.4,wobble:0.9,z:-200},
+  {id:'Ω-02',threat:'CRITICAL',color:'red',speed:0.00015,orbitR:0.8,orbitA:2.1,wobble:1.3,z:-800},
+  {id:'Ω-03',threat:'MEDIUM',color:'green',speed:0.00018,orbitR:0.5,orbitA:4.3,wobble:2.2,z:100},
+  {id:'Ω-04',threat:'CRITICAL',color:'red',speed:0.0001,orbitR:0.9,orbitA:1.0,wobble:0.6,z:-1100},
+  {id:'Ω-05',threat:'LOW',color:'white',speed:0.00025,orbitR:0.4,orbitA:3.6,wobble:3.1,z:-500},
+  {id:'Ω-06',threat:'UNKNOWN',color:'white',speed:0.00012,orbitR:0.7,orbitA:5.5,wobble:1.7,z:-900},
+];
+
+TARGETS.forEach(tgt => { tgt.history = []; tgt.jx = 0; tgt.jy = 0; tgt.isPanicking = true; tgt.stateTimer = 60 + Math.random() * 140; tgt.currentPos = {wx:0, wy:0, wz:0}; tgt.audio = null; });
+
+const SENTENCES=[ 'IT KNOWS YOU ARE WATCHING ', 'SIGNAL RECEIVED BEFORE TRANSMISSION ', 'THE NETWORK IS DREAMING ', 'COORDINATES DO NOT EXIST ON ANY MAP ', 'OBSERVER EFFECT INVERTED ', 'ENTITY DOES NOT CAST SHADOW ', 'CLOCK DESYNCHRONIZED — IMPOSSIBLE ', 'TRANSMISSION ORIGIN: SELF ', 'WARNING — CONTACT IS AWARE OF SCAN ', 'RECURSIVE LOOP DETECTED IN TIMELINE ', 'DISTANCE DECREASING ', 'THE ECHO IS GETTING LOUDER ' ];
+
+const CURRENCY_SYMBOLS = ['$', '€', '£', '¥', '₿', '₩', '₽', '₹', '█', '▓', '▒', '░'];
+
+const canvas=document.getElementById('c'); const ctx=canvas.getContext('2d');
+const glitchOverlay = document.getElementById('glitch-ov'); const shiningOverlay = document.getElementById('shining-overlay'); const ansiOverlay = document.getElementById('ansi-overlay');
+
+let W,H,CX,CY; let sweep=0,T=0,sel=null;
+let mx=0, my=0, lastMx=0, lastMy=0; let camAngleX=0, camAngleY=0; let targetZoom = 1.0, currentZoom = 1.0;
+let clickGlitchActive = false, clickGlitchTimer = 0; let phraseGlitchActive = false, phraseGlitchTimer = 0; let glitchIntensity = 0;
+let activeTypingIntervals = []; let panelGlitchInterval = null; let extremeCanvasGlitch = false; let ansiAnimInterval = null;
+
+function dprResize() { const dpr = window.devicePixelRatio || 1; W = window.innerWidth; H = window.innerHeight; canvas.width = W * dpr; canvas.height = H * dpr; canvas.style.width = W + 'px'; canvas.style.height = H + 'px'; ctx.scale(dpr, dpr); CX=(W-360)/2; CY=H/2; }
+dprResize(); window.addEventListener('resize',dprResize);
+
+document.addEventListener('mousemove',e=>{ mx=(e.clientX/(W-360)-0.5)*2; my=(e.clientY/H-0.5)*2; });
+window.addEventListener('wheel', e => { targetZoom += e.deltaY * -0.0015; targetZoom = Math.min(Math.max(0.3, targetZoom), 4.0); });
+
+const CAM_DIST = 800; const FOV_BASE = 650;      
+
+function project3D(x, y, z) {
+  const j = (clickGlitchActive || phraseGlitchActive) ? (Math.random() - 0.5) * 40 * glitchIntensity : 0;
+  x += j; y += j; z += j;
+  let y1 = y * Math.cos(camAngleX) - z * Math.sin(camAngleX); let z1 = y * Math.sin(camAngleX) + z * Math.cos(camAngleX);
+  let x2 = x * Math.cos(camAngleY) - z1 * Math.sin(camAngleY); let z2 = x * Math.sin(camAngleY) + z1 * Math.cos(camAngleY);
+  z2 += CAM_DIST; let scale = 0; if(z2 > 10) { scale = (FOV_BASE * currentZoom) / z2; } 
+  return { x: CX + (x2 * scale), y: CY + (y1 * scale), s: scale, z_index: z2 };
+}
+
+function tcol(tgt,a){ if(tgt.color==='red') return`rgba(255,32,32,${a})`; if(tgt.color==='green') return`rgba(51,255,80,${a})`; return`rgba(255,255,255,${a})`; }
+const CONE_LAYERS = [ {z: 200, r: 450, color: 'rgba(51,255,80,'}, {z: 0, r: 360, color: 'rgba(51,255,80,'}, {z: -300, r: 280, color: 'rgba(51,255,80,'}, {z: -600, r: 200, color: 'rgba(255,32,32,'}, {z: -900, r: 120, color: 'rgba(255,32,32,'}, {z: -1200, r: 40, color: 'rgba(255,32,32,'} ];
+const STARS=[]; (function initStars(){ for(let i=0;i<150;i++){ STARS.push({ x: (Math.random()-0.5)*2000, y: (Math.random()-0.5)*2000, z: (Math.random()*1500) - 1300, size: 0.5+Math.random()*1.5, alpha: 0.05+Math.random()*0.3 }); } })();
+
+let phosphor=1;
+
+function draw(){
+  T+=0.008; currentZoom += (targetZoom - currentZoom) * 0.1; document.getElementById('zoomui').textContent = currentZoom.toFixed(1) + 'x';
+  camAngleX += ( (my * 0.4) - camAngleX ) * 0.08; camAngleY += ( (mx * 1.2) - camAngleY ) * 0.08; 
+
+  if(audioInitialized && interferenceFilter && interferenceGain) {
+    let dx = mx - lastMx; let dy = my - lastMy; let mouseSpeed = Math.sqrt(dx*dx + dy*dy); 
+    interferenceFilter.frequency.setTargetAtTime(150 + (mouseSpeed * 25000), audioCtx.currentTime, 0.02); 
+    interferenceModulator.frequency.setTargetAtTime(10 + Math.abs(mx) * 1000, audioCtx.currentTime, 0.05);
+    interferenceModGain.gain.setTargetAtTime(100 + (mouseSpeed * 8000), audioCtx.currentTime, 0.05); 
+    interferenceGain.gain.setTargetAtTime(Math.min(0.7, mouseSpeed * 12.0), audioCtx.currentTime, 0.05);
+    lastMx = mx; lastMy = my;
+  }
+
+  if(clickGlitchActive){ clickGlitchTimer--; glitchIntensity = clickGlitchTimer / 30; if(clickGlitchTimer <= 0) { clickGlitchActive = false; extremeCanvasGlitch = false; } }
+  if(phraseGlitchActive){ phraseGlitchTimer--; glitchIntensity = phraseGlitchTimer / 5; if(phraseGlitchTimer <= 0) phraseGlitchActive = false; }
+  phosphor = (clickGlitchActive || phraseGlitchActive) ? (Math.random() > 0.4 ? 0.2 : 0.95) : (0.85 + Math.random()*0.15);
+
+  ctx.globalAlpha = phosphor; ctx.fillStyle='rgba(0,3,0,0.9)'; ctx.fillRect(0,0,W,H);
+
+  if((clickGlitchActive || phraseGlitchActive) && Math.random() > (extremeCanvasGlitch ? 0.0 : 0.2)) {
+    ctx.save(); ctx.globalAlpha = extremeCanvasGlitch ? 0.8 : (glitchIntensity * 0.5); let tearMultiplier = extremeCanvasGlitch ? 250 : 80; 
+    for(let i=0; i<H; i+=Math.floor(Math.random()* (extremeCanvasGlitch ? 30 : 20) + 5)){ let shift = (Math.random() - 0.5) * tearMultiplier * glitchIntensity; ctx.drawImage(canvas, 0, i, W, 8, shift, i + (Math.random()-0.5)*10, W, 8); } ctx.restore();
+  }
+
+  STARS.forEach(s=>{ const p = project3D(s.x, s.y, s.z); if(p.s > 0) { ctx.beginPath(); ctx.arc(p.x, p.y, s.size * p.s, 0, Math.PI*2); ctx.fillStyle=`rgba(51,255,80,${s.alpha * p.s})`; ctx.fill(); } });
+
+  ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(51,255,80,0.25)'; ctx.beginPath();
+  for(let a=0; a<Math.PI*2; a+=Math.PI/6) { for(let i=0; i<CONE_LAYERS.length; i++) { let layer = CONE_LAYERS[i]; let p = project3D(Math.cos(a)*layer.r, Math.sin(a)*layer.r, layer.z); if(i===0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); } } ctx.stroke();
+
+  CONE_LAYERS.forEach((layer, idx) => { ctx.beginPath(); for(let a=0; a<=Math.PI*2; a+=0.1) { let p = project3D(Math.cos(a)*layer.r, Math.sin(a)*layer.r, layer.z); if(a===0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); } ctx.closePath(); ctx.strokeStyle = layer.color + (0.2 + (CONE_LAYERS.length-idx)*0.12) + ')'; ctx.lineWidth = Math.max(1, 4 - idx*0.5); ctx.stroke(); });
+
+  ctx.globalAlpha = phosphor; const traceSteps = 35; 
+  for(let j=traceSteps; j>0; j--) { const a1 = sweep - (j*0.03); const a2 = sweep - ((j-1)*0.03); const front = CONE_LAYERS[0], back = CONE_LAYERS[CONE_LAYERS.length-1]; const p1 = project3D(Math.cos(a1)*front.r, Math.sin(a1)*front.r, front.z); const p2 = project3D(Math.cos(a1)*back.r, Math.sin(a1)*back.r, back.z); const p3 = project3D(Math.cos(a2)*back.r, Math.sin(a2)*back.r, back.z); const p4 = project3D(Math.cos(a2)*front.r, Math.sin(a2)*front.r, front.z); if(p1.s>0 && p2.s>0 && p3.s>0 && p4.s>0) { ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.lineTo(p3.x, p3.y); ctx.lineTo(p4.x, p4.y); ctx.closePath(); ctx.fillStyle = `rgba(51,255,70,${(traceSteps-j)/traceSteps * 0.12})`; ctx.fill(); } }
+  
+  const frontL = CONE_LAYERS[0], backL = CONE_LAYERS[CONE_LAYERS.length-1]; const pFront = project3D(Math.cos(sweep)*frontL.r, Math.sin(sweep)*frontL.r, frontL.z); const pBack = project3D(Math.cos(sweep)*backL.r, Math.sin(sweep)*backL.r, backL.z); if(pFront.s > 0 && pBack.s > 0) { ctx.beginPath(); ctx.moveTo(pFront.x, pFront.y); ctx.lineTo(pBack.x, pBack.y); ctx.strokeStyle = 'rgba(51,255,70,1)'; ctx.lineWidth = 2.5; ctx.stroke(); }
+
+  let projectedTargets = [];
+  TARGETS.forEach(tgt=>{
+    tgt.stateTimer--; if(tgt.stateTimer <= 0) { tgt.isPanicking = !tgt.isPanicking; if(tgt.isPanicking) { tgt.stateTimer = 60 + Math.random() * 120; } else { tgt.stateTimer = 180 + Math.random() * 300; } }
+    let currentSpeed = tgt.speed; if(tgt.isPanicking) currentSpeed *= 6.0; tgt.orbitA += currentSpeed; tgt.jx *= 0.85; tgt.jy *= 0.85;
+    if(tgt.isPanicking && Math.random() < 0.15) { tgt.jx += (Math.random() - 0.5) * 180; tgt.jy += (Math.random() - 0.5) * 180; }
+    let depthPercent = Math.abs((tgt.z - 200) / 1400); let rBase = 450 - (depthPercent * 410); 
+    let wx = Math.cos(tgt.orbitA) * (rBase * tgt.orbitR) + Math.sin(T*tgt.wobble*6)*30 + tgt.jx; let wy = Math.sin(tgt.orbitA) * (rBase * tgt.orbitR) + Math.cos(T*tgt.wobble*4)*30 + tgt.jy; let wz = tgt.z + Math.sin(T*tgt.wobble*5)*40;
+    tgt.currentPos = {wx, wy, wz};
+    if(tgt.isPanicking || Math.random() < 0.3) { tgt.history.push({x:wx, y:wy, z:wz}); if(tgt.history.length > 20) tgt.history.shift(); }
+    if(tgt.audio && audioInitialized) { let vol = Math.max(0.001, (wz + 1200) / 1400) * 0.05; if(tgt.isPanicking) vol *= 2.5; let pitch = 80 + (currentSpeed * 60000) + (wz > 0 ? 30 : 0); tgt.audio.panner.pan.setTargetAtTime(Math.max(-1, Math.min(1, wx / 450)), audioCtx.currentTime, 0.1); tgt.audio.osc.frequency.setTargetAtTime(pitch, audioCtx.currentTime, 0.1); tgt.audio.gain.gain.setTargetAtTime(vol, audioCtx.currentTime, 0.1); }
+    const angDiff=((tgt.orbitA-sweep+Math.PI*2)%(Math.PI*2)); const p = project3D(wx, wy, wz); if(p.s>0) { projectedTargets.push({tgt:tgt, p:p, baseAlpha: angDiff<0.15?1:Math.max(0.2,1-angDiff*0.4), coords:{x:wx, y:wy, z:wz}}); }
+  });
+
+  projectedTargets.sort((a,b) => b.p.z_index - a.p.z_index); 
+  projectedTargets.forEach(item => {
+    const {tgt, p, baseAlpha, coords} = item; const sz = 14 * p.s; ctx.save(); 
+    if(tgt.history.length > 1) { ctx.beginPath(); for(let i=0; i<tgt.history.length; i++){ let hp = project3D(tgt.history[i].x, tgt.history[i].y, tgt.history[i].z); if(hp.s > 0) { if(i===0) ctx.moveTo(hp.x, hp.y); else ctx.lineTo(hp.x, hp.y); } } ctx.strokeStyle = tcol(tgt, baseAlpha * (tgt.isPanicking ? 0.8 : 0.3)); ctx.lineWidth = (tgt.isPanicking ? 2.5 : 1) * p.s; ctx.stroke(); }
+    ctx.translate(p.x, p.y); if(sel&&sel.id===tgt.id){ ctx.beginPath();ctx.arc(0,0,26*p.s,0,Math.PI*2); ctx.strokeStyle=tcol(tgt,0.8);ctx.setLineDash([2,4]);ctx.stroke(); }
+    ctx.strokeStyle=tcol(tgt,baseAlpha); ctx.lineWidth=2*p.s; ctx.beginPath();ctx.moveTo(0,-sz);ctx.lineTo(sz,0);ctx.lineTo(0,sz);ctx.lineTo(-sz,0);ctx.closePath();ctx.stroke(); ctx.fillStyle=tcol(tgt,baseAlpha);ctx.fillRect(-2*p.s, -2*p.s, 4*p.s, 4*p.s); ctx.restore();
+    let fSize = Math.max(8,Math.round(11*p.s)); ctx.font=`bold ${fSize}px "Consolas"`; ctx.fillStyle=tcol(tgt,baseAlpha); ctx.fillText(tgt.id, p.x+18*p.s, p.y - 8*p.s);
+    ctx.font=`${Math.max(5,Math.round(8*p.s))}px "Consolas"`; ctx.fillStyle = tgt.isPanicking ? '#ff2020' : tcol(tgt,baseAlpha * 0.7); ctx.fillText(`[X:${Math.round(coords.x)} Y:${Math.round(coords.y)} Z:${Math.round(coords.z)}]`, p.x+18*p.s, p.y + 12*p.s);
+  });
+
+  const paranoidNoise = (Math.random() - 0.5) * 0.05; let oldSweep = sweep; sweep = (sweep + 0.03 + paranoidNoise) % (Math.PI*2); if (sweep < 0) sweep += Math.PI*2;
+  if(oldSweep > sweep) playRadarPing(); 
+  document.getElementById('swdeg').textContent=String(Math.round(sweep*180/Math.PI)).padStart(3,'0')+'°';
+
+  if(clickGlitchActive || phraseGlitchActive){ glitchOverlay.style.opacity = glitchIntensity * 0.85; glitchOverlay.style.background = `radial-gradient(circle, rgba(255,0,0,0.2) 0%, rgba(0,255,0,0.15) 50%, rgba(0,0,255,0.2) 100%)`; shiningOverlay.style.transform = `translateX(${(Math.random()-0.5)*35}px) translateY(${(Math.random()-0.5)*35}px) skewX(${(Math.random()-0.5)*15}deg)`; } else { glitchOverlay.style.opacity = 0; shiningOverlay.style.transform = 'none'; }
+
+  requestAnimationFrame(draw);
+}
+draw();
+
+function triggerDistortion(sentence) {
+  clickGlitchActive = true; clickGlitchTimer = 25; extremeCanvasGlitch = false;
+  activeTypingIntervals.forEach(clearInterval); activeTypingIntervals = []; shiningOverlay.innerHTML = ''; const totalRows = 14; 
+  for(let i = 0; i < totalRows; i++) {
+    const row = document.createElement('div'); row.className = 'shining-row'; let roll = Math.random();
+    if(roll > 0.75) { row.style.color = 'rgba(255, 32, 32, 0.85)'; row.style.textShadow = '3px 0px rgba(0,255,255,0.9), -2px 0px rgba(255,255,0,0.6)'; } else if (roll > 0.35) { row.style.color = 'rgba(51, 255, 80, 0.7)'; row.style.textShadow = '1px 1px rgba(255,0,0,0.8)'; } else { row.style.color = `rgba(51, 255, 80, ${Math.random() * 0.25 + 0.08})`; }
+    row.style.paddingLeft = `${Math.floor(Math.random() * 50) - 25}px`;
+    if(i % 2 === 0) { row.classList.add('scroll-mode'); let repeatedText = sentence.repeat(5); row.innerHTML = `<span>${repeatedText}</span><br><span>${repeatedText}</span>`; shiningOverlay.appendChild(row); } else { row.classList.add('cursor-blink'); shiningOverlay.appendChild(row); let fullText = sentence.repeat(4); let currentIdx = 0; const interval = setInterval(() => { if(currentIdx <= fullText.length) { row.textContent = fullText.substring(0, currentIdx); currentIdx += Math.floor(Math.random() * 2) + 1; } else { clearInterval(interval); } }, Math.floor(Math.random() * 25) + 10); activeTypingIntervals.push(interval); }
+  }
+  setTimeout(() => { Array.from(shiningOverlay.children).forEach(child => { child.style.transition = 'opacity 1.5s ease-out'; child.style.opacity = '0'; }); }, 1600);
+}
+
+function triggerAnsiGlitch() {
+  if(!audioInitialized) return;
+  playTotalBitcrushFailure(); 
+  clickGlitchActive = true; clickGlitchTimer = 30; glitchIntensity = 2.0; extremeCanvasGlitch = true;
+  ansiOverlay.style.inset = '0'; ansiOverlay.className = 'ansi-rgb-glitch'; ansiOverlay.style.color = '#ffffff'; ansiOverlay.style.opacity = 1;
+  const charCount = 2000; 
+  const renderChaos = () => { let content = ''; for(let i=0; i<charCount; i++) { content += CURRENCY_SYMBOLS[Math.floor(Math.random() * CURRENCY_SYMBOLS.length)]; } ansiOverlay.textContent = content; };
+  renderChaos(); 
+  if(ansiAnimInterval) clearInterval(ansiAnimInterval); ansiAnimInterval = setInterval(renderChaos, 50);
+  setTimeout(() => { ansiOverlay.style.opacity = 0; ansiOverlay.className = ''; clearInterval(ansiAnimInterval); }, 300 + Math.random() * 350); 
+}
+
+function scheduleNextGlitch() { if(audioInitialized) { setTimeout(() => { triggerAnsiGlitch(); scheduleNextGlitch(); }, 3000 + Math.random() * 4000); } }
+
+function generateVirusSprite() { const chars = ['$', '€', '£', '¥', '₿', '█', '▓', '▒', '░']; let sprite = []; for(let y=0; y<12; y++){ let left = ""; for(let x=0; x<13; x++){ let prob = (x / 12); if (Math.random() < prob + 0.2) left += chars[Math.floor(Math.random()*chars.length)]; else left += ' '; } sprite.push(left + left.split('').reverse().join('')); } return sprite.join('\n'); }
+function generateNoiseLine(len) { const chars = ['$', '€', '£', '¥', '₿', '₩', '₽', '█', '▓', '▒', '░']; let res = ''; for(let i=0; i<len; i++) res += chars[Math.floor(Math.random()*chars.length)]; return res; }
+
+window.addEventListener('click', e => {
+  if(!audioInitialized) return; 
+  playSolenoidClick(); 
+  let hit=null,md=45; TARGETS.forEach(tgt=>{ if(!tgt.currentPos) return; const p = project3D(tgt.currentPos.wx, tgt.currentPos.wy, tgt.currentPos.wz); const d = Math.sqrt((e.clientX-p.x)**2+(e.clientY-p.y)**2); if(d<md){md=d;hit=tgt;} });
+  triggerDistortion(SENTENCES[Math.floor(Math.random()*SENTENCES.length)]);
+  if(hit){ sel=hit; document.getElementById('selid').textContent=hit.id; playOrganicDecode(hit); showInfo(hit); }
+});
+
+function showInfo(tgt){
+  const p=document.getElementById('tinfo'); p.style.display='block';
+  if(panelGlitchInterval) clearInterval(panelGlitchInterval);
+  panelGlitchInterval = setInterval(() => { p.innerHTML = `\n<pre style="color:${tgt.color==='red'?'#ff2020':'#33ff55'}; font-size:15px; line-height:1.1; text-shadow:0 0 10px ${tgt.color==='red'?'#ff2020':'#33ff55'}; margin:0;">\n[ID: ${tgt.id}]\n[LVL: ${tgt.threat}]\n${generateNoiseLine(26)}\n\n${generateVirusSprite()}\n\n${generateNoiseLine(26)}\n[SYS_MEM: CORRUPT]\n</pre>`; }, 150);
+}
+
+setInterval(() => { const n = new Date(); document.getElementById('clk').textContent = String(n.getHours()).padStart(2,'0') + ':' + String(n.getMinutes()).padStart(2,'0') + ':' + String(n.getSeconds()).padStart(2,'0'); }, 1000);
+
+</script>
+</body>
+</html>

@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>MONOLITHIC_NOISE_FM_0x00</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    background-color: #000000;
+    overflow: hidden;
+    user-select: none;
+    width: 100vw;
+    height: 100vh;
+    font-family: 'Consolas', 'Courier New', monospace;
+    color: #00ff00;
+  }
+
+  #error-matrix {
+    position: absolute;
+    inset: 0;
+    white-space: pre-wrap;
+    word-break: break-all;
+    line-height: 0.85;
+    padding: 0;
+    box-sizing: border-box;
+    overflow: hidden;
+    font-size: 10px;
+    color: #00ff00;
+  }
+
+  .a-normal { color: #004400; }
+  .a-bright { color: #00ff00; font-weight: bold; }
+  .a-dim { color: #001500; }
+  .a-block { color: #000000; background-color: #00ff00; font-weight: bold; }
+
+  /* --- ESTADO DE CONGELAMIENTO EN BLANCO PURA LUZ --- */
+  body.hardware-freeze-glitch {
+    background-color: #000000 !important;
+  }
+
+  body.hardware-freeze-glitch #error-matrix,
+  body.hardware-freeze-glitch #error-matrix span {
+    color: #ffffff !important;
+    background-color: transparent !important;
+    text-shadow: 0 0 6px #ffffff, 0 0 12px #ffffff !important;
+  }
+
+  body.hardware-freeze-glitch #error-matrix span.a-block {
+    color: #000000 !important;
+    background-color: #ffffff !important;
+  }
+
+  /* Inversión total aleatoria para parpadeos de hardware */
+  body.random-invert {
+    filter: invert(1) contrast(300%) !important;
+  }
+</style>
+</head>
+<body>
+
+<div id="error-matrix"></div>
+
+<script>
+  const matrix = document.getElementById('error-matrix');
+  const ALIEN_PATTERNS = '01XØ█▓▒░▄▀■┼║╚╔╗╝═▲▼░▄■/\\*+:=--᚛ᚗᚖᚕᚔΞΨΩ'.split('');
+
+  let audioCtx, masterGain, bitcrushNode;
+  let audioInitialized = false;
+  let sysVoice = null;
+  let currentState = 'dumping';
+
+  // --- VOZ MASCULINA NATIVA ---
+  function initVoice() {
+    if (!('speechSynthesis' in window)) return;
+    const voices = window.speechSynthesis.getVoices();
+    sysVoice = voices.find(v => 
+      v.name.includes('David') || 
+      v.name.includes('Mark') || 
+      v.name.includes('George') || 
+      (v.name.toLowerCase().includes('male') && !v.name.toLowerCase().includes('female'))
+    ) || voices.find(v => v.lang.startsWith('es') || v.lang.startsWith('en'));
+  }
+  if (typeof speechSynthesis !== 'undefined') {
+    speechSynthesis.onvoiceschanged = initVoice;
+    initVoice();
+  }
+
+  function speakInharmonicAlert(text) {
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    if (sysVoice) utterance.voice = sysVoice;
+    utterance.pitch = 0.01;
+    utterance.rate = 1.5;
+    utterance.volume = 1.0;
+    window.speechSynthesis.speak(utterance);
+  }
+
+  // --- AUDIO: BITCRUSHER & MONOLITHIC BASS ---
+  function initAudio() {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    audioCtx = new AudioContext();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+
+    const bufferSize = 4096;
+    bitcrushNode = audioCtx.createScriptProcessor(bufferSize, 1, 1);
+    
+    bitcrushNode.onaudioprocess = function(e) {
+      const input = e.inputBuffer.getChannelData(0);
+      const output = e.outputBuffer.getChannelData(0);
+      
+      const currentBits = currentState === 'frozen' ? 2 : 4;
+      const bitsStep = Math.pow(0.5, currentBits);
+
+      for (let i = 0; i < input.length; i++) {
+        output[i] = Math.floor(input[i] / bitsStep) * bitsStep;
+      }
+    };
+
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = 0.5;
+
+    bitcrushNode.connect(masterGain);
+    masterGain.connect(audioCtx.destination);
+    audioInitialized = true;
+  }
+
+  // --- SUB-BAJO ESTÁTICO MONÓTONO Y ZUMBIDO INDUSTRIAL ---
+  function playMonolithicDroneNoise() {
+    if (!audioInitialized) return;
+    const now = audioCtx.currentTime;
+    const duration = Math.random() * 0.2 + 0.1;
+
+    const carrier = audioCtx.createOscillator();
+    const modulator = audioCtx.createOscillator();
+    const modGain = audioCtx.createGain();
+
+    carrier.type = 'sawtooth';
+    modulator.type = 'square';
+
+    const FIXED_SUB_BASS = 60.0; 
+    const FIXED_MOD_RATIO = 14000.0;
+
+    carrier.frequency.setValueAtTime(FIXED_SUB_BASS, now);
+    modulator.frequency.setValueAtTime(FIXED_MOD_RATIO, now);
+
+    modGain.gain.setValueAtTime(2500, now);
+    modGain.gain.linearRampToValueAtTime(2000, now + duration);
+
+    modulator.connect(modGain);
+    modGain.connect(carrier.frequency);
+
+    const envGain = audioCtx.createGain();
+    envGain.gain.setValueAtTime(0.9, now);
+    envGain.gain.setValueAtTime(0.0001, now + duration);
+
+    carrier.connect(envGain);
+    envGain.connect(bitcrushNode);
+
+    carrier.start(now); modulator.start(now);
+    carrier.stop(now + duration); modulator.stop(now + duration);
+  }
+
+  function playDumpNoise() {
+    if (!audioInitialized) return;
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(80, now);
+
+    const gain = audioCtx.createGain();
+    gain.gain.setValueAtTime(0.15, now);
+    gain.gain.setValueAtTime(0.001, now + 0.01);
+
+    osc.connect(gain);
+    gain.connect(bitcrushNode);
+
+    osc.start(now);
+    osc.stop(now + 0.015);
+  }
+
+  // --- GENERACIÓN DE PATRONES ALIENÍGENAS ---
+  function getStyleClass() {
+    const rand = Math.random();
+    if (rand < 0.05) return 'a-block';
+    if (rand < 0.25) return 'a-bright';
+    if (rand < 0.60) return 'a-normal';
+    return 'a-dim';
+  }
+
+  function generateAlienBlock() {
+    let html = `<span class="${getStyleClass()}">`;
+    const len = Math.floor(Math.random() * 50) + 15;
+    for (let i = 0; i < len; i++) {
+      html += ALIEN_PATTERNS[Math.floor(Math.random() * ALIEN_PATTERNS.length)];
+    }
+    html += '</span>';
+    return html;
+  }
+
+  // --- RELLENO INSTANTÁNEO ---
+  function initialFullDump() {
+    let initialBatch = '';
+    for (let i = 0; i < 400; i++) {
+      initialBatch += generateAlienBlock();
+    }
+    matrix.innerHTML = initialBatch;
+  }
+
+  // --- BUCLE DE RENDERIZADO Y CONTROL ---
+  function fastDumpStep() {
+    if (currentState === 'dumping') {
+      document.body.className = '';
+
+      let batch = '';
+      for (let i = 0; i < 40; i++) {
+        batch += generateAlienBlock();
+      }
+      matrix.insertAdjacentHTML('beforeend', batch);
+
+      if (Math.random() < 0.7) playDumpNoise();
+
+      if (matrix.childNodes.length > 1500) {
+        for (let i = 0; i < 150; i++) {
+          if (matrix.firstChild) matrix.removeChild(matrix.firstChild);
+        }
+      }
+    } else if (currentState === 'frozen') {
+      if (Math.random() < 0.4) {
+        document.body.classList.add('hardware-freeze-glitch');
+        playMonolithicDroneNoise();
+      } else {
+        document.body.classList.remove('hardware-freeze-glitch');
+      }
+
+      if (Math.random() < 0.3) {
+        document.body.classList.add('random-invert');
+      } else {
+        document.body.classList.remove('random-invert');
+      }
+    }
+
+    const nextInterval = currentState === 'dumping' ? (Math.floor(Math.random() * 10) + 2) : 25;
+    setTimeout(fastDumpStep, nextInterval);
+  }
+
+  function asyncStateController() {
+    if (currentState === 'dumping') {
+      currentState = 'frozen';
+      
+      if (audioInitialized && Math.random() < 0.3) {
+        speakInharmonicAlert("ZERO FREQUENCY. STATIC LOCK.");
+      }
+
+      const freezeTime = Math.floor(Math.random() * 1600) + 200;
+      setTimeout(asyncStateController, freezeTime);
+    } else {
+      currentState = 'dumping';
+      
+      const dumpTime = Math.floor(Math.random() * 700) + 200;
+      setTimeout(asyncStateController, dumpTime);
+    }
+  }
+
+  // --- ARRANCADOR AUTOMÁTICO AL CARGAR EL DOCUMENTO ---
+  window.addEventListener('DOMContentLoaded', () => {
+    initAudio();
+    initialFullDump();
+    fastDumpStep();
+    asyncStateController();
+  });
+</script>
+</body>
+</html>
