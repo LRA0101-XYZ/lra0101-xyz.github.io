@@ -87,7 +87,6 @@
             pointer-events: none;
             padding: 40px;
             text-align: center;
-            position: relative;
             overflow: hidden;
         }
 
@@ -122,6 +121,12 @@
             word-break: break-word;
             line-height: 1.5;
             z-index: 2;
+            width: 100%;
+            max-width: 900px;
+            margin: auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         @keyframes stroboscopic {
@@ -133,7 +138,7 @@
         }
 
         .strobe-active {
-            animation: stroboscopic 0.03s infinite steps(1);
+            animation: stroboscopic 0.02s infinite steps(1);
         }
 
         @keyframes phosphor-invert-toggle {
@@ -161,7 +166,7 @@
         }
 
         .glitch-anim {
-            animation: micro-glitch 0.25s steps(1) forwards !important;
+            animation: micro-glitch 0.0125s steps(1) forwards !important;
         }
 
         #audio-unlocker {
@@ -248,7 +253,7 @@
                 { file: "g9_9.html",          codeName: "PRTCL_09_TERM",        duration: 40 },
                 { file: "out.html",          codeName: "XXXXXXXXXXXXXX",        duration: 40 }
             ],
-            fadeTime: 0.22,
+            fadeTime: 0.125,
             defaultDuration: 45 
         };
 
