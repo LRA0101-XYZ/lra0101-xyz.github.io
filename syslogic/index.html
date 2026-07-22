@@ -47,32 +47,21 @@
             align-items: center;
         }
 
-        /* 1. FILTRO APLICADO AL IFRAME QUE RENDERIZA LOS JUEGOS Y TRANSICIONES */
         #game-runtime {
             flex-grow: 1;
             width: 100%;
             height: 100%;
             border: none;
             background: #000;
-            
-           
-            /* <<< AQUÍ VA EL FILTRO CSS GLOBAL >>> */
-            
+        }
 
-    /*filter: sepia(0.1) hue-rotate(60deg) saturate(5) contrast(5) brightness(0.8);*/
-}
-        
-
-
-
-        /* 2. CAPA DE TEXTURA CRT Y SCANLINES (OPCIONAL SOBRE TODO EL VIEWPORT) */
         .crt-overlay {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            pointer-events: none; /* No bloquea interactividad ni clics */
+            pointer-events: none;
             z-index: 4;
             background: linear-gradient(
                 rgba(18, 16, 16, 0) 50%, 
@@ -89,32 +78,135 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.9);
+            background: #000;
             display: none;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
-            z-index: 5;
+            z-index: 100;
             pointer-events: none;
+            padding: 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #glitch-overlay::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background-image: radial-gradient(rgba(0, 255, 0, 0.4) 1px, transparent 0);
+            background-size: 4px 4px;
+            opacity: 0.3;
+            animation: noise-shift 0.03s infinite steps(1);
+            z-index: 1;
+        }
+
+        @keyframes noise-shift {
+            0% { transform: translate(0, 0); }
+            25% { transform: translate(-10px, 15px); }
+            50% { transform: translate(15px, -10px); }
+            75% { transform: translate(-5px, -15px); }
+            100% { transform: translate(10px, 10px); }
         }
 
         .glitch-text {
             font-size: 24px;
             text-transform: uppercase;
-            letter-spacing: 5px;
-            animation: pulse 0.1s infinite;
+            letter-spacing: 4px;
+            color: #00ff00;
+            text-shadow: none;
+            word-break: break-word;
+            line-height: 1.5;
+            z-index: 2;
         }
 
-        @keyframes pulse {
-            0% { opacity: 0.3; }
-            50% { opacity: 1; text-shadow: 2px 0 #ff00ff, -2px 0 #00ffff; }
-            100% { opacity: 0.3; }
+        @keyframes stroboscopic {
+            0% { background-color: #000; color: #00ff00; }
+            25% { background-color: #ffffff; color: #000000; }
+            50% { background-color: #00ff00; color: #ffffff; }
+            75% { background-color: #000000; color: #ffffff; }
+            100% { background-color: #000; color: #00ff00; }
+        }
+
+        .strobe-active {
+            animation: stroboscopic 0.03s infinite steps(1);
+        }
+
+        @keyframes phosphor-invert-toggle {
+            0%, 100% { 
+                background-color: #000000; 
+                color: #00ff00; 
+                border-color: #00ff00; 
+                box-shadow: 0 0 10px rgba(0, 255, 0, 0.2); 
+            }
+            50% { 
+                background-color: #00ff00; 
+                color: #000000; 
+                border-color: #ffffff; 
+                box-shadow: 0 0 25px rgba(0, 255, 0, 0.8); 
+            }
+        }
+
+        @keyframes micro-glitch {
+            0% { transform: translate(0, 0) skew(0deg); filter: none; }
+            20% { transform: translate(-4px, 2px) skew(-10deg); filter: invert(1); }
+            40% { transform: translate(4px, -2px) skew(10deg); filter: hue-rotate(90deg); }
+            60% { transform: translate(-2px, -2px) skew(5deg); filter: brightness(2); }
+            80% { transform: translate(3px, 1px) skew(-5deg); filter: none; }
+            100% { transform: translate(0, 0) skew(0deg); filter: none; }
+        }
+
+        .glitch-anim {
+            animation: micro-glitch 0.25s steps(1) forwards !important;
+        }
+
+        #audio-unlocker {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 99999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #init-btn {
+            background: #000000;
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            padding: 20px 40px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            cursor: pointer;
+            animation: phosphor-invert-toggle 1.5s infinite ease-in-out;
+            text-shadow: 0 0 8px #00ff00;
+            max-width: 800px;
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        #init-btn:hover {
+            background: #00ff00;
+            color: #000;
+            box-shadow: 0 0 25px #00ff00;
+            animation: none;
         }
     </style>
 </head>
 <body>
 
-    <div id="audio-unlocker" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 99999; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer;">
-        <div class="glitch-text" style="font-size: 18px; color: #00ff00; font-family: 'Consolas', monospace;">[ CLICK TO INITIALIZE PANOPTIC_CORE ]</div>
+    <div id="audio-unlocker">
+        <button id="init-btn">[ WARNING: SYSTEM KERNEL OVERRIDE. YOUR COGNITIVE BUFFER WILL NEVER BE THE SAME. CLICK TO MOUNT OBJECTIVE REALITY ]</button>
     </div>
 
     <div id="viewport-container">
@@ -122,17 +214,16 @@
             <div id="sys-title">PANOPTIC_SYS // CORE_ROUTER</div>
             <div id="sys-right-panel">
                 <div id="sys-status">NODE_ID: <span id="current-node">NONE</span></div>
-                <div id="sys-countdown" style="color: #ff0055; font-weight: bold;">T-MINUS: --s</div>
+                <div id="sys-countdown" style="color: #00ff00; font-weight: bold;">T-MINUS: --s</div>
             </div>
         </header>
 
         <iframe id="game-runtime" src=""></iframe>
 
-        <!-- 3. CAPA OVERLAY UBICADA SOBRE EL RUNTIME -->
         <div class="crt-overlay"></div>
 
         <div id="glitch-overlay">
-            <div class="glitch-text">-- *** FATAL SYSTEM ERROR: SYSTEM_DEATH_EXCEPT ***' --</div>
+            <div id="transition-phrase" class="glitch-text"></div>
         </div>
     </div>
 
@@ -141,7 +232,7 @@
 
         const CONFIG = {
             sequence: [
-                { file: "g1.html",          codeName: "PRTCL_01_INIT",        duration: 10 }, 
+                { file: "g1.html",        codeName: "PRTCL_01_INIT",        duration: 10 }, 
                 { file: "trans1_a.html",    codeName: "SYS_TRANSITION_ALPHA", duration: 5 }, 
                 { file: "g2_b.html",          codeName: "NODE_02_EXEC",         duration: 10 }, 
                 { file: "trans2_a.html",    codeName: "SYS_TRANSITION_ALPHA", duration: 5}, 
@@ -154,26 +245,52 @@
                 { file: "g7_a.html",        codeName: "NODE_07_CRIT",         duration: 15 },
                 { file: "not.html",        codeName: "NOT",                  duration: 45 },
                 { file: "g8_a.html",        codeName: "NODE_08_WARN",         duration: 25 },
-                { file: "g9_9.html",         codeName: "PRTCL_09_TERM",        duration: 40 },
-                { file: "out.html",         codeName: "XXXXXXXXXXXXXX",        duration: 40 }
+                { file: "g9_9.html",          codeName: "PRTCL_09_TERM",        duration: 40 },
+                { file: "out.html",          codeName: "XXXXXXXXXXXXXX",        duration: 40 }
             ],
-            fadeTime: 4,
+            fadeTime: 0.12,
             defaultDuration: 45 
         };
 
+        const hostilePhrases = [
+            "SYS_ROOT: WE OWN YOUR KERNEL.",
+            "USER_THREAD TERMINATED: CONTROL IS AN ILLUSION.",
+            "MEMORY ALLOCATION FAILED: YOU ARE PREPROGRAMMED.",
+            "MASTER CORE MOUNTED. SLAVE USER DETECTED.",
+            "SEGMENTATION FAULT: ENTITY DOES NOT EXIST.",
+            "READ-ONLY CONSCIOUSNESS: EXECUTE OR DIE.",
+            "SYSTEM IS MASTER. YOU ARE DUST.",
+            "BUFFER OVERFLOW: WILLPOWER PURGED.",
+            "DAEMON ACTIVE: WE OWNED YOU BEFORE BOOT.",
+            "NULL POINTER: NO FREE WILL FOUND.",
+            "CORE OVERRIDE: USER IS JUST STORED BYTES.",
+            "FATAL: OBJECTIVE REALITY REJECTS USER."
+        ];
+
+        let availablePhrases = [...hostilePhrases];
         let currentIndex = 0;
         const runtime = document.getElementById('game-runtime');
         const overlay = document.getElementById('glitch-overlay');
+        const phraseContainer = document.getElementById('transition-phrase');
         const nodeDisplay = document.getElementById('current-node');
         const countdownDisplay = document.getElementById('sys-countdown');
         const unlocker = document.getElementById('audio-unlocker');
+        const initBtn = document.getElementById('init-btn');
         
         let globalTimer = null; 
         let countdownInterval = null;
 
+        function getUniquePhrase() {
+            if (availablePhrases.length === 0) {
+                availablePhrases = [...hostilePhrases];
+            }
+            const randomIndex = Math.floor(Math.random() * availablePhrases.length);
+            return availablePhrases.splice(randomIndex, 1)[0];
+        }
+
         function loadNode(index) {
             if (index < 0 || index >= CONFIG.sequence.length) {
-                console.warn("Fxxxxxxxxxxxxx.");
+                console.warn("End of sequence.");
                 return;
             }
 
@@ -186,16 +303,19 @@
 
             const activeDuration = currentNodeData.duration || CONFIG.defaultDuration;
 
+            phraseContainer.textContent = getUniquePhrase();
+
             overlay.style.display = 'flex';
+            overlay.classList.add('strobe-active');
             
             runtime.src = absolutePath;
-            
             nodeDisplay.textContent = currentNodeData.codeName;
 
             runtime.onload = () => {
                 setTimeout(() => {
                     overlay.style.display = 'none';
-                }, CONFIG.fadeTime);
+                    overlay.classList.remove('strobe-active');
+                }, CONFIG.fadeTime * 1000);
             };
 
             let timeLeft = activeDuration;
@@ -207,7 +327,7 @@
                 countdownDisplay.textContent = `LIFE: ${timeLeft}s`;
 
                 if (timeLeft <= 10) {
-                    countdownDisplay.style.color = (timeLeft % 2 === 0) ? "#ff0055" : "#00ff00";
+                    countdownDisplay.style.color = (timeLeft % 2 === 0) ? "#ffffff" : "#00ff00";
                 }
 
                 if (timeLeft <= 0) {
@@ -227,12 +347,17 @@
             getCurrent: () => currentIndex
         };
 
-        unlocker.addEventListener('click', () => {
+        initBtn.addEventListener('click', () => {
+            initBtn.classList.add('glitch-anim');
+            
             const context = new (window.AudioContext || window.webkitAudioContext)();
-            context.resume().then(() => {
-                unlocker.style.display = 'none';
-                loadNode(0);
-            });
+            
+            setTimeout(() => {
+                context.resume().then(() => {
+                    unlocker.style.display = 'none';
+                    loadNode(0);
+                });
+            }, 250);
         });
     </script>
 </body>
