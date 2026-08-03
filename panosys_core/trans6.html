@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>PANOPTIC_STROBE_MATRIX // SYNC_01</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    background-color: #000000;
+    overflow: hidden;
+    user-select: none;
+    width: 100vw;
+    height: 100vh;
+    font-family: 'Consolas', 'Courier New', monospace;
+    color: #00ff00;
+  }
+
+  #error-matrix {
+    position: absolute;
+    inset: 0;
+    white-space: pre-wrap;
+    word-break: break-all;
+    line-height: 0.85;
+    padding: 0;
+    box-sizing: border-box;
+    overflow: hidden;
+    font-size: 10px;
+    color: #00ff00;
+  }
+
+  .a-normal { color: #004400; }
+  .a-bright { color: #00ff00; font-weight: bold; }
+  .a-dim { color: #001500; }
+  .a-block { color: #000000; background-color: #00ff00; font-weight: bold; }
+
+  /* --- ESTROBOSCOPICO PURO Y CONGELAMIENTO DE ALTA FRECUENCIA --- */
+  body.hardware-freeze-glitch {
+    background-color: #ffffff !important;
+  }
+
+  body.hardware-freeze-glitch #error-matrix,
+  body.hardware-freeze-glitch #error-matrix span {
+    color: #000000 !important;
+    background-color: #ffffff !important;
+    text-shadow: none !important;
+  }
+
+  body.hardware-freeze-glitch #error-matrix span.a-block {
+    color: #ffffff !important;
+    background-color: #000000 !important;
+  }
+
+  /* Inversión total estroboscópica rápida */
+  body.random-invert {
+    filter: invert(1) contrast(500%) !important;
+  }
+</style>
+</head>
+<body>
+
+<div id="error-matrix"></div>
+
+<script>
+  const matrix = document.getElementById('error-matrix');
+  const ALIEN_PATTERNS = '01XØ█▓▒░▄▀■┼║╚╔╗╝═▲▼░▄■/\\*+:=--᚛ᚗᚖᚕᚔΞΨΩ'.split('');
+
+  let audioCtx, masterGain, bitcrushNode;
+  let audioInitialized = false;
+  let currentState = 'dumping';
+
+  // --- AUDIO: BITCRUSHER ÁSPERO Y MONÓTONO (AUTOPLAY DESDE EL ÍNDICE) ---
+  function initAudio() {
+    if (audioInitialized) return;
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    audioCtx = new AudioContext();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+
+    const bufferSize = 4096;
+    bitcrushNode = audioCtx.createScriptProcessor(bufferSize, 1, 1);
+    
+    bitcrushNode.onaudioprocess = function(e) {
+      const input = e.inputBuffer.getChannelData(0);
+      const output = e.outputBuffer.getChannelData(0);
+      
+      const currentBits = currentState === 'frozen' ? 1.5 : 3.5;
+      const bitsStep = Math.pow(0.5, currentBits);
+
+      for (let i = 0; i < input.length; i++) {
+        output[i] = Math.floor(input[i] / bitsStep) * bitsStep;
+      }
+    };
+
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = 0.25;
+
+    bitcrushNode.connect(masterGain);
+    masterGain.connect(audioCtx.destination);
+    audioInitialized = true;
+  }
+
+  // --- DRONE DE INTERFERENCIA DE DATOS MONÓTONO Y ÁSPERO ---
+  function playMonolithicStrobeNoise() {
+    if (!audioInitialized) return;
+    const now = audioCtx.currentTime;
+    const duration = Math.random() * 0.08 + 0.03;
+
+    const carrier = audioCtx.createOscillator();
+    const modulator = audioCtx.createOscillator();
+    const modGain = audioCtx.createGain();
+
+    carrier.type = 'square';
+    modulator.type = 'square';
+
+    carrier.frequency.setValueAtTime(55.0, now);
+    modulator.frequency.setValueAtTime(8000.0, now);
+
+    modGain.gain.setValueAtTime(4000, now);
+
+    modulator.connect(modGain);
+    modGain.connect(carrier.frequency);
+
+    const envGain = audioCtx.createGain();
+    envGain.gain.setValueAtTime(0.8, now);
+    envGain.gain.setValueAtTime(0.0001, now + duration);
+
+    carrier.connect(envGain);
+    envGain.connect(bitcrushNode);
+
+    carrier.start(now); modulator.start(now);
+    carrier.stop(now + duration); modulator.stop(now + duration);
+  }
+
+  function playDumpNoise() {
+    if (!audioInitialized) return;
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(5020, now);
+
+    const gain = audioCtx.createGain();
+    gain.gain.setValueAtTime(0.12, now);
+    gain.gain.setValueAtTime(0.001, now + 0.008);
+
+    osc.connect(gain);
+    gain.connect(bitcrushNode);
+
+    osc.start(now);
+    osc.stop(now + 0.012);
+  }
+
+  // --- GENERACIÓN DE PATRONES ---
+  function getStyleClass() {
+    const rand = Math.random();
+    if (rand < 0.05) return 'a-block';
+    if (rand < 0.25) return 'a-bright';
+    if (rand < 0.60) return 'a-normal';
+    return 'a-dim';
+  }
+
+  function generateAlienBlock() {
+    let html = `<span class="${getStyleClass()}">`;
+    const len = Math.floor(Math.random() * 50) + 15;
+    for (let i = 0; i < len; i++) {
+      html += ALIEN_PATTERNS[Math.floor(Math.random() * ALIEN_PATTERNS.length)];
+    }
+    html += '</span>';
+    return html;
+  }
+
+  function initialFullDump() {
+    let initialBatch = '';
+    for (let i = 0; i < 400; i++) {
+      initialBatch += generateAlienBlock();
+    }
+    matrix.innerHTML = initialBatch;
+  }
+
+  // --- BUCLE DE RENDERIZADO ESTROBOSCÓPICO ---
+  function fastDumpStep() {
+    if (currentState === 'dumping') {
+      document.body.className = '';
+
+      let batch = '';
+      for (let i = 0; i < 45; i++) {
+        batch += generateAlienBlock();
+      }
+      matrix.insertAdjacentHTML('beforeend', batch);
+
+      if (Math.random() < 0.8) playDumpNoise();
+
+      if (matrix.childNodes.length > 1500) {
+        for (let i = 0; i < 150; i++) {
+          if (matrix.firstChild) matrix.removeChild(matrix.firstChild);
+        }
+      }
+    } else if (currentState === 'frozen') {
+      // Estroboscopio puro de alta velocidad y flash visual
+      if (Math.random() < 0.7) {
+        document.body.classList.add('hardware-freeze-glitch');
+        playMonolithicStrobeNoise();
+      } else {
+        document.body.classList.remove('hardware-freeze-glitch');
+      }
+
+      if (Math.random() < 0.5) {
+        document.body.classList.add('random-invert');
+      } else {
+        document.body.classList.remove('random-invert');
+      }
+    }
+
+    const nextInterval = currentState === 'dumping' ? (Math.floor(Math.random() * 8) + 1) : 15;
+    setTimeout(fastDumpStep, nextInterval);
+  }
+
+  function asyncStateController() {
+    if (currentState === 'dumping') {
+      currentState = 'frozen';
+      const freezeTime = Math.floor(Math.random() * 400) + 800; // Transiciones estroboscópicas más cortas y agresivas
+      setTimeout(asyncStateController, freezeTime);
+    } else {
+      currentState = 'dumping';
+      const dumpTime = Math.floor(Math.random() * 500) + 100;
+      setTimeout(asyncStateController, dumpTime);
+    }
+  }
+
+  // --- AUTOPLAY Y ARRANQUE DIRECTO ---
+  function triggerStart() {
+    initAudio();
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+  }
+
+  window.addEventListener('click', triggerStart);
+  window.addEventListener('keydown', triggerStart);
+  window.addEventListener('touchstart', triggerStart);
+
+  window.addEventListener('DOMContentLoaded', () => {
+    initAudio();
+    initialFullDump();
+    fastDumpStep();
+    asyncStateController();
+    setTimeout(triggerStart, 100);
+  });
+</script>
+</body>
+</html>

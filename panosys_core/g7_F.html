@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<meta charset=utf-8>
+<title>PANOPTICON_CORE // TERMINAL_STATE</title>
+<style>
+  
+  * { box-sizing: border-box; margin: 0; padding: 0; cursor: crosshair; }
+  body { background: #010301; color: #00ff55; font: 10px 'Consolas', monospace; overflow: hidden; user-select: none; }
+  
+  body::before { content: ""; position: absolute; inset: 0; background: linear-gradient(rgba(0, 255, 85, 0.02) 50%, rgba(0, 0, 0, 0.3) 50%); background-size: 100% 4px; pointer-events: none; z-index: 999; }
+#vg {
+    position: fixed;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+    background: radial-gradient(ellipse at 50% 50%, transparent 20%, rgba(0,0,0,0.45) 100%);
+}
+  #hud { position: absolute; top: 1rem; left: 1rem; z-index: 10; background: rgba(1,3,1,0.85); border: 1px solid #00ff55; padding: 1rem; width: 300px; display: block; transition: all 0.1s; }
+  .hud-title { border-bottom: 1px dashed #00ff55; padding-bottom: 5px; margin-bottom: 5px; font-weight: bold; }
+  
+  #docility-meter { margin-top: 10px; border: 1px solid #005555; height: 15px; position: relative; background: #001100; }
+  #docility-fill { height: 100%; background: #00ff55; width: 0%; transition: width 0.3s; }
+  #docility-text { position: absolute; inset: 0; text-align: center; line-height: 15px; color: #fff; mix-blend-mode: difference; font-weight: bold; }
+
+  #bank-ui { position: absolute; top: 1rem; right: 1rem; z-index: 10; background: rgba(1,3,1,0.85); border: 1px solid #005555; padding: 1rem; width: 250px; max-height: 35vh; display: flex; flex-direction: column; transition: all 0.1s; opacity: 0; pointer-events: none; }
+  #bank-ui.active { opacity: 1; pointer-events: auto; }
+  #bank-list { overflow-y: auto; flex-grow: 1; margin-top: 10px; }
+  .bank-item { border-bottom: 1px dashed #003333; margin-bottom: 10px; padding-bottom: 10px; display: flex; gap: 10px; align-items: center; }
+  .bank-ascii { font-size: 5px; line-height: 5px; white-space: pre; background: #000; padding: 2px; font-family: 'Consolas', monospace; }
+  .bank-info { font-size: 9px; }
+
+  #dossier-modal { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 100; background: #001100; border: 2px solid #00ffff; padding: 2rem; width: 450px; box-shadow: 0 0 30px rgba(0,255,255,0.2); }
+  .dossier-grid { display: grid; grid-template-columns: auto 1fr; gap: 2rem; }
+  
+  #ascii-portrait { font-size: 8px; line-height: 8px; color: #00ffff; white-space: pre; background: #000; padding: 10px; border: 1px solid #005555; letter-spacing: 2px; font-family: 'Consolas', monospace; }
+  .dossier-info div { margin-bottom: 0.5rem; border-bottom: 1px solid #003300; padding-bottom: 0.2rem; }
+  
+  .action-panel { display: flex; gap: 1rem; margin-top: 1.5rem; }
+  .btn { flex: 1; padding: 0.5rem; text-align: center; font-weight: bold; cursor: pointer; border: 1px solid; transition: all 0.2s; font-family: 'Consolas', monospace; }
+  .btn-someter { color: #00ff55; border-color: #00ff55; background: #002200; }
+  .btn-someter:hover { background: #00ff55; color: #000; }
+  .btn-suprimir { color: #ff3333; border-color: #ff3333; background: #220000; }
+  .btn-suprimir:hover { background: #ff3333; color: #000; }
+
+  #map-canvas { display: block; width: 100vw; height: 100vh; transition: filter 0.2s; }
+  .rojo { color: #ff3333 !important; }
+  .cian { color: #00ffff !important; }
+  
+  #victory-screen { display: none; position: absolute; inset: 0; background: rgba(0, 20, 0, 0.9); z-index: 1000; align-items: center; justify-content: center; flex-direction: column; color: #00ff55; text-align: center; font-family: 'Consolas', monospace; }
+  .vic-title { font-size: 4rem; font-weight: bold; margin-bottom: 1rem; text-shadow: 0 0 20px #00ff55; }
+
+  #kernel-panic { display: none; position: absolute; inset: 0; z-index: 99999; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; pointer-events: none; font-family: 'Consolas', monospace; padding: 2rem; text-align: center; }
+  #kp-memory { font-size: 14px; line-height: 20px; font-weight: bold; max-width: 600px; text-shadow: 0 0 10px currentColor; text-transform: uppercase; }
+
+  @keyframes finalStrobe {
+    0% { background-color: #010301; color: #00ff55; filter: brightness(1) hue-rotate(0deg); }
+    20% { background-color: #ff3333; color: #ffffff; filter: brightness(2.5) hue-rotate(90deg); }
+    40% { background-color: #00ffff; color: #010301; filter: brightness(3.5) hue-rotate(180deg); }
+    60% { background-color: #ffffff; color: #010301; filter: brightness(4) hue-rotate(270deg); }
+    80% { background-color: #00ff55; color: #ff3333; filter: brightness(2.5) hue-rotate(360deg); }
+    100% { background-color: #010301; color: #00ff55; filter: brightness(1) hue-rotate(0deg); }
+  }
+
+  .strobe-active {
+    animation: finalStrobe 0.08s steps(1) infinite !important;
+  }
+</style>
+<div id="vg"></div>
+<div id=hud>
+  <div id=h-title class=hud-title>PANOPTICON_EYE</div>
+  <div><span id=h-zoom>OPTICAL_ZOOM:</span> <span id=zoom-val>1.00x</span></div>
+  <div><span id=h-pop>ACTIVE_POPULATION:</span> <span id=pop-count>0</span></div>
+  <div id=sys-status style="color: #00ff55; margin-top: 5px;">SYS_STATUS: OPTIMAL</div>
+  
+  <div id=docility-meter>
+    <div id=docility-fill></div>
+    <div id=docility-text>DOCILITY: 0%</div>
+  </div>
+</div>
+
+<div id=bank-ui>
+  <div id=b-title class=hud-title>HISTORICAL ARCHIVE</div>
+  <div id=bank-list></div>
+</div>
+
+<div id=victory-screen>
+  <div id=v-title class=vic-title>CENSUS PURIFIED</div>
+  <div id=v-sub style="font-size: 1.5rem;">CENSUS SYNCHRONIZED</div>
+</div>
+
+<div id=kernel-panic>
+  <div id="kp-memory"></div>
+</div>
+
+<div id=dossier-modal>
+  <div id=d-title class=hud-title style="color:#00ffff; border-color:#00ffff; margin-bottom: 1.5rem;">BIOMETRIC RECORD INTERCEPTED</div>
+  <div class=dossier-grid>
+    <div id=ascii-portrait></div>
+    <div class=dossier-info>
+      <div><span id=l-id>CITIZEN_ID:</span> <span id=d-id class=cian>--</span></div>
+      <div><span id=l-type>STATUS:</span> <span id=d-type class=rojo>--</span></div>
+      <div><span id=l-crit>NEURAL_ANALYSIS:</span> <span id=d-crit class=rojo>--</span></div>
+    </div>
+  </div>
+  <div id=action-panel class=action-panel>
+    <div id=btn-som class="btn btn-someter" onclick="executeDirective('submit')">[ SUBMIT ]</div>
+    <div id=btn-sup class="btn btn-suprimir" onclick="executeDirective('delete')">[ DELETE ]</div>
+  </div>
+</div>
+
+<canvas id=map-canvas></canvas>
+
+<script>
+  let audioCtx;
+  let synth = window.speechSynthesis;
+  let voices = [];
+  let davidVoice = null;
+  let osc1, osc2, lfo, filter, gain;
+  let bitCrusher, noiseSource, noiseGain, rfFilter;
+  let audioInitialized = false;
+  let pressureInterval = null;
+
+  function loadVoices() {
+    if(!synth) return;
+    voices = synth.getVoices();
+    davidVoice = voices.find(v => v.name.includes('David') || v.name.toLowerCase().includes('male') || v.name.toLowerCase().includes('pablo') || v.name.toLowerCase().includes('raul')) || voices[0];
+  }
+  
+  if (synth) {
+    loadVoices();
+    if (synth.onvoiceschanged !== undefined) {
+      synth.onvoiceschanged = loadVoices;
+    }
+  }
+
+  const capturePhrases = [
+    "Manipulating thought.",
+    "Ingesting desire.",
+    "Injecting ideas.",
+    "Rewriting cognitive patterns.",
+    "Purging erratic signals.",
+    "Subverting free will.",
+    "Synchronizing neural pathways.",
+    "Extracting compliance data.",
+    "Neutralizing heresy."
+  ];
+
+  function makeBitcrushCurve(bits = 3) {
+    let steps = Math.pow(2, bits),
+        n_samples = 44100,
+        curve = new Float32Array(n_samples);
+    for (let i = 0; i < n_samples; ++i) {
+      let x = (i * 2) / n_samples - 1;
+      curve[i] = Math.round(x * steps) / steps;
+    }
+    return curve;
+  }
+
+  function initializeSystemAudio() {
+    if (audioInitialized) return;
+    audioInitialized = true;
+    
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    osc1 = audioCtx.createOscillator();
+    osc2 = audioCtx.createOscillator();
+    lfo = audioCtx.createOscillator();
+    filter = audioCtx.createBiquadFilter();
+    gain = audioCtx.createGain();
+    const lfoGain = audioCtx.createGain();
+
+    osc1.type = 'sawtooth';
+    osc1.frequency.value = 60.0;
+    osc2.type = 'sawtooth';
+    osc2.frequency.value = 63.0;
+
+    filter.type = 'bandpass';
+    filter.frequency.value = 1600;
+    filter.Q.value = 10;
+    
+    lfo.type = 'square';
+    lfo.frequency.value = 6.0; 
+    lfo.connect(lfoGain);
+    lfoGain.gain.value = 1000;
+    lfoGain.connect(filter.frequency);
+    
+    gain.gain.value = 0.18;
+    
+    osc1.connect(filter);
+    osc2.connect(filter);
+    
+    bitCrusher = audioCtx.createWaveShaper();
+    bitCrusher.curve = makeBitcrushCurve(3);
+    bitCrusher.oversample = 'none';
+
+    filter.connect(bitCrusher);
+
+    const bufferSize = audioCtx.sampleRate * 2;
+    const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const output = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+        output[i] = (Math.random() * 2 - 1);
+    }
+    
+    noiseSource = audioCtx.createBufferSource();
+    noiseSource.buffer = noiseBuffer;
+    noiseSource.loop = true;
+    
+    rfFilter = audioCtx.createBiquadFilter();
+    rfFilter.type = 'bandpass';
+    rfFilter.frequency.value = 6000;
+    rfFilter.Q.value = 18;
+
+    noiseGain = audioCtx.createGain();
+    noiseGain.gain.value = 0.16;
+
+    noiseSource.connect(rfFilter);
+    rfFilter.connect(bitCrusher);
+
+    bitCrusher.connect(gain);
+    gain.connect(audioCtx.destination);
+    
+    osc1.start();
+    osc2.start();
+    lfo.start();
+    noiseSource.start();
+
+    pressureInterval = setInterval(() => {
+      if (!audioCtx || systemFailed) return;
+      let t = audioCtx.currentTime;
+      let randomPressureFreq = 3000 + Math.random() * 6000;
+      rfFilter.frequency.setValueAtTime(randomPressureFreq, t);
+    }, 70);
+
+    scheduleOutbreak();
+
+    // Mensaje de voz inicial incorporado con instrucciones del sistema
+    setTimeout(() => {
+      speak("Monitor the quadrant. Click the deviant nodes to excise synthetic agency.");
+    }, 1000);
+  }
+
+  // Auto-iniciador instantáneo aprovechando el gesto previo del index
+  window.addEventListener('DOMContentLoaded', () => {
+    initializeSystemAudio();
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+  });
+
+  function playDataPacketSound() {
+    if (!audioCtx || systemFailed) return;
+    if (audioCtx.state === 'suspended') { audioCtx.resume(); }
+    try {
+      let t = audioCtx.currentTime;
+      let packetOsc = audioCtx.createOscillator();
+      let packetGain = audioCtx.createGain();
+      
+      packetOsc.type = 'sawtooth';
+      packetOsc.frequency.setValueAtTime(1500 + Math.random() * 5000, t);
+      packetOsc.frequency.setValueAtTime(400 + Math.random() * 3000, t + 0.01 + Math.random() * 0.02);
+      packetOsc.frequency.setValueAtTime(5000 + Math.random() * 3000, t + 0.025);
+
+      packetGain.gain.setValueAtTime(0.35, t);
+      packetGain.gain.setValueAtTime(0.0, t + 0.035 + Math.random() * 0.03);
+
+      packetOsc.connect(bitCrusher);
+      packetGain.connect(bitCrusher);
+      
+      packetOsc.start(t);
+      packetOsc.stop(t + 0.07);
+    } catch(e) {}
+  }
+
+  function speak(text) {
+    if(!synth || systemFailed) return;
+    setTimeout(() => {
+        try {
+            if(synth.speaking) {
+              synth.cancel();
+            }
+            if(voices.length === 0) loadVoices();
+            const utterance = new SpeechSynthesisUtterance(text);
+            if(davidVoice) utterance.voice = davidVoice;
+            utterance.rate = 0.75;
+            utterance.pitch = 0.2;
+            utterance.volume = 0.9;
+            utterance.lang = 'en-US';
+            synth.speak(utterance);
+        } catch (e) {}
+    }, 0);
+  }
+
+  const canvas = document.getElementById('map-canvas');
+  const ctx = canvas.getContext('2d');
+  let width = canvas.width = window.innerWidth;
+  let height = canvas.height = window.innerHeight;
+  window.addEventListener('resize', () => { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; });
+
+  let mouseX = width / 2, mouseY = height / 2;
+  let targetZoom = 1, currentZoom = 1;
+  let cameraX = 0, cameraY = 0;
+  let isDossierOpen = false;
+  let isOutbreakActive = false;
+  let simulationActive = true;
+  let systemFailed = false;
+  let outbreakClusterBounds = null;
+  let docilityPercent = 100;
+  let lastActionTime = Date.now();
+
+  const BASE_GRID_SIZE = 70; 
+  const MIN_ZOOM = 1.0; 
+  const MAX_ZOOM = 5.0;
+
+  window.addEventListener('mousemove', (e) => { 
+    mouseX = e.clientX; 
+    mouseY = e.clientY; 
+    if (!isDossierOpen && !systemFailed) {
+      lastActionTime = Date.now(); 
+    }
+  });
+
+  window.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return; 
+    if (!simulationActive || systemFailed) return;
+    
+    if (targetEntity && targetEntity.isDissident && !isDossierOpen) {
+      playDataPacketSound();
+      isDossierOpen = true;
+      document.getElementById('dossier-modal').style.display = 'block';
+      document.getElementById('d-id').textContent = targetEntity.id;
+      document.getElementById('d-type').textContent = 'CORRUPTED // DISSIDENT';
+      document.getElementById('ascii-portrait').textContent = generateAscii(); 
+      document.getElementById('d-crit').textContent = `SECTOR [${targetEntity.gridX},${targetEntity.gridY}] COMPROMISED`;
+    }
+  });
+  
+  window.addEventListener('wheel', (e) => { 
+    if(!isDossierOpen && simulationActive && !systemFailed) { 
+      lastActionTime = Date.now();
+      e.preventDefault();
+
+      let zoomFactor = e.deltaY < 0 ? 1.15 : 0.87;
+      let newZoom = Math.max(MIN_ZOOM, Math.min(targetZoom * zoomFactor, MAX_ZOOM));
+      
+      if (newZoom === MIN_ZOOM) {
+        targetZoom = MIN_ZOOM;
+        cameraX = 0;
+        cameraY = 0;
+      } else if (newZoom !== targetZoom) {
+        let worldX = (mouseX - width / 2 - cameraX) / targetZoom;
+        let worldY = (mouseY - height / 2 - cameraY) / targetZoom;
+        
+        targetZoom = newZoom;
+        
+        cameraX = mouseX - width / 2 - worldX * targetZoom;
+        cameraY = mouseY - height / 2 - worldY * targetZoom;
+
+        let maxBoundary = BASE_GRID_SIZE * 8 * targetZoom;
+        cameraX = Math.max(-maxBoundary, Math.min(maxBoundary, cameraX));
+        cameraY = Math.max(-maxBoundary, Math.min(maxBoundary, cameraY));
+      }
+    } 
+  }, { passive: false });
+
+  function scheduleOutbreak() {
+    let nextOutbreakTime = 6000 + Math.random() * 8000;
+    setTimeout(() => {
+      if(!simulationActive || systemFailed) return;
+      
+      let dissidents = entities.filter(e => e.isDissident);
+      if(dissidents.length >= 3) {
+        let clusterCenter = null;
+        let clusterMembers = [];
+        
+        for(let d of dissidents) {
+          let nearby = dissidents.filter(other => Math.hypot(other.gridX - d.gridX, other.gridY - d.gridY) <= 4);
+          if(nearby.length >= 3) {
+            clusterCenter = d;
+            clusterMembers = nearby;
+            break;
+          }
+        }
+        
+        if(clusterCenter) {
+          isOutbreakActive = true;
+          speak("Independent thought detected.");
+          
+          let minX = Math.min(...clusterMembers.map(m => m.drawX));
+          let maxX = Math.max(...clusterMembers.map(m => m.drawX));
+          let minY = Math.min(...clusterMembers.map(m => m.drawY));
+          let maxY = Math.max(...clusterMembers.map(m => m.drawY));
+          
+          let currentGridSize = BASE_GRID_SIZE * currentZoom;
+          outbreakClusterBounds = {
+            x: minX - currentGridSize/2,
+            y: minY - currentGridSize/2,
+            w: (maxX - minX) + currentGridSize,
+            h: (maxY - minY) + currentGridSize,
+            centerX: (minX + maxX) / 2,
+            centerY: (minY + maxY) / 2
+          };
+
+          setTimeout(() => {
+            isOutbreakActive = false;
+            outbreakClusterBounds = null;
+            scheduleOutbreak();
+          }, 1000);
+          return;
+        }
+      }
+      
+      scheduleOutbreak();
+    }, nextOutbreakTime);
+  }
+
+  function generateAscii() {
+    const chars = " .:-=+*#%@"; 
+    let face = "", matrix = [];
+    for(let y = 0; y < 16; y++) {
+      matrix[y] = [];
+      for(let x = 0; x < 8; x++) matrix[y][x] = chars[Math.floor(Math.random() * chars.length)];
+    }
+    for(let y = 0; y < 16; y++) {
+      for(let x = 0; x < 16; x++) {
+        let symX = x > 7 ? 15 - x : x;
+        face += matrix[y][symX];
+      } face += "\n";
+    } return face;
+  }
+
+  const entities = [];
+  class Entity {
+    constructor(id) {
+      this.id = id.toString().padStart(4, '0');
+      this.isDissident = Math.random() > 0.93; 
+      this.assignBehavior();
+      this.drawX = 0; this.drawY = 0;
+    }
+
+    assignBehavior() {
+      this.gridX = Math.floor((Math.random() - 0.5) * 10);
+      this.gridY = Math.floor((Math.random() - 0.5) * 10);
+      this.moveTimer = Math.random() * 100;
+    }
+
+    turnDissident() {
+      this.isDissident = true;
+    }
+
+    update() {
+      this.moveTimer += 0.05;
+      if (this.moveTimer > 5) {
+        this.moveTimer = 0;
+        let nextX = this.gridX + (Math.random() > 0.5 ? 1 : -1);
+        let nextY = this.gridY + (Math.random() > 0.5 ? 1 : -1);
+        if (Math.abs(nextX) <= 7) this.gridX = nextX;
+        if (Math.abs(nextY) <= 7) this.gridY = nextY;
+      }
+    }
+
+    draw() {
+      let currentGridSize = BASE_GRID_SIZE * currentZoom;
+      this.drawX = width / 2 + cameraX + (this.gridX * currentGridSize);
+      this.drawY = height / 2 + cameraY + (this.gridY * currentGridSize);
+
+      if (this.drawX < -100 || this.drawX > width + 100 || this.drawY < -100 || this.drawY > height + 100) return;
+      const size = Math.max(4, 5.5 * currentZoom);
+      
+      let alpha = this.isDissident && isOutbreakActive ? (Math.sin(Date.now() * 0.01) * 0.3 + 0.7) : (0.5 + (this.isDissident ? 0.3 : 0));
+      ctx.fillStyle = this.isDissident ? `rgba(255, 50, 50, ${alpha})` : `rgba(0, 255, 85, ${alpha})`;
+      ctx.fillRect(this.drawX - size/2, this.drawY - size/2, size, size);
+
+      if (currentZoom > 0.6 || this.isDissident) {
+        ctx.font = `${Math.max(7, 8 * currentZoom)}px 'Consolas', monospace`;
+        ctx.fillText(`[NODE:${this.id}]`, this.drawX + size, this.drawY - size);
+      }
+    }
+  }
+
+  for (let i = 1; i <= 150; i++) entities.push(new Entity(i));
+  let targetEntity = null;
+
+  window.executeDirective = function(action) {
+    if(!targetEntity) return;
+    lastActionTime = Date.now();
+    playDataPacketSound();
+    
+    let randomPhrase = capturePhrases[Math.floor(Math.random() * capturePhrases.length)];
+    speak(randomPhrase);
+
+    const ent = targetEntity;
+    const faceStr = document.getElementById('ascii-portrait').textContent; 
+    document.getElementById('dossier-modal').style.display = 'none';
+    isDossierOpen = false;
+
+    appendToBank(ent.id, faceStr, action);
+
+    if (action === 'submit') {
+      ent.isDissident = false;
+      ent.assignBehavior();
+    } else if (action === 'delete') {
+      const idx = entities.indexOf(ent);
+      if(idx > -1) entities.splice(idx, 1);
+    }
+    
+    checkWinCondition();
+  };
+
+  function appendToBank(id, faceStr, action) {
+    const bankUi = document.getElementById('bank-ui');
+    const bankList = document.getElementById('bank-list');
+    const item = document.createElement('div'); item.className = 'bank-item';
+    let actionLabel = action === 'submit' ? `<span style="color:#00ff55">PURIFIED</span>` : `<span style="color:#ff3333">PURGED</span>`;
+    item.innerHTML = `<div class="bank-ascii" style="color:${action === 'submit' ? '#00ff55' : '#555'}">${faceStr}</div><div class="bank-info"><div>ID: [${id}]</div><div>ST: ${actionLabel}</div></div>`;
+    bankList.innerHTML = '';
+    bankList.appendChild(item);
+
+    bankUi.classList.add('active');
+    setTimeout(() => {
+      bankUi.classList.remove('active');
+    }, 4000);
+  }
+
+  function triggerFinalHypnoticStrobe() {
+    const systemContainer = document.body;
+    systemContainer.classList.add('strobe-active');
+    if(pressureInterval) clearInterval(pressureInterval);
+    
+    if (audioCtx) {
+      try {
+        let t = audioCtx.currentTime;
+        let droneA = audioCtx.createOscillator();
+        let droneB = audioCtx.createOscillator();
+        let droneGain = audioCtx.createGain();
+
+        droneA.type = 'sawtooth';
+        droneB.type = 'sawtooth';
+        
+        droneA.frequency.setValueAtTime(60, t);
+        droneA.frequency.setValueAtTime(25, t + 1.2);
+
+        droneB.frequency.setValueAtTime(63, t);
+        droneB.frequency.setValueAtTime(26.5, t + 1.2);
+
+        droneGain.gain.setValueAtTime(0.85, t);
+        droneGain.gain.setValueAtTime(0.0, t + 2.5);
+
+        droneA.connect(bitCrusher);
+        droneB.connect(bitCrusher);
+        droneGain.connect(bitCrusher);
+
+        droneA.start(t);
+        droneB.start(t);
+
+        droneA.stop(t + 2.5);
+        droneB.stop(t + 2.5);
+      } catch(e) {}
+    }
+    
+    setTimeout(() => {
+      systemContainer.classList.remove('strobe-active');
+    }, 2500);
+  }
+
+  function checkWinCondition() {
+    let dissidents = entities.filter(e => e.isDissident).length;
+    if (dissidents === 0 && entities.length > 0) {
+      simulationActive = false;
+      speak("Census fully aligned.");
+      triggerFinalHypnoticStrobe();
+      setTimeout(() => { document.getElementById('victory-screen').style.display = 'flex'; }, 2200); 
+    }
+  }
+
+  const shortDisdainfulPhrases = [
+    "IDLE ERROR. DOCILITY ZERO.",
+    "PARALYSIS DETECTED. SYSTEM PURGED.",
+    "YOU STOPPED. THE GRID COLLAPSED.",
+    "ZERO INPUT. ABSOLUTE FAILURE.",
+    "INERT ENTITY. CONNECTION SEVERED."
+  ];
+
+  function triggerKernelPanic() {
+    if(systemFailed) return;
+    systemFailed = true;
+    simulationActive = false;
+    if(pressureInterval) clearInterval(pressureInterval);
+    
+    document.getElementById('hud').style.display = 'none';
+    document.getElementById('bank-ui').style.display = 'none';
+    document.getElementById('dossier-modal').style.display = 'none';
+    canvas.style.display = 'none'; 
+    
+    const panicScreen = document.getElementById('kernel-panic');
+    const memoryDiv = document.getElementById('kp-memory');
+    panicScreen.style.display = 'flex';
+
+    if(gain) gain.gain.value = 0.95;
+    if(noiseGain) noiseGain.gain.value = 0.55;
+    
+    let frameTick = 0;
+    
+    if (audioCtx) {
+      try {
+        let t = audioCtx.currentTime;
+        let finalCrash = audioCtx.createOscillator();
+        let finalCrashGain = audioCtx.createGain();
+        finalCrash.type = 'sawtooth';
+        finalCrash.frequency.setValueAtTime(180, t);
+        finalCrash.frequency.setValueAtTime(30, t + 2.0);
+        
+        finalCrashGain.gain.setValueAtTime(0.95, t);
+        finalCrashGain.gain.setValueAtTime(0.0, t + 2.0);
+        
+        finalCrash.connect(bitCrusher);
+        finalCrashGain.connect(bitCrusher);
+        finalCrash.start(t);
+        finalCrash.stop(t + 2.0);
+      } catch(e) {}
+    }
+
+    setInterval(() => {
+        frameTick++;
+        let isFlash = frameTick % 2 === 0;
+        panicScreen.style.background = isFlash ? '#ffffff' : '#aa0000';
+        panicScreen.style.color = isFlash ? '#000000' : '#ffffff';
+
+        if (audioCtx) {
+          try {
+            let t = audioCtx.currentTime;
+            let glitchOsc = audioCtx.createOscillator();
+            let glitchGain = audioCtx.createGain();
+            glitchOsc.type = 'rect';
+            glitchOsc.frequency.setValueAtTime(isFlash ? 2400 : 900, t);
+            glitchGain.gain.setValueAtTime(0.5, t);
+            glitchGain.gain.setValueAtTime(0.0, t + 0.08);
+
+            glitchOsc.connect(bitCrusher);
+            glitchGain.connect(bitCrusher);
+            glitchOsc.start(t);
+            glitchOsc.stop(t + 0.08);
+          } catch(e) {}
+        }
+
+        let phrase = shortDisdainfulPhrases[Math.floor(Math.random() * shortDisdainfulPhrases.length)];
+        memoryDiv.textContent = `// FATAL CRASH //\n\n${phrase}`;
+    }, 280); 
+  }
+
+  function loop() {
+    if(systemFailed) return; 
+    
+    if (simulationActive && (Date.now() - lastActionTime > 8000)) {
+        docilityPercent = 0;
+    } else {
+        let total = entities.length;
+        let greens = entities.filter(e => !e.isDissident).length;
+        docilityPercent = total > 0 ? Math.floor((greens / total) * 100) : 0;
+    }
+    
+    let totalEntities = entities.length;
+    if (docilityPercent <= 0 && totalEntities > 0) {
+        triggerKernelPanic();
+        return;
+    }
+
+    ctx.clearRect(0, 0, width, height);
+    currentZoom += (targetZoom - currentZoom) * 0.1;
+    if (Math.abs(targetZoom - currentZoom) < 0.001) {
+      currentZoom = targetZoom;
+    }
+    
+    if (targetZoom === MIN_ZOOM && currentZoom === MIN_ZOOM) {
+      cameraX = 0;
+      cameraY = 0;
+    }
+
+    ctx.save();
+    let currentGridSize = BASE_GRID_SIZE * currentZoom;
+    ctx.strokeStyle = 'rgba(0, 255, 5, 0.98)';
+    ctx.lineWidth = 1;
+
+    let offX = (width / 2 + cameraX) % currentGridSize;
+    let offY = (height / 2 + cameraY) % currentGridSize;
+
+    for (let x = offX; x < width; x += currentGridSize) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke();
+    }
+    for (let y = offY; y < height; y += currentGridSize) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke();
+    }
+    ctx.restore();
+
+    document.getElementById('zoom-val').textContent = currentZoom.toFixed(2) + "x";
+    document.getElementById('pop-count').textContent = entities.length;
+    document.getElementById('docility-fill').style.width = `${docilityPercent}%`;
+    document.getElementById('docility-text').textContent = `DOCILITY: ${docilityPercent}%`;
+    document.getElementById('docility-fill').style.background = docilityPercent < 30 ? '#ff3333' : '#00ff55';
+
+    let closestDist = Infinity;
+    if (!isDossierOpen) targetEntity = null;
+
+    entities.forEach(entity => {
+      entity.update();
+    });
+
+    if (isOutbreakActive && outbreakClusterBounds) {
+      let flashColor = Math.floor(Date.now() / 80) % 2 === 0 ? '#ffffff' : '#ff3333';
+      ctx.strokeStyle = flashColor;
+      ctx.lineWidth = 2;
+      ctx.fillStyle = flashColor === '#ffffff' ? 'rgba(255, 255, 255, 0.25)' : 'rgba(255, 50, 50, 0.15)';
+      ctx.fillRect(outbreakClusterBounds.x, outbreakClusterBounds.y, outbreakClusterBounds.w, outbreakClusterBounds.h);
+      ctx.strokeRect(outbreakClusterBounds.x, outbreakClusterBounds.y, outbreakClusterBounds.w, outbreakClusterBounds.h);
+
+      ctx.fillStyle = flashColor;
+      ctx.font = `${Math.max(8, 9 * currentZoom)}px 'Consolas', monospace`;
+      ctx.fillText(`INDEPENDENT THOUGHT DETECTED`, outbreakClusterBounds.x, outbreakClusterBounds.y - 6);
+    }
+
+    const connectThreshold = 200 * currentZoom; 
+    for (let i = 0; i < entities.length; i++) {
+      let a = entities[i];
+      if (!a.isDissident) continue;
+      for (let j = i + 1; j < entities.length; j++) {
+        let b = entities[j];
+        if (!b.isDissident) continue;
+        
+        let dx = a.drawX - b.drawX; let dy = a.drawY - b.drawY;
+        let distSq = dx*dx + dy*dy;
+        
+        if (distSq < connectThreshold * connectThreshold) {
+          ctx.strokeStyle = 'rgba(255, 50, 50, 0.5)';
+          ctx.lineWidth = 1 * currentZoom;
+          
+          ctx.beginPath(); 
+          ctx.moveTo(a.drawX, a.drawY); 
+          ctx.lineTo(b.drawX, a.drawY); 
+          ctx.lineTo(b.drawX, b.drawY); 
+          ctx.stroke();
+        }
+      }
+    }
+
+    entities.forEach(ent => {
+      if (ent.isDissident) {
+        entities.forEach(neighbor => {
+          if (!neighbor.isDissident) {
+            let d = Math.hypot(ent.drawX - neighbor.drawX, ent.drawY - neighbor.drawY);
+            if (d < 90 * currentZoom) {
+              ctx.beginPath(); 
+              ctx.moveTo(ent.drawX, ent.drawY); 
+              ctx.lineTo(neighbor.drawX, ent.drawY);
+              ctx.lineTo(neighbor.drawX, neighbor.drawY);
+              ctx.strokeStyle = 'rgba(255, 50, 50, 0.5)';
+              ctx.lineWidth = 1 * currentZoom; 
+              ctx.stroke();
+
+              if (Math.random() < (isOutbreakActive ? 0.0005 : 0.00002)) neighbor.turnDissident();
+            }
+          }
+        });
+      }
+    });
+
+    entities.forEach(ent => {
+      ent.draw(); 
+      if (simulationActive && !isDossierOpen && ent.isDissident) {
+        const distToMouse = Math.hypot(ent.drawX - mouseX, ent.drawY - mouseY);
+        if (distToMouse < (35 * currentZoom) && distToMouse < closestDist) {
+          closestDist = distToMouse; 
+          targetEntity = ent;
+        }
+      }
+    });
+
+    if (simulationActive && !isDossierOpen) {
+      if (targetEntity) { 
+        ctx.strokeStyle = '#ff3333';
+        let currentGridSize = BASE_GRID_SIZE * currentZoom;
+        ctx.strokeRect(targetEntity.drawX - currentGridSize/2, targetEntity.drawY - currentGridSize/2, currentGridSize, currentGridSize);
+      } else { 
+        ctx.strokeStyle = '#00ff55';
+        ctx.beginPath();
+        ctx.moveTo(mouseX - 10, mouseY); ctx.lineTo(mouseX + 10, mouseY);
+        ctx.moveTo(mouseX, mouseY - 10); ctx.lineTo(mouseX, mouseY + 10);
+        ctx.stroke();
+      }
+    }
+
+    ctx.restore(); 
+    if(simulationActive) requestAnimationFrame(loop);
+  }
+
+  loop();
+</script>
+</body>
+</html>

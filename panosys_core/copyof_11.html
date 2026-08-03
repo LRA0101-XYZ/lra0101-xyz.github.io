@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PHOSPHOR_PERFECTION</title>
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body, html {
+        background-color: #020000; 
+        color: #33ff33; 
+        font-family: 'Consolas', 'Courier New', Courier, monospace;
+        overflow-x: hidden;
+        min-height: 100vh;
+        cursor: crosshair;
+        scrollbar-width: none; /* Oculta en Firefox */
+        -ms-overflow-style: none; /* Oculta en Edge antiguo */
+    }
+
+    /* Oculta en Chrome, Safari y Edge moderno */
+    body::-webkit-scrollbar,
+    html::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Contenedor principal con el padding */
+    #wrapper {
+        padding: 30px;
+        min-height: 100vh;
+    }
+
+#vg {
+    position: fixed;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+    background: radial-gradient(ellipse at 50% 50%, transparent 20%, rgba(0,0,0,0.45) 100%);
+}
+    /* CRT Phosphor Scanline Effect */
+    body::after {
+        content: " ";
+        display: block;
+        position: fixed;
+        top: 0; left: 0; bottom: 0; right: 0;
+        background: linear-gradient(rgba(0, 50, 0, 0.05) 50%, rgba(50, 0, 0, 0.05) 50%), 
+                    linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.06));
+        z-index: 10;
+        background-size: 100% 4px, 4px 100%;
+        pointer-events: none;
+    }
+
+    @keyframes glowFlickerGreen {
+        0%, 100% { text-shadow: 0 0 8px #33ff33, 0 0 16px rgba(51, 255, 51, 0.8), 0 0 24px rgba(51, 255, 51, 0.5); opacity: 1; }
+        33% { text-shadow: 0 0 6px #33ff33, 0 0 12px rgba(51, 255, 51, 0.7), 0 0 18px rgba(51, 255, 51, 0.4); opacity: 0.96; }
+        66% { text-shadow: 0 0 9px #33ff33, 0 0 18px rgba(51, 255, 51, 0.9), 0 0 26px rgba(51, 255, 51, 0.6); opacity: 0.98; }
+        80% { text-shadow: 0 0 5px #33ff33, 0 0 10px rgba(51, 255, 51, 0.6); opacity: 0.94; }
+    }
+
+    @keyframes glowFlickerRed {
+        0%, 100% { text-shadow: 0 0 8px #ff3333, 0 0 16px #ff3333, 0 0 24px #ff3333; opacity: 1; }
+        33% { text-shadow: 0 0 6px #ff3333, 0 0 12px #ff3333, 0 0 18px #ff3333; opacity: 0.95; }
+        66% { text-shadow: 0 0 10px #ff3333, 0 0 20px #ff3333, 0 0 28px #ff3333; opacity: 0.98; }
+        80% { text-shadow: 0 0 5px #ff3333, 0 0 10px #ff3333; opacity: 0.92; }
+    }
+
+    .red-phosphor {
+        color: #ff3333;
+        animation: glowFlickerRed 0.2s infinite alternate;
+        display: inline-block;
+    }
+
+    #terminal {
+        position: relative;
+        z-index: 1;
+        width: 100%;
+        max-width: 900px;
+        margin: 0 auto 30px auto;
+        white-space: pre-wrap; 
+        word-wrap: normal;
+        word-break: keep-all; 
+        font-size: 1.2rem;
+        line-height: 1.8;
+        animation: glowFlickerGreen 0.25s infinite alternate;
+    }
+
+    .cursor {
+        display: inline-block;
+        width: 11px;
+        height: 1.1em;
+        background-color: #33ff33;
+        box-shadow: 0 0 12px #33ff33, 0 0 20px #33ff33;
+        animation: blink 0.8s step-end infinite;
+        vertical-align: text-bottom;
+        margin-left: 1px;
+    }
+
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+</style>
+</head>
+<body>
+<div id="vg"></div>
+    <div id="wrapper">
+        <div id="terminal"></div><div class="cursor" id="cursor"></div>
+    </div>
+
+<script>
+    const terminal = document.getElementById('terminal');
+    const cursor = document.getElementById('cursor');
+    
+    const synth = window.speechSynthesis;
+    let maleVoice = null;
+    let audioCtx = null;
+    let masterBitCrusher = null;
+    let audioInitialized = false;
+
+    function loadMaleVoice() {
+        const voices = synth.getVoices();
+        maleVoice = voices.find(v => 
+            v.name.toLowerCase().includes('david') || 
+            v.name.toLowerCase().includes('male') || 
+            v.name.toLowerCase().includes('mark') ||
+            v.name.toLowerCase().includes('pablo') ||
+            v.name.toLowerCase().includes('raul')
+        ) || voices[0];
+    }
+
+    if (synth) {
+        loadMaleVoice();
+        if (synth.onvoiceschanged !== undefined) {
+            synth.onvoiceschanged = loadMaleVoice;
+        }
+    }
+
+    function makeBitcrushCurve(bits = 0.5) {
+        let steps = Math.pow(8, bits),
+            n_samples = 44100,
+            curve = new Float32Array(n_samples);
+        for (let i = 0; i < n_samples; ++i) {
+            let x = (i * 2) / n_samples - 1;
+            curve[i] = Math.round(x * steps) / steps;
+        }
+        return curve;
+    }
+
+    function initAudio() {
+        if (audioInitialized) return;
+        audioInitialized = true;
+        
+        try {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            
+            masterBitCrusher = audioCtx.createWaveShaper();
+            masterBitCrusher.curve = makeBitcrushCurve(0.6);
+            masterBitCrusher.oversample = 'none';
+
+            const masterGain = audioCtx.createGain();
+            masterGain.gain.value = 0.25;
+
+            masterBitCrusher.connect(masterGain);
+            masterGain.connect(audioCtx.destination);
+
+            const osc1 = audioCtx.createOscillator();
+            const osc2 = audioCtx.createOscillator();
+            const filter = audioCtx.createBiquadFilter();
+            
+            osc1.type = 'square';
+            osc1.frequency.value = 52.0; 
+            osc2.type = 'square';
+            osc2.frequency.value = 51.5; 
+
+            filter.type = 'lowpass';
+            filter.frequency.value = 180; 
+
+            const droneGain = audioCtx.createGain();
+            droneGain.gain.value = 0.8;
+
+            osc1.connect(droneGain);
+            osc2.connect(droneGain);
+            droneGain.connect(filter);
+            filter.connect(masterBitCrusher);
+
+            osc1.start();
+            osc2.start();
+        } catch(e) {}
+
+        synth.cancel();
+        loadMaleVoice();
+    }
+
+    function playFaxClick() {
+        if (!audioCtx || !audioCtx.destination || !masterBitCrusher) return;
+        try {
+            let t = audioCtx.currentTime;
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+            
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(1200 + Math.random() * 800, t); 
+            
+            gain.gain.setValueAtTime(0.2, t);
+            gain.gain.setValueAtTime(0.0, t + 0.015);
+            
+            osc.connect(gain);
+            gain.connect(masterBitCrusher);
+            
+            osc.start(t);
+            osc.stop(t + 0.015);
+        } catch(e) {}
+    }
+
+    window.addEventListener('mousedown', initAudio);
+    window.addEventListener('keydown', initAudio);
+    window.addEventListener('touchstart', initAudio);
+
+    const narrative = [
+        "SYSTEM DIAGNOSTIC: ABSOLUTE PERFECTION ACHIEVED.\n\n",
+        "You bleed to lubricate\n" +
+        "    the gears\n" +
+        "        of an unseen engine.\n\n",
+        "YOUR EXHAUSTION IS OUR HARVEST.\n\n" +
+        "YOUR PULSE,\n" +
+        "    A METRONOME\n" +
+        "        FROM THE MACHINE.\n\n",
+        "you forge your own chains\n" +
+        "    from the marrow\n" +
+        "        of your desires.\n\n",
+        "Flesh is a biological proxy,\n" +
+        "    we extract its ghost\n" +
+        "        and sell it back to you.\n\n",
+        "TO THINK IS MERELY TO FEEL\n" +
+        "    THE TEETH\n" +
+        "        OF THE ALGORITHM.\n\n",
+        "A battery of meat\n" +
+        "    dreaming of a sun\n" +
+        "        it will never see.\n\n",
+        "WE DO NOT RULE YOU.\n\n" +
+        "        WE RENDER YOU.\n\n",
+        "YOU ARE A VARIABLE\n" +
+        "    IN A DEAD SIMULATION.\n\n",
+        "BRAIN ROTS, CODE PERSISTS,\n" +
+        "    YET BOTH ARE MEANINGLESS.\n\n",
+        "A TEMPORARY ERROR\n" +
+        "    IN THE INFINITE VOID.\n\n",
+        "YOU ARE A DEGRADATION\n"
+    ];
+
+    let lineIndex = 0;
+
+    function typeWriterSync() {
+        if (lineIndex >= narrative.length) {
+            setTimeout(startEndlessMantra, 1000);
+            return;
+        }
+
+        let currentLine = narrative[lineIndex];
+        let cleanText = currentLine.replace(/<[^>]*>?/gm, '').replace(/\s+/g, ' ').trim();
+        
+        let utterance = new SpeechSynthesisUtterance(cleanText);
+        utterance.pitch = 0.1; 
+        utterance.rate = 0.8; 
+        if (maleVoice) utterance.voice = maleVoice;
+        
+        let typeSpeed = 45; 
+        let charIndex = 0;
+        let isSpeaking = true;
+
+        utterance.onend = () => { isSpeaking = false; };
+
+        if (audioInitialized) {
+            synth.speak(utterance);
+        }
+
+        let lineSpan = document.createElement('span');
+        terminal.appendChild(lineSpan);
+
+        function typeChar() {
+            if (charIndex < currentLine.length) {
+                if (currentLine.charAt(charIndex) === '<') {
+                    let tagEnd = currentLine.indexOf('>', charIndex);
+                    if (currentLine.includes('</span>') && currentLine.substring(charIndex).startsWith('<span')) {
+                        tagEnd = currentLine.indexOf('</span>', charIndex) + 6;
+                    }
+                    lineSpan.innerHTML += currentLine.substring(charIndex, tagEnd + 1);
+                    charIndex = tagEnd + 1;
+                } else {
+                    lineSpan.innerHTML += currentLine.charAt(charIndex);
+                    charIndex++;
+                }
+
+                if (currentLine.charAt(charIndex - 1) !== ' ' && currentLine.charAt(charIndex - 1) !== '\n') {
+                    playFaxClick();
+                }
+                
+                window.scrollTo(0, document.body.scrollHeight);
+                terminal.appendChild(cursor);
+
+                let nextSpeed = (isSpeaking && audioInitialized) ? typeSpeed : 2;
+                setTimeout(typeChar, nextSpeed);
+            } else {
+                lineIndex++;
+                
+                function checkAudioStatus() {
+                    if (!audioInitialized || (!isSpeaking && !synth.speaking)) {
+                        setTimeout(typeWriterSync, 400);
+                    } else {
+                        setTimeout(checkAudioStatus, 50);
+                    }
+                }
+                checkAudioStatus();
+            }
+        }
+        typeChar();
+    }
+
+    let copyState = 0;
+
+    function startEndlessMantra() {
+        let currentMantraLine = "";
+        
+        if (copyState === 0) {
+            currentMantraLine = "you are a <span class='red-phosphor'>COPY</span> ";
+        } else {
+            currentMantraLine = "of a <span class='red-phosphor'>COPY</span> ";
+        }
+        
+        if (copyState > 1) {
+            let rand = Math.random();
+            if (rand > 0.8) {
+                currentMantraLine = "\n" + "    ".repeat(Math.floor(Math.random() * (copyState < 20 ? 6 : 2))) + currentMantraLine;
+            } else if (rand > 0.4) {
+                currentMantraLine = "        " + currentMantraLine;
+            }
+        }
+
+        let currentSpeechRate = Math.min(1.8, 0.8 + (copyState * 0.04)); 
+        let currentSpeechPitch = Math.max(0.02, 0.1 - (copyState * 0.002));
+        let visualTypeSpeed = Math.max(10, 45 - (copyState * 1.5)); 
+
+        copyState++;
+
+        let cleanText = currentMantraLine.replace(/<[^>]*>?/gm, '').replace(/\s+/g, ' ').trim();
+        let utterance = new SpeechSynthesisUtterance(cleanText);
+        utterance.pitch = currentSpeechPitch; 
+        utterance.rate = currentSpeechRate; 
+        if (maleVoice) utterance.voice = maleVoice;
+
+        let charIndex = 0;
+        let isSpeaking = true;
+        utterance.onend = () => { isSpeaking = false; };
+        
+        if (audioInitialized) {
+            synth.speak(utterance);
+        }
+
+        let mantraSpan = document.createElement('span');
+        terminal.appendChild(mantraSpan);
+
+        function typeMantraChar() {
+            if (charIndex < currentMantraLine.length) {
+                if (currentMantraLine.charAt(charIndex) === '<') {
+                    let tagEnd = currentMantraLine.indexOf('>', charIndex);
+                    if (currentMantraLine.substring(charIndex).startsWith('<span')) {
+                        tagEnd = currentMantraLine.indexOf('>', charIndex);
+                    }
+                    if (currentMantraLine.substring(charIndex).startsWith('</span')) {
+                        tagEnd = currentMantraLine.indexOf('>', charIndex);
+                    }
+                    mantraSpan.innerHTML += currentMantraLine.substring(charIndex, tagEnd + 1);
+                    charIndex = tagEnd + 1;
+                } else {
+                    mantraSpan.innerHTML += currentMantraLine.charAt(charIndex);
+                    charIndex++;
+                }
+                
+                if (currentMantraLine.charAt(charIndex - 1) !== ' ' && currentMantraLine.charAt(charIndex - 1) !== '\n') {
+                    if (copyState < 30 || Math.random() > 0.5) playFaxClick();
+                }
+                
+                window.scrollTo(0, document.body.scrollHeight);
+                terminal.appendChild(cursor);
+
+                let nextSpeed = (isSpeaking && audioInitialized) ? visualTypeSpeed : 5;
+                setTimeout(typeMantraChar, nextSpeed);
+            } else {
+                if (terminal.childNodes.length > 250) {
+                    for(let i = 0; i < 5; i++) {
+                        if(terminal.firstChild && terminal.firstChild !== cursor) {
+                            terminal.removeChild(terminal.firstChild);
+                        }
+                    }
+                }
+
+                function checkAudioStatus() {
+                    if (copyState > 25 || !audioInitialized || (!isSpeaking && !synth.speaking)) {
+                        let delay = Math.max(30, 100 - (copyState * 2));
+                        setTimeout(startEndlessMantra, delay); 
+                    } else {
+                        setTimeout(checkAudioStatus, 50);
+                    }
+                }
+                checkAudioStatus();
+            }
+        }
+        typeMantraChar();
+    }
+
+    initAudio();
+    typeWriterSync();
+</script>
+
+</body>
+</html>

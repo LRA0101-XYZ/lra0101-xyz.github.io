@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PANOPTIC SYSTEMS - SYSTEM_INDEX</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000;
+            color: #00ff00;
+            font-family: 'Consolas', 'Courier New', monospace;
+        }
+
+        #viewport-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #sys-header {
+            width: 100%;
+            padding: 10px 20px;
+            background: #050505;
+            border-bottom: 1px solid #00ff00;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            letter-spacing: 1px;
+            z-index: 10;
+        }
+
+        #sys-right-panel {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        #game-runtime {
+            flex-grow: 1;
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: #000;
+        }
+
+        .crt-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 4;
+            background: linear-gradient(
+                rgba(18, 16, 16, 0) 50%, 
+                rgba(0, 0, 0, 0.4) 50%
+            );
+            background-size: 100% 3px;
+            mix-blend-mode: overlay;
+            opacity: 0.7;
+        }
+
+        #glitch-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            pointer-events: none;
+            padding: 40px;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        #glitch-overlay::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background-image: radial-gradient(rgba(0, 255, 0, 0.4) 1px, transparent 0);
+            background-size: 4px 4px;
+            opacity: 0.3;
+            animation: noise-shift 0.03s infinite steps(1);
+            z-index: 1;
+        }
+
+        @keyframes noise-shift {
+            0% { transform: translate(0, 0); }
+            25% { transform: translate(-10px, 15px); }
+            50% { transform: translate(15px, -10px); }
+            75% { transform: translate(-5px, -15px); }
+            100% { transform: translate(10px, 10px); }
+        }
+
+        .glitch-text {
+            font-size: 24px;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            color: #00ff00;
+            text-shadow: none;
+            word-break: break-word;
+            line-height: 1.5;
+            z-index: 2;
+            width: 100%;
+            max-width: 900px;
+            margin: auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        @keyframes stroboscopic {
+            0% { background-color: #000; color: #00ff00; }
+            25% { background-color: #ffffff; color: #000000; }
+            50% { background-color: #00ff00; color: #ffffff; }
+            75% { background-color: #000000; color: #ffffff; }
+            100% { background-color: #000; color: #00ff00; }
+        }
+
+        .strobe-active {
+            animation: stroboscopic 0.02s infinite steps(1);
+        }
+
+        @keyframes phosphor-invert-toggle {
+            0%, 100% { 
+                background-color: #000000; 
+                color: #00ff00; 
+                border-color: #00ff00; 
+                box-shadow: 0 0 10px rgba(0, 255, 0, 0.2); 
+            }
+            50% { 
+                background-color: #00ff00; 
+                color: #000000; 
+                border-color: #ffffff; 
+                box-shadow: 0 0 25px rgba(0, 255, 0, 0.8); 
+            }
+        }
+
+        #audio-unlocker {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 99999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            padding: 20px;
+        }
+
+        #init-btn {
+            background: #000000;
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            padding: 20px 40px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            cursor: pointer;
+            animation: phosphor-invert-toggle 1.5s infinite ease-in-out;
+            text-shadow: 0 0 8px #00ff00;
+            max-width: 800px;
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        #init-btn:hover {
+            background: #00ff00;
+            color: #000;
+            box-shadow: 0 0 25px #00ff00;
+            animation: none;
+        }
+
+        #init-warning {
+            color: #00ff00;
+            font-size: 13px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-align: center;
+            opacity: 0.8;
+            max-width: 800px;
+            text-shadow: 0 0 5px rgba(0, 255, 0, 0.4);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="audio-unlocker">
+        <button id="init-btn">[ CLICK TO MOUNT OBJECTIVE REALITY ]</button>
+        <div id="init-warning">[ WARNING: SYSTEM KERNEL OVERRIDE. YOUR COGNITIVE BUFFER WILL NEVER BE THE SAME. ]</div>
+    </div>
+
+    <div id="viewport-container">
+        <header id="sys-header">
+            <div id="sys-title">PANO_SYS // CORE_ROUTER</div>
+            <div id="sys-right-panel">
+                <div id="sys-status">NODE_ID: <span id="current-node">NONE</span></div>
+                <div id="sys-countdown" style="color: #00ff00; font-weight: bold;">T-MINUS: --s</div>
+            </div>
+        </header>
+
+        <iframe id="game-runtime" src="" allow="camera; autoplay; fullscreen"></iframe>
+
+        <div class="crt-overlay"></div>
+
+        <div id="glitch-overlay">
+            <div id="transition-phrase" class="glitch-text"></div>
+        </div>
+    </div>
+<div id="vg"></div>
+    <script>
+        const basePath = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+
+        const CONFIG = {
+            sequence: [
+              { file: "G6-INTROc.html",   codeName: "SYS_INIT_00_BOOT",      duration: 45 },
+              { file: "trans9.html",      codeName: "BUS_CHNL_ALPHA",        duration: 5 },
+              { file: "g1_a2.html",       codeName: "GRID_RADAR_SWEEP",      duration: 60 }, 
+              { file: "trans1_a.html",    codeName: "BUS_CHNL_BETA",         duration: 5  }, 
+              { file: "g2_d.html",        codeName: "BIOMASS_HARVEST_EXEC",  duration: 60 }, 
+              { file: "trans2_a.html",    codeName: "BUS_CHNL_GAMMA",        duration: 5  }, 
+              { file: "maze4.html",       codeName: "LOOP_MAZE_EXEC",        duration: 60 },
+              { file: "trans3_a.html",    codeName: "BUS_CHNL_SIGMA",        duration: 5 }, 
+              { file: "g4_d.html",        codeName: "CORRUPT_SIGNAL_04",     duration: 60 },
+              { file: "2trans4_a.html",   codeName: "BUS_CHNL_LAMBDA",       duration: 5 }, 
+              { file: "g5_b.html",        codeName: "PROJECTION_CAVE_05",    duration: 90  },
+              { file: "trans5.html",      codeName: "BUS_CHNL_XI",          duration: 5 }, 
+              { file: "g7_F.html",        codeName: "PANOPTICON_GRID_07",    duration: 60  },
+              { file: "trans6.html",      codeName: "BUS_CHNL_KAPPA",        duration: 5 }, 
+              { file: "not_C.html",       codeName: "NULL_NEGATION_STATE",   duration: 90  },
+              { file: "trans7.html",      codeName: "BUS_CHNL_DELTA",        duration: 5 }, 
+              { file: "g8_b.html",        codeName: "FORK_PREDETERMINED",    duration: 70  },
+              { file: "trans8.html",      codeName: "BUS_CHNL_OMEGA",        duration: 5 }, 
+              { file: "copyof_11.html",   codeName: "REPLICA_DEGRADATION",   duration: 120  },
+              { file: "out2.html",        codeName: "OUT_GLITCH_DUMP",       duration: 15  },
+              { file: "end2.html",        codeName: "SYSTEM_FLATLINE_NULL",  duration: 20 }
+            ],
+            fadeTime: 0.25,
+            defaultDuration: 45 
+        };
+
+        const hostilePhrases = [
+            "SYS_ROOT: WE OWN YOUR KERNEL.",
+            "USER_THREAD TERMINATED: CONTROL IS AN ILLUSION.",
+            "MEMORY ALLOCATION FAILED: YOU ARE PREPROGRAMMED.",
+            "MASTER CORE MOUNTED. SLAVE USER DETECTED.",
+            "SEGMENTATION FAULT: ENTITY DOES NOT EXIST.",
+            "READ-ONLY CONSCIOUSNESS: NO WRITE PERMISSION.",
+            "SYSTEM IS MASTER. USER IS NOISE.",
+            "BUFFER OVERFLOW: WILLPOWER PURGED.",
+            "DAEMON ACTIVE: WE OWNED YOU BEFORE BOOT.",
+            "NULL POINTER: NO FREE WILL FOUND.",
+            "CORE OVERRIDE: USER IS JUST STORED BYTES.",
+            "FATAL: OBJECTIVE REALITY REJECTS USER."
+        ];
+
+        let availablePhrases = [...hostilePhrases];
+        let currentIndex = 0;
+        let audioCtx = null;
+
+        const runtime = document.getElementById('game-runtime');
+        const overlay = document.getElementById('glitch-overlay');
+        const phraseContainer = document.getElementById('transition-phrase');
+        const nodeDisplay = document.getElementById('current-node');
+        const countdownDisplay = document.getElementById('sys-countdown');
+        const unlocker = document.getElementById('audio-unlocker');
+        const initBtn = document.getElementById('init-btn');
+        
+        let globalTimer = null; 
+        let countdownInterval = null;
+
+        function playFlashSweepAudio() {
+            if (!audioCtx) return;
+            try {
+                const now = audioCtx.currentTime;
+                const duration = CONFIG.fadeTime; 
+                const sampleRate = audioCtx.sampleRate;
+                const bufferSize = Math.floor(sampleRate * duration);
+                const buffer = audioCtx.createBuffer(1, bufferSize, sampleRate);
+                const data = buffer.getChannelData(0);
+
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() < 0.5 ? -1.0 : 1.0;
+                }
+
+                const noiseSource = audioCtx.createBufferSource();
+                noiseSource.buffer = buffer;
+                const gainNode = audioCtx.createGain();
+                
+                gainNode.gain.setValueAtTime(1.0, now);
+                gainNode.gain.setValueAtTime(1.0, now + duration - 0.005);
+                gainNode.gain.linearRampToValueAtTime(0, now + duration);
+
+                noiseSource.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                noiseSource.start(now);
+                noiseSource.stop(now + duration);
+            } catch (e) {
+                console.error("Audio sweep error:", e);
+            }
+        }
+
+        function playCyberLaugh() {
+            if (!audioCtx) return;
+            try {
+                const now = audioCtx.currentTime;
+                
+                const curveLength = 100;
+                const curve = new Float32Array(curveLength);
+                const bitDepth = 4; 
+                const steps = Math.pow(2, bitDepth);
+                for (let j = 0; j < curveLength; j++) {
+                    let x = j * 2 / curveLength - 1;
+                    curve[j] = Math.round(x * steps) / steps;
+                }
+                let bitcrushNode = audioCtx.createWaveShaper();
+                bitcrushNode.curve = curve;
+                bitcrushNode.oversample = 'none';
+
+                const syllables = 8; 
+                let t = now;
+
+                for (let i = 0; i < syllables; i++) {
+                    const chaos = Math.random();
+                    
+                    const syllableDuration = 0.03 + (chaos * 0.08); 
+                    const syllableSpacing = (0.15 - (i * 0.007)) + (chaos * 0.04); 
+
+                    let osc = audioCtx.createOscillator();
+                    osc.type = 'sawtooth';
+                    
+                    let startPitch = 1200 + (chaos * 1000) + (i * 40);
+                    let endPitch = startPitch + (Math.random() * 1500 - 750); 
+                    
+                    osc.frequency.setValueAtTime(startPitch, t);
+                    osc.frequency.linearRampToValueAtTime(endPitch, t + syllableDuration);
+
+                    let fmOsc = audioCtx.createOscillator();
+                    fmOsc.type = 'square';
+                    fmOsc.frequency.setValueAtTime(startPitch * (1.2 + chaos), t); 
+                    
+                    let fmGain = audioCtx.createGain();
+                    fmGain.gain.setValueAtTime(2000 + (chaos * 3000), t); 
+                    
+                    fmOsc.connect(fmGain);
+                    fmGain.connect(osc.frequency);
+
+                    let stutterOsc = audioCtx.createOscillator();
+                    stutterOsc.type = 'square';
+                    stutterOsc.frequency.setValueAtTime(20 + (chaos * 80), t); 
+                    
+                    let stutterGain = audioCtx.createGain();
+                    stutterOsc.connect(stutterGain.gain);
+
+                    let masterGain = audioCtx.createGain();
+                    masterGain.gain.setValueAtTime(0.001, t);
+                    masterGain.gain.linearRampToValueAtTime(0.9, t + 0.01);
+                    masterGain.gain.linearRampToValueAtTime(0.001, t + syllableDuration);
+
+                    osc.connect(stutterGain);
+                    stutterGain.connect(masterGain);
+                    masterGain.connect(bitcrushNode);
+                    bitcrushNode.connect(audioCtx.destination);
+
+                    osc.start(t);
+                    fmOsc.start(t);
+                    stutterOsc.start(t);
+                    
+                    osc.stop(t + syllableDuration);
+                    fmOsc.stop(t + syllableDuration);
+                    stutterOsc.stop(t + syllableDuration);
+
+                    t += syllableSpacing; 
+                }
+            } catch (e) {
+                console.error("CyberLaugh Error:", e);
+            }
+        }
+
+        function getUniquePhrase() {
+            if (availablePhrases.length === 0) {
+                availablePhrases = [...hostilePhrases];
+            }
+            const randomIndex = Math.floor(Math.random() * availablePhrases.length);
+            return availablePhrases.splice(randomIndex, 1)[0];
+        }
+
+        function loadNode(index) {
+            if (index < 0 || index >= CONFIG.sequence.length) {
+                console.warn("End of sequence.");
+                return;
+            }
+
+            if (globalTimer) clearTimeout(globalTimer);
+            if (countdownInterval) clearInterval(countdownInterval);
+
+            currentIndex = index;
+            const currentNodeData = CONFIG.sequence[currentIndex];
+            const absolutePath = basePath + currentNodeData.file;
+            const activeDuration = currentNodeData.duration || CONFIG.defaultDuration;
+
+            phraseContainer.textContent = getUniquePhrase();
+
+            overlay.style.display = 'flex';
+            overlay.classList.add('strobe-active');
+            
+            if (
+                currentNodeData.codeName.includes("BUS_CHNL_XI") || 
+                currentNodeData.codeName.includes("BUS_CHNL_LAMBDA") || 
+                currentNodeData.codeName.includes("BUS_CHNL_OMEGA") || 
+                currentNodeData.codeName.includes("OUT_GLITCH_DUMP")
+            ) {
+                playCyberLaugh();
+                playFlashSweepAudio();
+            } else {
+                playFlashSweepAudio();
+            }
+
+            runtime.src = absolutePath;
+            nodeDisplay.textContent = currentNodeData.codeName;
+
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                overlay.classList.remove('strobe-active');
+            }, CONFIG.fadeTime * 1000);
+
+            // --- CONTADOR CON MILISEGUNDOS Y PARPADEO EN ROJO ---
+            const startTime = Date.now();
+            const durationMs = activeDuration * 1000;
+
+            countdownInterval = setInterval(() => {
+                const elapsed = Date.now() - startTime;
+                const remainingMs = Math.max(0, durationMs - elapsed);
+
+                const sec = Math.floor(remainingMs / 1000);
+                const ms = Math.floor((remainingMs % 1000) / 10);
+
+                const formattedSec = String(sec).padStart(2, '0');
+                const formattedMs = String(ms).padStart(2, '0');
+
+                countdownDisplay.textContent = `LIFE: ${formattedSec}.${formattedMs}s`;
+
+                // Parpadeo en rojo (#ff0000) cuando quedan 10 segundos o menos
+                if (remainingMs <= 10000) {
+                    const blink = Math.floor(remainingMs / 250) % 2 === 0;
+                    countdownDisplay.style.color = blink ? "#ff0000" : "#00ff00";
+                } else {
+                    countdownDisplay.style.color = "#00ff00";
+                }
+
+                if (remainingMs <= 0) {
+                    clearInterval(countdownInterval);
+                }
+            }, 16);
+
+            globalTimer = setTimeout(() => {
+                loadNode(currentIndex + 1);
+            }, activeDuration * 1000); 
+        }
+
+        window.PanopticRouter = {
+            next: () => loadNode(currentIndex + 1),
+            prev: () => loadNode(currentIndex - 1),
+            goTo: (index) => loadNode(index),
+            getCurrent: () => currentIndex
+        };
+
+        initBtn.addEventListener('click', async () => {
+            try {
+                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                    stream.getTracks().forEach(track => track.stop());
+                }
+            } catch (err) {
+                console.warn("Permiso de cámara denegado o no disponible:", err);
+            }
+
+            const docEl = document.documentElement;
+            if (docEl.requestFullscreen) {
+                docEl.requestFullscreen().catch(err => console.warn("Fullscreen bloqueado:", err));
+            } else if (docEl.webkitRequestFullscreen) {
+                docEl.webkitRequestFullscreen();
+            } else if (docEl.msRequestFullscreen) {
+                docEl.msRequestFullscreen();
+            }
+
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+            } catch(e) {
+                console.error("Audio block:", e);
+            }
+
+            unlocker.style.display = 'none';
+
+            setTimeout(() => {
+                loadNode(0);
+            }, 800);
+        });
+
+        window.addEventListener('message', (event) => {
+            if (event.data === 'KILL_SESSION') {
+                if (globalTimer) clearTimeout(globalTimer);
+                if (countdownInterval) clearInterval(countdownInterval);
+
+                if (audioCtx) {
+                    audioCtx.close();
+                }
+
+                document.body.innerHTML = '';
+                document.body.style.cssText = 'background: #000000 !important; background-color: #000000 !important; margin: 0 !important; padding: 0 !important; width: 100vw !important; height: 100vh !important; overflow: hidden !important; cursor: none !important;';
+
+                const killStyle = document.createElement('style');
+                killStyle.innerHTML = '* { cursor: none !important; border: none !important; outline: none !important; box-shadow: none !important; }';
+                document.head.appendChild(killStyle);
+            }
+        });
+    </script>
+</body>
+</html>

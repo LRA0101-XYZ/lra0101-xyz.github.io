@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TERMINAL // PANOSYS_EXTRACTION_SYSTEM</title>
+    <style>
+        #vg {
+    position: fixed;
+    inset: 0;
+    z-index: 25;
+    pointer-events: none;
+    background: radial-gradient(ellipse at 50% 50%, transparent 20%, rgba(0,0,0,0.65) 100%);
+}
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+        
+        body, html {
+            width: 100%; height: 100%;
+            font-family: 'Consolas', 'Courier New', monospace;
+            background-color: #020403;
+            color: #00ff66; overflow: hidden;
+        }
+
+        /* CRT SCANLINE EFFECT */
+        body::before {
+            content: " "; display: block; position: fixed;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.4) 50%);
+            background-size: 100% 4px; pointer-events: none; z-index: 50;
+        }
+
+        /* 1. HACKER TERMINAL LOGIN */
+        #login-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #020403; z-index: 100;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .login-card {
+            width: 480px; padding: 30px; background: #050a07;
+            border: 2px solid #00ff66; box-shadow: 0 0 15px rgba(0, 255, 102, 0.4);
+            text-align: left;
+        }
+        .login-card .sys-badge {
+            font-size: 10px; color: #008833; letter-spacing: 2px;
+            text-transform: uppercase; margin-bottom: 12px; display: block;
+        }
+        .login-card h2 { 
+            font-size: 13px; color: #00ff66; margin-bottom: 15px; 
+            letter-spacing: 1px; text-transform: uppercase;
+            border-bottom: 1px dashed #005522; padding-bottom: 8px;
+        }
+        .input-group { margin-bottom: 20px; }
+        .input-group label {
+            display: block; font-size: 10px; color: #00aa44; margin-bottom: 6px; letter-spacing: 1px;
+        }
+        .input-group input {
+            width: 100%; padding: 10px; background: #020403; border: 1px solid #00ff66;
+            color: #00ff66; font-family: monospace; font-size: 13px; outline: none;
+            box-shadow: inset 0 0 8px rgba(0, 255, 102, 0.4);
+        }
+        .login-btn { 
+            width: 100%; padding: 12px; background: #00ff66; color: #020403; 
+            border: none; font-size: 12px; font-weight: bold; letter-spacing: 2px; 
+            cursor: pointer; text-transform: uppercase; font-family: monospace;
+            transition: background 0.2s, color 0.2s;
+        }
+        .login-btn:hover { background: #00cc55; }
+
+        /* 2. CONTROL HUD */
+        #hud-layer {
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            z-index: 10; pointer-events: none; opacity: 0; width: 90%; max-width: 950px;
+            display: flex; justify-content: space-between; align-items: center;
+            transition: opacity 0.3s ease;
+        }
+        #hud-layer.visible { opacity: 1; }
+        h1 { font-weight: bold; font-size: 14px; color: #00ff66; letter-spacing: 2px; text-transform: uppercase; }
+        #subtitle { font-size: 10px; color: #008833; text-transform: uppercase; margin-top: 3px; }
+        
+        .status-widget {
+            padding: 10px 20px; background: rgba(5, 10, 7, 0.9); 
+            border: 1px solid #00ff66; display: flex; gap: 30px;
+            align-items: center; box-shadow: 0 0 12px rgba(0, 255, 102, 0.3);
+        }
+        .w-label { font-size: 9px; color: #00aa44; text-transform: uppercase; letter-spacing: 1px; }
+        .w-value { font-size: 16px; color: #00ff66; font-weight: bold; }
+        #sys-msg { font-size: 11px; color: #00ff66; text-align: right; min-width: 320px; }
+
+        /* 3. RENDER CANVAS */
+        #canvas-2D {
+            position: absolute; top: 0; left: 0; z-index: 2; opacity: 0;
+            background-color: #020403; transition: opacity 0.2s ease;
+        }
+
+        .hypnotic-violence { animation: violent-shake 0.01s infinite; }
+        @keyframes violent-shake {
+            0% { transform: translate(0); }
+            33% { transform: translate(-12px, 8px); }
+            66% { transform: translate(10px, -10px); }
+            100% { transform: translate(-4px, -6px); }
+        }
+    </style>
+</head>
+<body>
+<div id="vg"></div>
+    <!-- TERMINAL HACKER LOGIN -->
+    <div id="login-screen">
+        <div class="login-card">
+            <span class="sys-badge">[PANOSYS // SYSTEM_GATEWAY]</span>
+            <h2>INSTRUCTION // YIELD_TO_PANOSYS_FRAMEWORK</h2>
+            <form id="login-form" onsubmit="handleQuickLogin(event)">
+                <div class="input-group">
+                    <label>> IDENTIFY_NODE_ASSET</label>
+                    <input type="text" id="username" required value="" placeholder="enter_unit_id..." autocomplete="off" autofocus>
+                </div>
+                <button type="submit" class="login-btn" id="login-btn">[ EXECUTE_INDUCTION ]</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- CONTROL HUD -->
+    <div id="hud-layer">
+        <div class="brand-info">
+            <h1 id="title">PANOSYS_FRAMEWORK_GRID</h1>
+            <p id="subtitle">Cognitive Expropriation Protocol & PANOSYS Network</p>
+        </div>
+        <div class="status-widget" id="main-widget">
+            <div class="metric-block">
+                <div class="w-label">EXPROPRIATED</div>
+                <div class="w-value" id="val-links">0</div>
+            </div>
+            <div class="metric-block">
+                <div class="w-label">SYSTEM QUOTA</div>
+                <div class="w-value" id="val-quota" style="color:#00aa44;">3</div>
+            </div>
+            <div id="sys-msg">CONNECT ASSET [OUT] TO SYSTEM [IN]...</div>
+        </div>
+    </div>
+
+    <canvas id="canvas-2D"></canvas>
+
+    <script>
+        let phase = -1; 
+        let linksCount = 0;
+        let quota = 3; 
+
+        const loginScreen = document.getElementById('login-screen');
+        const hudLayer = document.getElementById('hud-layer');
+        const canvas2D = document.getElementById('canvas-2D');
+        const sysMsg = document.getElementById('sys-msg');
+
+        let audioCtx = null;
+        let humActive = false;
+        let crusherNode = null; 
+        let filterNode = null;
+
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            startBitcrushedHum();
+        }
+
+        // MOTOR DE ATMÓSFERA HUM
+        function startBitcrushedHum() {
+            if (humActive || !audioCtx) return;
+            humActive = true;
+
+            let bitDepth = 3; 
+            let step = Math.pow(0.5, bitDepth);
+            let sampleRateReduction = 6; 
+
+            crusherNode = audioCtx.createScriptProcessor(4096, 1, 1);
+            let lastSample = 0;
+            let sampleCount = 0;
+
+            crusherNode.onaudioprocess = function(e) {
+                let inputData = e.inputBuffer.getChannelData(0);
+                let outputData = e.outputBuffer.getChannelData(0);
+                for (let i = 0; i < inputData.length; i++) {
+                    if (sampleCount % sampleRateReduction === 0) {
+                        lastSample = step * Math.floor(inputData[i] / step + 0.5);
+                    }
+                    outputData[i] = lastSample;
+                    sampleCount++;
+                }
+            };
+
+            filterNode = audioCtx.createBiquadFilter();
+            filterNode.type = 'lowpass';
+            filterNode.frequency.setValueAtTime(450, audioCtx.currentTime);
+
+            crusherNode.connect(filterNode);
+            filterNode.connect(audioCtx.destination);
+
+            let osc1 = audioCtx.createOscillator();
+            let osc2 = audioCtx.createOscillator();
+            osc1.type = 'sawtooth';
+            osc2.type = 'square';
+            osc1.frequency.setValueAtTime(55, audioCtx.currentTime); 
+            osc2.frequency.setValueAtTime(57.4, audioCtx.currentTime);
+
+            let noiseBuffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 2, audioCtx.sampleRate);
+            let output = noiseBuffer.getChannelData(0);
+            for (let i = 0; i < noiseBuffer.length; i++) output[i] = Math.random() * 2 - 1;
+            
+            let noise = audioCtx.createBufferSource();
+            noise.buffer = noiseBuffer;
+            noise.loop = true;
+            noise.start();
+
+            let noiseGain = audioCtx.createGain();
+            noiseGain.gain.value = 0.08;
+            noise.connect(noiseGain);
+
+            let mixGain = audioCtx.createGain();
+            mixGain.gain.value = 0.06;
+
+            osc1.connect(mixGain);
+            osc2.connect(mixGain);
+            noiseGain.connect(mixGain);
+
+            mixGain.connect(crusherNode);
+
+            osc1.start();
+            osc2.start();
+        }
+
+        function playMechanicalClick() {
+            initAudio();
+            if (!audioCtx) return;
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.04);
+            gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.05);
+        }
+
+        function playSharpStrobePulse() {
+            if (!audioCtx) return;
+            
+            let osc1 = audioCtx.createOscillator();
+            let osc2 = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+            
+            osc1.type = 'sawtooth';
+            osc2.type = 'square';
+            
+            osc1.frequency.setValueAtTime(4500, audioCtx.currentTime); 
+            osc1.frequency.exponentialRampToValueAtTime(180, audioCtx.currentTime + 0.04);
+
+            osc2.frequency.setValueAtTime(2250, audioCtx.currentTime);
+            osc2.frequency.exponentialRampToValueAtTime(90, audioCtx.currentTime + 0.04);
+            
+            gain.gain.setValueAtTime(0.65, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.045);
+
+            let strobeCrusher = audioCtx.createScriptProcessor(256, 1, 1);
+            let bitDepth = 2; 
+            let step = Math.pow(0.5, bitDepth);
+            strobeCrusher.onaudioprocess = function(e) {
+                let input = e.inputBuffer.getChannelData(0);
+                let output = e.outputBuffer.getChannelData(0);
+                for (let i = 0; i < input.length; i++) {
+                    output[i] = step * Math.floor(input[i] / step + 0.5);
+                }
+            };
+
+            osc1.connect(gain);
+            osc2.connect(gain);
+            gain.connect(strobeCrusher);
+            strobeCrusher.connect(audioCtx.destination);
+
+            osc1.start(); 
+            osc2.start();
+            osc1.stop(audioCtx.currentTime + 0.05);
+            osc2.stop(audioCtx.currentTime + 0.05);
+        }
+
+       function speak(text, pitch = 0.35, rate = 0.70) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel(); 
+                const utterance = new SpeechSynthesisUtterance(text);
+                let voices = window.speechSynthesis.getVoices();
+                
+                // Filtro corregido y estricto para priorizar voz masculina y bloquear cualquier variante femenina
+                let selectedVoice = voices.find(v => 
+                    (v.name.includes("David") || v.name.includes("Pablo") || v.name.toLowerCase().includes("male")) && 
+                    !v.name.toLowerCase().includes("female") && 
+                    !v.name.toLowerCase().includes("zira") && 
+                    !v.name.toLowerCase().includes("helena") &&
+                    !v.name.toLowerCase().includes("hazel") &&
+                    !v.name.toLowerCase().includes("monica")
+                ) || voices.find(v => v.lang.startsWith('en') && !v.name.toLowerCase().includes('female')) 
+                  || voices.find(v => v.lang.startsWith('es') && !v.name.toLowerCase().includes('female')) 
+                  || voices[0];
+                
+                if (selectedVoice) utterance.voice = selectedVoice;
+                utterance.lang = 'en-US'; 
+                utterance.pitch = pitch; 
+                utterance.rate = rate;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        // DISPARO AUTOMÁTICO INMEDIATO (YA CONFIGURADO DESDE EL INDEX PRINCIPAL)
+        window.addEventListener('load', () => {
+            initAudio();
+            speak("Identification protocol engaged. Provide user label.", 0.35, 0.75);
+        });
+
+        function handleQuickLogin(e) {
+            e.preventDefault();
+            initAudio();
+            const user = document.getElementById('username').value.trim();
+            if (!user) return;
+            
+            document.getElementById('login-btn').innerText = "INDUCTING_ASSET...";
+            speak(`Welcome asset ${user}. Yield to the Panosys core through construct unification`, 0.40, 0.80);
+            
+            setTimeout(() => {
+                loginScreen.style.opacity = '0';
+                setTimeout(() => {
+                    loginScreen.style.display = 'none';
+                    startDashboard();
+                }, 300);
+            }, 400);
+        }
+
+        const ctx2D = canvas2D.getContext('2d');
+        let w, h, boxes = [], activePort = null, mouseX = 0, mouseY = 0;
+
+        function resize() {
+            w = canvas2D.width = window.innerWidth;
+            h = canvas2D.height = window.innerHeight;
+            if (phase === 0) rebuildMoireLayout();
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        const originMetaphors = ["HUMAN_RESOURCE", "COGNITIVE_SURPLUS", "BEHAVIORAL_YIELD"];
+        const targetMetaphors = ["PANOSYS_CORE", "SYSTEM_ENGINE", "DEBT_HARVESTER"];
+        const structuralMetaphors = ["PANOSYS_NODE_01", "EXTRACTION_VECTOR", "CORE_SUB_FEED", "ALIGNED_ASSET", "PANOSYS_KERNEL", "DATA_DRAIN"];
+        const overloadAphorisms = ["KEEP STARING", "DONT LOOK AWAY"];
+
+        function rebuildMoireLayout() {
+            boxes = [];
+            const leftCount = 3;
+            const rightCount = 3;
+            
+            for(let i = 0; i < leftCount; i++) {
+                let x = w * 0.12;
+                let y = (h * 0.2) + (i * (h * 0.22));
+                boxes.push({
+                    id: 'L_' + i,
+                    x, y, w: 250, h: 65,
+                    label: originMetaphors[i],
+                    type: 'source',
+                    ports: [{ type: 'out', label: 'OUT', x: 250, y: 32.5 }], 
+                    connections: []
+                });
+            }
+
+            for(let i = 0; i < rightCount; i++) {
+                let x = w * 0.63;
+                let y = (h * 0.2) + (i * (h * 0.22));
+                boxes.push({
+                    id: 'R_' + i,
+                    x, y, w: 250, h: 65,
+                    label: targetMetaphors[i],
+                    type: 'target',
+                    ports: [{ type: 'in', label: 'IN', x: 0, y: 32.5 }], 
+                    connections: []
+                });
+            }
+        }
+
+        function startDashboard() {
+            phase = 0;
+            hudLayer.classList.add('visible');
+            canvas2D.style.opacity = '1';
+            rebuildMoireLayout();
+            draw2D();
+        }
+
+        canvas2D.addEventListener('mousedown', (e) => {
+            if (phase !== 0 && phase !== 2) return; 
+            initAudio();
+            const mx = e.clientX, my = e.clientY;
+            
+            for (let b of boxes) {
+                if (b.type === 'source') {
+                    for (let p of b.ports) {
+                        let px = b.x + p.x;
+                        let py = b.y + p.y;
+                        if (Math.hypot(px - mx, py - my) < 80 || (mx >= b.x && mx <= b.x + b.w && my >= b.y && my <= b.y + b.h)) { 
+                            activePort = { box: b, port: p, px: px, py: py };
+                            playMechanicalClick();
+                            return;
+                        }
+                    }
+                }
+            }
+        });
+
+        canvas2D.addEventListener('mousemove', (e) => { mouseX = e.clientX; mouseY = e.clientY; });
+
+        canvas2D.addEventListener('mouseup', (e) => {
+            if ((phase !== 0 && phase !== 2) || !activePort) { activePort = null; return; }
+            const mx = e.clientX, my = e.clientY;
+
+            for (let b of boxes) {
+                if (b.type === 'target') {
+                    for (let p of b.ports) {
+                        let px = b.x + p.x;
+                        let py = b.y + p.y;
+                        if (Math.hypot(px - mx, py - my) < 90 || (mx >= b.x && mx <= b.x + b.w && my >= b.y && my <= b.y + b.h)) {
+                            
+                            let exists = activePort.box.connections.some(c => c.toBox.id === b.id);
+                            if (!exists) {
+                                activePort.box.connections.push({ fromPort: activePort.port, toBox: b, toPort: p });
+
+                                if(phase === 0) {
+                                    linksCount++;
+                                    document.getElementById('val-links').innerText = linksCount;
+                                    playMechanicalClick();
+                                    
+                                    if (linksCount >= quota) {
+                                        activePort = null;
+                                        triggerLongHypnosis(); 
+                                        return;
+                                    } else {
+                                        speak("Asset extracted.", 0.4, 0.9);
+                                    }
+                                }
+                            }
+                            activePort = null;
+                            return;
+                        }
+                    }
+                }
+            }
+            activePort = null;
+        });
+
+        let strobeInterval = 350;
+        let lastStrobeTime = 0;
+        let strobeColor = '#020403';
+
+        function draw2D() {
+            requestAnimationFrame(draw2D);
+            let currentTime = Date.now();
+
+            if (phase === 1) {
+                if (currentTime - lastStrobeTime > strobeInterval) {
+                    let strobeFactor = Math.random();
+                    strobeColor = strobeFactor > 0.66 ? '#00ff66' : (strobeFactor > 0.33 ? '#ef4444' : '#020403');
+                    playSharpStrobePulse();
+                    lastStrobeTime = currentTime;
+                }
+                ctx2D.fillStyle = strobeColor;
+                ctx2D.fillRect(0, 0, w, h);
+            } else {
+                ctx2D.fillStyle = '#020403'; 
+                ctx2D.fillRect(0, 0, w, h);
+
+                let now = performance.now() * 0.001;
+                let slowBreath = (Math.sin(now * 1.25) + 1) * 0.5;
+                
+                let gridOpacity = 0.15 + (slowBreath * 0.5);
+                let gridBlur = 2 + (slowBreath * 14);
+
+                let step = 30; 
+                ctx2D.strokeStyle = phase === 2 
+                    ? `rgba(239, 68, 68, ${gridOpacity})` 
+                    : `rgba(0, 255, 102, ${gridOpacity})`;
+                ctx2D.lineWidth = 1.2;
+                ctx2D.shadowColor = phase === 2 ? '#ef4444' : '#00ff66';
+                ctx2D.shadowBlur = gridBlur;
+                
+                ctx2D.beginPath();
+                for (let x = 0; x < w; x += step) { ctx2D.moveTo(x, 0); ctx2D.lineTo(x, h); }
+                for (let y = 0; y < h; y += step) { ctx2D.moveTo(0, y); ctx2D.lineTo(w, y); }
+                ctx2D.stroke();
+                ctx2D.shadowBlur = 0;
+            }
+
+            boxes.forEach(b => {
+                b.connections.forEach(c => {
+                    let startX = b.x + c.fromPort.x;
+                    let startY = b.y + c.fromPort.y;
+                    let endX = c.toBox.x + c.toPort.x;
+                    let endY = c.toBox.y + c.toPort.y;
+
+                    ctx2D.beginPath();
+                    ctx2D.moveTo(startX, startY);
+                    ctx2D.bezierCurveTo(startX + 100, startY, endX - 100, endY, endX, endY);
+
+                    if (phase === 1) {
+                        ctx2D.strokeStyle = Math.random() > 0.5 ? '#ffffff' : '#ef4444';
+                        ctx2D.lineWidth = 6;
+                    } else if (phase === 2) {
+                        ctx2D.strokeStyle = '#ef4444'; 
+                        ctx2D.lineWidth = 2.5;
+                        ctx2D.shadowColor = '#ef4444';
+                        ctx2D.shadowBlur = 6;
+                    } else {
+                        ctx2D.strokeStyle = '#00ff66'; 
+                        ctx2D.lineWidth = 3;
+                        ctx2D.shadowColor = '#00ff66';
+                        ctx2D.shadowBlur = 8;
+                    }
+                    ctx2D.stroke();
+                    ctx2D.shadowBlur = 0;
+                });
+            });
+
+            if (activePort) {
+                ctx2D.beginPath();
+                ctx2D.moveTo(activePort.px, activePort.py);
+                ctx2D.bezierCurveTo(activePort.px + 80, activePort.py, mouseX - 80, mouseY, mouseX, mouseY);
+                ctx2D.strokeStyle = '#00ff66'; 
+                ctx2D.lineWidth = 2;
+                ctx2D.setLineDash([5, 5]);
+                ctx2D.stroke();
+                ctx2D.setLineDash([]);
+            }
+
+            boxes.forEach(b => {
+                if (phase === 1) {
+                    b.w = 250 + Math.random() * 40;
+                    b.h = 55 + Math.random() * 20;
+                    b.x = Math.random() * (w - b.w);
+                    b.y = Math.random() * (h - b.h);
+                    b.label = overloadAphorisms[Math.floor(Math.random() * overloadAphorisms.length)];
+                    ctx2D.fillStyle = Math.random() > 0.5 ? '#020403' : '#ef4444';
+                    ctx2D.strokeStyle = '#ffffff';
+                    ctx2D.lineWidth = 3;
+                } else if (phase === 2) {
+                    ctx2D.fillStyle = '#080203'; 
+                    ctx2D.strokeStyle = '#ef4444';
+                    ctx2D.lineWidth = 1.8;
+                    ctx2D.shadowColor = '#ef4444';
+                    ctx2D.shadowBlur = 4;
+                } else {
+                    ctx2D.fillStyle = '#050a07';
+                    ctx2D.strokeStyle = (activePort && activePort.box.id === b.id) ? '#ffffff' : '#00ff66';
+                    ctx2D.lineWidth = 1.5;
+                }
+
+                ctx2D.beginPath(); ctx2D.rect(b.x, b.y, b.w, b.h); ctx2D.fill(); ctx2D.stroke();
+                ctx2D.shadowBlur = 0;
+
+                if (phase === 2) {
+                    ctx2D.fillStyle = '#ff4444';
+                    ctx2D.font = 'bold 12px monospace';
+                } else if (phase === 1) {
+                    ctx2D.fillStyle = '#ef4444';
+                    ctx2D.font = 'bold 15px monospace';
+                } else {
+                    ctx2D.fillStyle = '#00ff66';
+                    ctx2D.font = 'bold 10px monospace';
+                }
+
+                ctx2D.textAlign = 'center';
+                ctx2D.textBaseline = 'middle';
+                ctx2D.fillText(b.label, b.x + (b.w / 2), b.y + (b.h / 2));
+
+                b.ports.forEach(p => {
+                    let px = b.x + p.x;
+                    let py = b.y + p.y;
+                    
+                    ctx2D.fillStyle = phase === 2 ? '#ef4444' : '#00ff66';
+                    ctx2D.beginPath(); ctx2D.arc(px, py, 6, 0, Math.PI * 2); ctx2D.fill();
+
+                    if (phase === 0) {
+                        ctx2D.fillStyle = '#00aa44';
+                        ctx2D.font = '9px monospace';
+                        ctx2D.fillText(p.label, px + (p.type === 'out' ? -18 : 18), py - 12);
+                    }
+                });
+            });
+        }
+
+        let voiceClockId = null;
+        let accelerationClockId = null;
+
+        function triggerLongHypnosis() {
+            phase = 1;
+            document.body.classList.add('hypnotic-violence');
+            sysMsg.style.color = "#ef4444";
+            sysMsg.innerText = "SYSTEM_OVERLOAD_SEQUENCE_ACTIVE";
+
+            let aphorismIdx = 0;
+
+            const runVoiceLoop = () => {
+                if (phase !== 1) return;
+                let aphorism = overloadAphorisms[aphorismIdx % overloadAphorisms.length];
+                speak(aphorism, 0.30, 0.85);
+                aphorismIdx++;
+            };
+
+            runVoiceLoop();
+            voiceClockId = setInterval(runVoiceLoop, 1600); 
+
+            accelerationClockId = setInterval(() => {
+                if (strobeInterval > 30) strobeInterval -= 25; 
+            }, 150);
+
+            setTimeout(() => {
+                clearInterval(voiceClockId);
+                clearInterval(accelerationClockId);
+                triggerStructuralConsummation();
+            }, 10000); 
+        }
+
+        function triggerStructuralConsummation() {
+            phase = 2;
+            document.body.classList.remove('hypnotic-violence');
+            
+            canvas2D.style.backgroundColor = '#020403';
+            
+            document.getElementById('title').style.color = '#ef4444';
+            document.getElementById('title').innerText = "PANOSYS_CORE_REVEALED_";
+            
+            document.getElementById('subtitle').style.color = '#00aa44';
+            document.getElementById('subtitle').innerText = "Objective framework permanently online.";
+            
+            document.getElementById('main-widget').style.border = "1px solid #ef4444";
+            
+            sysMsg.style.color = "#00ff66";
+            sysMsg.innerText = "SYSTEM_OPEN // ALIGNMENT_COMPLETE";
+            
+            speak("Alienation consummated. Core permanently aligned. Welcome to the objective framework.", 0.20, 0.75);
+
+            boxes.forEach((b, idx) => {
+                b.label = structuralMetaphors[idx % structuralMetaphors.length];
+                b.w = 260; b.h = 65; 
+                
+                if (b.type === 'source') {
+                    b.x = w * 0.18;
+                    b.y = (h * 0.25) + (parseInt(b.id.split('_')[1]) * (h * 0.22));
+                    b.ports = [{ type: 'out', label: 'OUT', x: 260, y: 32.5 }];
+                } else {
+                    b.x = w * 0.62;
+                    b.y = (h * 0.25) + (parseInt(b.id.split('_')[1]) * (h * 0.22));
+                    b.ports = [{ type: 'in', label: 'IN', x: 0, y: 32.5 }];
+                }
+            });
+        }
+    </script>
+</body>
+</html>

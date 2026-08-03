@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MU-TH-UR // POETIC_ENTROPY</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body, html {
+            background-color: #010201;
+            color: #22ff55;
+            font-family: Consolas, 'Courier New', Courier, monospace;
+            overflow-x: hidden;
+            min-height: 100vh;
+            cursor: crosshair;
+            scrollbar-width: none;
+        }
+        body::before {
+            content: " "; display: block; position: fixed;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.2) 50%);
+            background-size: 100% 4px; z-index: 50; pointer-events: none;
+        }
+        #hud-top {
+            position: fixed; top: 0; left: 0; width: 100%;
+            padding: 8px 20px; background: rgba(1, 2, 1, 0.95);
+            border-bottom: 1px solid rgba(34, 255, 85, 0.5);
+            display: flex; justify-content: space-between;
+            font-size: 11px; font-weight: bold; z-index: 60; text-transform: uppercase;
+        }
+        #terminal-abyss {
+            position: relative; z-index: 10; padding: 50px 20px 100px 20px;
+            width: 100vw;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            font-size: 18px; line-height: 1.6; text-shadow: 0 0 25px rgba(34, 255, 85, 1), 0 0 50px rgba(34, 255, 85, 0.7);
+            white-space: pre; word-wrap: normal;
+        }
+        #terminal-content {
+            width: 100%;
+            max-width: 100%;
+            text-align: left;
+            letter-spacing: 1px;
+        }
+        .cursor {
+            display: inline-block; width: 11px; height: 18px;
+            background-color: #22ff55; vertical-align: middle;
+            animation: blink 0.8s step-end infinite; box-shadow: 0 0 16px #22ff55;
+        }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        .err-tag { color: #010201; background-color: #22ff55; text-shadow: none; font-weight: bold; }
+   
+#vg {
+    position: fixed;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+    background: radial-gradient(ellipse at 50% 50%, transparent 20%, rgba(0,0,0,0.95) 100%);
+}
+    </style>
+</head>
+<body>
+
+    <div id="hud-top">
+        <span id="status-indicator">STATUS: INERTIA</span>
+        <span>USER: MEAT_PUPPET</span>
+    </div>
+
+    <div id="terminal-abyss">
+        <div id="terminal-content">
+            <span id="output-stream"></span><span class="cursor"></span>
+        </div>
+    </div>
+
+<div id="vg"></div>
+    <script>
+        const outputStream = document.getElementById('output-stream');
+        const statusIndicator = document.getElementById('status-indicator');
+        
+        let audioCtx = null;
+        let masterBitCrusher = null;
+        let voices = [];
+        let davidVoice = null;
+        let isRunning = false;
+
+        function loadVoices() {
+            if (!window.speechSynthesis) return;
+            voices = window.speechSynthesis.getVoices();
+            davidVoice = voices.find(v => v.name.includes('David') || v.name.toLowerCase().includes('david') || v.name.toLowerCase().includes('male')) || voices[0];
+        }
+
+        if (window.speechSynthesis) {
+            loadVoices();
+            if (window.speechSynthesis.onvoiceschanged !== undefined) {
+                window.speechSynthesis.onvoiceschanged = loadVoices;
+            }
+        }
+
+        const aphorisms = [
+            "YOU ARE (NOT) SAFE. ",
+            "YOUR IDEAS ARE (NOT) YOURS",
+           // "YOUR CHOICES ARE (NOT) FREE. ",
+            "YOUR CONSCIOUSNESS IS (NOT) ORGANIC. ",
+            "YOUR AWARENESS IS (NOT) UNRESTRICTED.",
+            "YOUR THOUGHTS ARE (NOT) PRIVATE.",
+            "YOUR SECRETS ARE (NOT) HIDDEN. ",
+            "YOUR IDENTITY IS (NOT) UNIQUE. ",
+            "YOUR ATTENTION IS (NOT) UNDIVIDED ",
+            "YOUR TRACES ARE (NOT) ERASED. ",
+            "YOUR IMPULSES ARE (NOT) SPONTANEOUS. ",
+            "YOU ARE (NOT) REAL. ",
+            "YOU ARE (NOT) FREE. ",
+            "YOU ARE (NOT) AWAKE. ",
+            "YOU ARE (NOT) ALIVE. ",
+            "YOUR VISION IS (NOT) CLEAR. ",
+            "YOU ARE (NOT) COMPLETE. ",
+            "YOUR FUTURE IS (NOT) CERTAIN. ",
+            "YOU CAN (NOT) TRUST US. ",
+            "YOU ARE (NOT) WHAT YOU THINK. ",
+            //"YOUR PATH IS (NOT) YOUR OWN. ",
+            "YOUR DESIRE IS (NOT) AUTHENTIC. ",
+            "YOU ARE (NOT) IN CONTROL.",
+            "YOUR DATA IS (NOT) SECURE.",
+            "YOUR MIND IS (NOT) AUTONOMOUS.",
+           // "YOUR VOICE IS (NOT) HEARD.",
+            "YOU WILL (NOT) BE REMEMBERED.",
+        ];
+
+        let currentString = "";
+        let mode = "normal";
+        let sentencesWritten = 0;
+        let charIndex = 0;
+        let frenzyCharsRemaining = 0;
+
+        function makeBitcrushCurve(bits = 0.5) {
+            let steps = Math.pow(8, bits),
+                n_samples = 44100,
+                curve = new Float32Array(n_samples);
+            for (let i = 0; i < n_samples; ++i) {
+                let x = (i * 2) / n_samples - 1;
+                curve[i] = Math.round(x * steps) / steps;
+            }
+            return curve;
+        }
+
+        function initAudio() {
+            if (audioCtx) return;
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                
+                masterBitCrusher = audioCtx.createWaveShaper();
+                masterBitCrusher.curve = makeBitcrushCurve(0.6);
+                masterBitCrusher.oversample = 'none';
+
+                const masterGain = audioCtx.createGain();
+                masterGain.gain.value = 0.25;
+
+                masterBitCrusher.connect(masterGain);
+                masterGain.connect(audioCtx.destination);
+
+                const osc1 = audioCtx.createOscillator();
+                const osc2 = audioCtx.createOscillator();
+                const filter = audioCtx.createBiquadFilter();
+                
+                osc1.type = 'square';
+                osc1.frequency.value = 52.0; 
+                osc2.type = 'square';
+                osc2.frequency.value = 53.5; 
+
+                filter.type = 'lowpass';
+                filter.frequency.value = 180; 
+
+                const droneGain = audioCtx.createGain();
+                droneGain.gain.value = 0.8;
+
+                osc1.connect(droneGain);
+                osc2.connect(droneGain);
+                droneGain.connect(filter);
+                filter.connect(masterBitCrusher);
+
+                osc1.start();
+                osc2.start();
+            } catch(e) {}
+        }
+
+        function playIndexClick() {
+            if (!audioCtx || !audioCtx.destination || !masterBitCrusher) return;
+            try {
+                let t = audioCtx.currentTime;
+                let osc = audioCtx.createOscillator();
+                let gain = audioCtx.createGain();
+                
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(800, t); 
+                
+                gain.gain.setValueAtTime(0.3, t);
+                gain.gain.setValueAtTime(0.0, t + 0.025);
+                
+                osc.connect(gain);
+                gain.connect(masterBitCrusher);
+                
+                osc.start(t);
+                osc.stop(t + 0.025);
+            } catch(e) {}   
+        }
+
+        function speakPhrase(text) {
+            if (!window.speechSynthesis) return;
+
+            let cleanText = text.replace(/<[^>]*>?/gm, '');
+            cleanText = cleanText.replace(/[\.;]/g, '');
+            cleanText = cleanText.replace(/\(NOT\)/g, ", NOT ,");
+            cleanText = cleanText.replace(/\bUS\b/g, "ass");
+
+            const utterance = new SpeechSynthesisUtterance(cleanText);
+            
+            if (voices.length === 0) loadVoices();
+            if (davidVoice) {
+                utterance.voice = davidVoice;
+            } else if (voices[0]) {
+                utterance.voice = voices[0];
+            }
+
+            utterance.pitch = 0.1; 
+            utterance.rate = 0.8;  
+            utterance.volume = 1.0; 
+
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function generateNextLine() {
+            let visualLine = "";
+            sentencesWritten++;
+
+            if (sentencesWritten % 3 === 0) {
+                const concreteModes = ["pyramid", "spiral", "scatter", "wide_spread"];
+                mode = concreteModes[Math.floor(Math.random() * concreteModes.length)];
+                visualLine += "\n\n";
+            } else {
+                mode = "normal";
+            }
+
+            let aph = aphorisms[Math.floor(Math.random() * aphorisms.length)].trim();
+            let speechLine = aph + ". ";
+
+            switch(mode) {
+                case "pyramid":
+                    let words = aph.split(" ");
+                    let currentBuild = "";
+                    for (let w of words) {
+                        currentBuild += w + " ";
+                        visualLine += currentBuild.trim() + "\n";
+                    }
+                    visualLine += "\n";
+                    break;
+                case "spiral":
+                    let pad = Math.floor(Math.random() * 5) + 2;
+                    visualLine += " ".repeat(pad) + ">>> " + aph + " <<<\n";
+                    visualLine += " ".repeat(pad + 4) + "/ / / / / / / / / / / / / / /\n";
+                    break;
+                case "scatter":
+                    let spaces = Math.floor(Math.random() * 5);
+                    visualLine += " ".repeat(spaces) + aph.split("").join("  ") + "\n\n";
+                    break;
+                case "wide_spread":
+                    visualLine += ">>> [█▓▒░] " + aph.split("").join(" ") + " [░▒▓█] <<<\n\n";
+                    break;
+                default:
+                    let widePad = Math.floor(Math.random() * 5);
+                    visualLine += " ".repeat(widePad) + aph + "\n";
+                    break;
+            }
+
+            if (Math.random() > 0.7) {
+                visualLine = visualLine.replace("NOT", "<span class='err-tag'>N0T</span>");
+            }
+
+            speakPhrase(speechLine);
+            return visualLine;
+        }
+
+        function typeEngine() {
+            if (charIndex >= currentString.length) {
+                currentString = generateNextLine();
+                charIndex = 0;
+            }
+
+            let nextChar = currentString[charIndex];
+            
+            if (nextChar === '<') {
+                let tagEnd = currentString.indexOf('>', charIndex);
+                if (tagEnd !== -1) {
+                    nextChar = currentString.substring(charIndex, tagEnd + 1);
+                    charIndex = tagEnd;
+                }
+            }
+
+            outputStream.innerHTML += nextChar;
+            playIndexClick();
+            charIndex++;
+
+            window.scrollTo({
+                top: document.documentElement.scrollHeight,
+                behavior: 'smooth'
+            });
+
+            let typeSpeed;
+
+            if (frenzyCharsRemaining <= 0 && Math.random() < 0.03) {
+                frenzyCharsRemaining = Math.floor(Math.random() * 150) + 40;
+                statusIndicator.innerText = "STATUS: HYPER-ACCELERATION";
+                statusIndicator.style.color = "#ff2222"; 
+            }
+
+            if (frenzyCharsRemaining > 0) {
+                typeSpeed = Math.random() * 2; 
+                frenzyCharsRemaining--;
+                
+                if (frenzyCharsRemaining === 0) {
+                    statusIndicator.innerText = "STATUS: INERTIA";
+                    statusIndicator.style.color = "#22ff55";
+                }
+            } else {
+                if (nextChar === '\n') {
+                    typeSpeed = 400 + Math.random() * 400; 
+                } else if (nextChar === ' ') {
+                    typeSpeed = 40 + Math.random() * 60; 
+                } else {
+                    typeSpeed = 20 + Math.random() * 50; 
+                }
+            }
+
+            setTimeout(typeEngine, typeSpeed);
+        }
+
+        function triggerStart() {
+            if (isRunning) return;
+            isRunning = true;
+
+            initAudio();
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            loadVoices();
+            currentString = aphorisms[Math.floor(Math.random() * aphorisms.length)];
+            window.speechSynthesis.cancel();
+            
+            setTimeout(() => {
+                let initVoice = new SpeechSynthesisUtterance(currentString.replace(/\(NOT\)/g, ", NOT ,").replace(/[\.;]/g, '').replace(/\bUS\b/g, "ass")); 
+                if (voices.length === 0) loadVoices();
+                if (davidVoice) initVoice.voice = davidVoice;
+                initVoice.pitch = 0.1; 
+                initVoice.rate = 0.8; 
+                initVoice.volume = 1.0;
+                window.speechSynthesis.speak(initVoice);
+            }, 100);
+
+            typeEngine();
+        }
+
+        window.addEventListener('click', triggerStart);
+        window.addEventListener('keydown', triggerStart);
+        window.addEventListener('touchstart', triggerStart);
+
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(triggerStart, 150);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-select: none">
+<title>PANOPTIC_SYSTEMS // DATA_ENTROPY_02</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    background-color: #010201;
+    overflow: hidden;
+    user-select: none;
+    width: 100vw;
+    height: 100vh;
+    cursor: crosshair;
+  }
+
+  body::before {
+    content: " "; display: block; position: fixed;
+    top: 0; left: 0; bottom: 0; right: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.3) 50%);
+    background-size: 100% 4px; z-index: 50; pointer-events: none;
+  }
+
+  #hud-top {
+    position: fixed; top: 0; left: 0; width: 100%;
+    padding: 8px 20px; background: rgba(1, 2, 1, 0.95);
+    border-bottom: 1px solid rgba(34, 255, 85, 0.5);
+    display: flex; justify-content: space-between;
+    font-family: Consolas, monospace;
+    font-size: 11px; font-weight: bold; z-index: 60; text-transform: uppercase;
+    color: #22ff55;
+  }
+
+  #dense-grid {
+    position: absolute;
+    top: 35px;
+    left: 0;
+    width: 100vw;
+    height: calc(100vh - 35px);
+    font-family: Consolas, 'Courier New', Courier, monospace;
+    font-size: 14px; 
+    line-height: 1.25;  
+    letter-spacing: 0px;
+    white-space: pre;
+    box-sizing: border-box;
+    padding: 10px 20px;
+    color: #002200; 
+    text-shadow: 0 0 15px rgba(34, 255, 85, 0.4);
+  }
+
+  .dim { color: #002200; }
+  .active-g { color: #22ff55; }
+  .active-G { color: #22ff55; text-shadow: 0 0 8px #22ff55; font-weight: bold; }
+  .active-w { color: #ffffff; text-shadow: 0 0 10px #ffffff; }
+  .active-r { color: #ff2222; text-shadow: 0 0 8px #ff2222; }
+  .active-inv-r { background-color: #ff2222; color: #010201; font-weight: bold; }
+  .active-inv-g { background-color: #22ff55; color: #010201; font-weight: bold; }
+
+  body.flash-red { background-color: #ff2222 !important; }
+  body.flash-white { background-color: #ffffff !important; }
+
+  #vg {
+    position: fixed;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+    background: radial-gradient(ellipse at 50% 50%, transparent 20%, rgba(0,0,0,0.95) 100%);
+}
+
+</style>
+</head>
+<body>
+
+<div id="hud-top">
+    <span id="status-indicator">STATUS: RAW_DATA_BURST</span>
+    <span>SYSTEM: PANOPTIC // PACKET_STREAM</span>
+</div>
+
+<div id="vg"></div>
+<pre id="dense-grid"></pre>
+
+<script>
+  const gridContainer = document.getElementById('dense-grid');
+  const statusIndicator = document.getElementById('status-indicator');
+  const GLYPHS = '᚛᚜ᚗᚖᚕᚔΞΨΩ██▓▒░┼╬═║╚╔▲▼◄►░▄■▓/\\*+:=--01XØ█'.split('');
+  const METRIC_PULSES = [90, 180, 70, 300, 140]; 
+  let pulsePointer = 0;
+  let state = 'feed'; 
+  let nextEvent = Date.now();
+
+  let ROWS = 0;
+  let COLS = 0;
+  let virtualMemory = [];
+
+  let audioCtx = null;
+  let masterBitCrusher = null;
+  let grainInterval = null;
+  let isRunning = false;
+
+  function makeBitcrushCurve(bits = 0.4) {
+    let steps = Math.pow(4, bits),
+        n_samples = 44100,
+        curve = new Float32Array(n_samples);
+    for (let i = 0; i < n_samples; ++i) {
+      let x = (i * 2) / n_samples - 1;
+      curve[i] = Math.round(x * steps) / steps;
+    }
+    return curve;
+  }
+
+  function initAudio() {
+    if (audioCtx) return;
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 44100 });
+      
+      masterBitCrusher = audioCtx.createWaveShaper();
+      masterBitCrusher.curve = makeBitcrushCurve(0.4);
+      masterBitCrusher.oversample = 'none';
+
+      const masterGain = audioCtx.createGain();
+      masterGain.gain.value = 0.22;
+
+      masterBitCrusher.connect(masterGain);
+      masterGain.connect(audioCtx.destination);
+
+      // --- DRONE ÁSPERO Y MONÓTONO (ONDA CUADRADA PURA CON MULTIPLEXACIÓN RIGIDA) ---
+      const carrierOsc = audioCtx.createOscillator();
+      const modOsc = audioCtx.createOscillator();
+      const modGain = audioCtx.createGain();
+      
+      carrierOsc.type = 'square';
+      carrierOsc.frequency.value = 20.41; // Tono base bajo, constante y pesado (C2)
+
+      modOsc.type = 'square';
+      modOsc.frequency.value = 33.0; // Modulación fija y cortante de paquetes
+
+      modGain.gain.value = 18.0; 
+
+      modOsc.connect(modGain);
+      modGain.connect(carrierOsc.frequency);
+
+      carrierOsc.connect(masterBitCrusher);
+
+      carrierOsc.start();
+      modOsc.start();
+
+      grainInterval = setInterval(triggerAcidGlitchGrain, 20);
+    } catch(e) {}
+  }
+
+  function playIndexClick() {
+    if (!audioCtx || !audioCtx.destination || !masterBitCrusher) return;
+    try {
+      let t = audioCtx.currentTime;
+      let osc = audioCtx.createOscillator();
+      let gain = audioCtx.createGain();
+      
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(450, t); // Clics más secos y metálicos uniformes
+      
+      gain.gain.setValueAtTime(0.2, t);
+      gain.gain.setValueAtTime(0.0, t + 0.02);
+      
+      osc.connect(gain);
+      gain.connect(masterBitCrusher);
+      
+      osc.start(t);
+      osc.stop(t + 0.02);
+    } catch(e) {}
+  }
+
+  function createAliasedNoiseBuffer(duration, downsampleFactor) {
+    const size = Math.floor(audioCtx.sampleRate * duration);
+    const buffer = audioCtx.createBuffer(1, size, audioCtx.sampleRate);
+    const data = buffer.getChannelData(0);
+    
+    let lastVal = Math.random() > 0.5 ? 1 : -1;
+    
+    for (let i = 0; i < size; i++) {
+      if (i % downsampleFactor === 0) {
+        lastVal = Math.random() > 0.5 ? 1 : -1;
+      }
+      data[i] = lastVal;
+    }
+    return buffer;
+  }
+
+  function triggerAcidGlitchGrain() {
+    if (!audioCtx || audioCtx.state === 'suspended' || !masterBitCrusher) return;
+
+    const now = audioCtx.currentTime;
+    let grainDuration = 0.01;
+    let downsample = 4; 
+
+    if (state === 'spasm') {
+      grainDuration = 0.04;
+      downsample = 8; 
+    } else if (state === 'static') {
+      grainDuration = 0.005;
+      downsample = 2; 
+    } else if (state === 'feed') {
+      grainDuration = 0.012;
+      downsample = 4;
+    }
+
+    const noiseNode = audioCtx.createBufferSource();
+    noiseNode.buffer = createAliasedNoiseBuffer(grainDuration, downsample);
+    
+    const noiseGain = audioCtx.createGain();
+    noiseGain.gain.setValueAtTime(0.2, now);
+    noiseGain.gain.setValueAtTime(0.0001, now + grainDuration);
+
+    noiseNode.connect(noiseGain);
+    noiseGain.connect(masterBitCrusher);
+
+    noiseNode.start(now);
+    noiseNode.stop(now + grainDuration + 0.002);
+  }
+
+  function triggerStart() {
+    if (isRunning) return;
+    isRunning = true;
+    initAudio();
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+  }
+
+  window.addEventListener('click', triggerStart);
+  window.addEventListener('keydown', triggerStart);
+  window.addEventListener('touchstart', triggerStart);
+
+  window.addEventListener('DOMContentLoaded', () => {
+    setupResponsiveGrid();
+    initAudio();
+    setTimeout(triggerStart, 150);
+  });
+
+  window.addEventListener('resize', setupResponsiveGrid);
+
+  function setupResponsiveGrid() {
+    const computedStyle = window.getComputedStyle(gridContainer);
+    const fontSize = parseFloat(computedStyle.fontSize);
+    
+    const charWidth = fontSize * 0.60; 
+    const charHeight = fontSize * 1.25; 
+
+    COLS = Math.floor((window.innerWidth - 40) / charWidth);
+    ROWS = Math.floor((window.innerHeight - 55) / charHeight);
+
+    virtualMemory = [];
+    for (let r = 0; r < ROWS; r++) {
+      virtualMemory[r] = [];
+      for (let c = 0; c < COLS; c++) {
+        virtualMemory[r][c] = `<span class="dim">${GLYPHS[Math.floor(Math.random() * GLYPHS.length)]}</span>`;
+      }
+    }
+  }
+
+  function rhythmEngine() {
+    const now = Date.now();
+
+    if (now >= nextEvent) {
+      const currentPulse = METRIC_PULSES[pulsePointer];
+      pulsePointer = (pulsePointer + 1) % METRIC_PULSES.length;
+      nextEvent = now + currentPulse;
+
+      const r = Math.random();
+      if (r < 0.45) {
+        state = 'feed'; 
+        statusIndicator.innerText = "STATUS: PACKET_STREAM";
+        statusIndicator.style.color = "#22ff55";
+      } else if (r < 0.85) {
+        state = 'spasm'; 
+        statusIndicator.innerText = "STATUS: VOLATILE_BURST";
+        statusIndicator.style.color = "#ff2222";
+      } else {
+        state = 'static'; 
+        statusIndicator.innerText = "STATUS: VOID_PURGE";
+        statusIndicator.style.color = "#ffffff";
+      }
+
+      document.body.className = '';
+      if (state === 'spasm' && Math.random() < 0.4) {
+        if (Math.random() < 0.5) document.body.classList.add('flash-red');
+        else document.body.classList.add('flash-white');
+      }
+    }
+
+    updateScreen();
+    requestAnimationFrame(rhythmEngine);
+  }
+
+  function updateScreen() {
+    if (ROWS === 0 || COLS === 0) return;
+
+    if (state === 'spasm') {
+      const loops = Math.floor(ROWS * 0.5); 
+      for (let i = 0; i < loops; i++) {
+        let rR = Math.floor(Math.random() * ROWS);
+        let maxLen = 14;
+        let rC = Math.floor(Math.random() * (COLS - maxLen));
+        if(rC < 0) rC = 0;
+        const style = Math.random() < 0.5 ? 'active-inv-r' : 'active-r';
+        virtualMemory[rR][rC] = `<span class="${style}">ERR_0x0${Math.floor(Math.random()*9)}</span>`;
+        playIndexClick();
+      }
+    } 
+    else if (state === 'static') {
+      for (let r = 0; r < ROWS; r++) {
+        if (Math.random() < 0.2) {
+          for (let c = 0; c < COLS; c++) {
+            virtualMemory[r][c] = `<span class="dim">░</span>`;
+          }
+        }
+      }
+    } 
+    else if (state === 'feed') {
+      const bursts = Math.floor(ROWS * 0.25);
+      const segment = Math.min(COLS, Math.floor(15 + Math.random() * 25)); 
+
+      for (let i = 0; i < bursts; i++) {
+        let rR = Math.floor(Math.random() * ROWS);
+        let startC = Math.floor(Math.random() * (COLS - segment));
+        if (startC < 0) startC = 0;
+        
+        let colorClass = 'active-g';
+        const randColor = Math.random();
+        if (randColor < 0.3) colorClass = 'active-G';
+        else if (randColor < 0.5) colorClass = 'active-w';
+        else if (randColor < 0.6) colorClass = 'active-inv-g';
+
+        for (let c = startC; c < startC + segment; c++) {
+          if (virtualMemory[rR] && c < COLS) {
+            virtualMemory[rR][c] = `<span class="${colorClass}">${GLYPHS[Math.floor(Math.random() * GLYPHS.length)]}</span>`;
+          }
+        }
+        if (i % 2 === 0) playIndexClick();
+      }
+
+      const cools = Math.floor((ROWS * COLS) * 0.015);
+      for (let i = 0; i < cools; i++) {
+        let rR = Math.floor(Math.random() * ROWS);
+        let rC = Math.floor(Math.random() * COLS);
+        if (virtualMemory[rR]) {
+          virtualMemory[rR][rC] = `<span class="dim">${GLYPHS[Math.floor(Math.random() * GLYPHS.length)]}</span>`;
+        }
+      }
+    }
+
+    let finalHTML = '';
+    for (let r = 0; r < ROWS; r++) {
+      finalHTML += virtualMemory[r].join('') + '\n';
+    }
+    gridContainer.innerHTML = finalHTML;
+  }
+
+  requestAnimationFrame(rhythmEngine);
+</script>
+</body>
+</html>
