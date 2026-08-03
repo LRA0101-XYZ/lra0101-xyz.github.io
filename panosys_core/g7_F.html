@@ -28,10 +28,10 @@
   .bank-ascii { font-size: 5px; line-height: 5px; white-space: pre; background: #000; padding: 2px; font-family: 'Consolas', monospace; }
   .bank-info { font-size: 9px; }
 
-  #dossier-modal { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 100; background: #001100; border: 2px solid #00ffff; padding: 2rem; width: 450px; box-shadow: 0 0 30px rgba(0,255,255,0.2); }
+  #dossier-modal { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 100; background: #001100; border: 2px solid #00ff55; padding: 2rem; width: 450px; box-shadow: 0 0 30px rgba(0,255,255,0.2); }
   .dossier-grid { display: grid; grid-template-columns: auto 1fr; gap: 2rem; }
   
-  #ascii-portrait { font-size: 8px; line-height: 8px; color: #00ffff; white-space: pre; background: #000; padding: 10px; border: 1px solid #005555; letter-spacing: 2px; font-family: 'Consolas', monospace; }
+  #ascii-portrait { font-size: 8px; line-height: 8px; color: #00ff55; white-space: pre; background: #000; padding: 10px; border: 1px solid #005555; letter-spacing: 2px; font-family: 'Consolas', monospace; }
   .dossier-info div { margin-bottom: 0.5rem; border-bottom: 1px solid #003300; padding-bottom: 0.2rem; }
   
   .action-panel { display: flex; gap: 1rem; margin-top: 1.5rem; }
@@ -43,7 +43,7 @@
 
   #map-canvas { display: block; width: 100vw; height: 100vh; transition: filter 0.2s; }
   .rojo { color: #ff3333 !important; }
-  .cian { color: #00ffff !important; }
+  .cian { color: #00ff55 !important; }
   
   #victory-screen { display: none; position: absolute; inset: 0; background: rgba(0, 20, 0, 0.9); z-index: 1000; align-items: center; justify-content: center; flex-direction: column; color: #00ff55; text-align: center; font-family: 'Consolas', monospace; }
   .vic-title { font-size: 4rem; font-weight: bold; margin-bottom: 1rem; text-shadow: 0 0 20px #00ff55; }
@@ -54,7 +54,7 @@
   @keyframes finalStrobe {
     0% { background-color: #010301; color: #00ff55; filter: brightness(1) hue-rotate(0deg); }
     20% { background-color: #ff3333; color: #ffffff; filter: brightness(2.5) hue-rotate(90deg); }
-    40% { background-color: #00ffff; color: #010301; filter: brightness(3.5) hue-rotate(180deg); }
+    40% { background-color:#00ff55; color: #010301; filter: brightness(3.5) hue-rotate(180deg); }
     60% { background-color: #ffffff; color: #010301; filter: brightness(4) hue-rotate(270deg); }
     80% { background-color: #00ff55; color: #ff3333; filter: brightness(2.5) hue-rotate(360deg); }
     100% { background-color: #010301; color: #00ff55; filter: brightness(1) hue-rotate(0deg); }
@@ -92,7 +92,7 @@
 </div>
 
 <div id=dossier-modal>
-  <div id=d-title class=hud-title style="color:#00ffff; border-color:#00ffff; margin-bottom: 1.5rem;">BIOMETRIC RECORD INTERCEPTED</div>
+  <div id=d-title class=hud-title style="color:#00ff55; border-color:#00ff55; margin-bottom: 1.5rem;">BIOMETRIC RECORD INTERCEPTED</div>
   <div class=dossier-grid>
     <div id=ascii-portrait></div>
     <div class=dossier-info>
