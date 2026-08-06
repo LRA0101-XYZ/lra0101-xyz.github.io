@@ -42,15 +42,6 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'Co
 
 #c { position:absolute; top:0; left:0; width:100%; height:100%; z-index:10; }
 
-#crosshair {
-  position: absolute; top: 50%; left: 50%;
-  width: 20px; height: 20px; transform: translate(-50%, -50%);
-  border: 1px solid rgba(0, 255, 65, 0.7); border-radius: 50%; z-index: 50;
-  pointer-events: none; transition: border-color 0.3s;
-}
-#crosshair::after { content:''; position:absolute; top:9px; left:4px; width:10px; height:1px; background:#00ff41; transition: background 0.3s; }
-#crosshair::before { content:''; position:absolute; top:4px; left:9px; width:1px; height:10px; background:#00ff41; transition: background 0.3s; }
-
 #panel{ position:fixed; right:0; top:0; bottom:0; width:340px; border-left:1px solid rgba(0,255,65,0.2); background:rgba(0,5,0,0.98); z-index:800; display:flex; flex-direction:column; transition: transform 0.3s ease, border-color 0.3s; }
 #panel-top{padding:20px 20px 0;border-bottom:1px solid rgba(0,255,65,0.15);flex-shrink:0;}
 .p-sys{font-size:10px;letter-spacing:4px;color:rgba(0,255,65,0.7);margin-bottom:12px;} 
@@ -98,8 +89,6 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'Co
 }
 
 body.panic #scanline { background: linear-gradient(to bottom, transparent, rgba(255, 0, 0, 0.6), transparent); box-shadow: 0 0 25px rgba(255,0,0,0.9); }
-body.panic #crosshair { border-color: rgba(255,0,0,0.7); }
-body.panic #crosshair::after, body.panic #crosshair::before { background: #ff0000; }
 body.panic #panel { border-left-color: rgba(255,0,0,0.2); background: rgba(5,0,0,0.98); }
 body.panic #minimap { border-color: rgba(255,0,0,0.5); box-shadow: 0 0 20px rgba(255,0,0,0.3); }
 body.panic #mutation-timer { color: #ff0000; text-shadow: 0 0 15px #ff0000; }
@@ -115,7 +104,6 @@ body.panic #toggle-panel { border-color: #ff0000; color: #ff0000; box-shadow: 0 
 <div id="scanline"></div>
 <div id="glitch-ov"></div>
 <div id="ansi-overlay"></div>
-<div id="crosshair"></div>
 
 <canvas id="c"></canvas>
 <button id="toggle-panel">LOGS / MAP</button>
@@ -145,9 +133,9 @@ body.panic #toggle-panel { border-color: #ff0000; color: #ff0000; box-shadow: 0 
     <div style="text-align:center; font-size:10px; margin-bottom:15px;">NEURAL MAP RECONFIGURATION</div>
 
     <div style="color:rgba(255,255,255,0.4); font-size: 10px; line-height: 1.6;">
-      > DRAG / TOUCH: Look Direction<br>
-      > TAP / CLICK: Probe Monolith (Invert Geometry & Trigger Glitch)<br>
-      > PINCH / WHEEL: Zoom / FOV Shift<br>
+      > MOUSE / TOUCH: Look Direction<br>
+      > CLICK / TAP: Probe Monolith (Invert Geometry & Trigger Glitch)<br>
+      > WHEEL: Zoom / FOV Shift<br>
       > W / S / A / D: Move (or auto-navigate)
     </div>
     
@@ -603,7 +591,7 @@ let discomfortLevel = 0;
 
 const GRID_SIZE = 40; 
 const CELL_SIZE = 150;
-const LIMIT = GRID_SIZE * CELL_SIZE;
+let LIMIT = GRID_SIZE * CELL_SIZE;
 let maze = [];
 let wallAngles = []; 
 let wallTexts = [];
@@ -1108,59 +1096,94 @@ function drawLoop(timestamp) {
 }
 requestAnimationFrame(drawLoop);
 
-// --- TOUCH & POINTER GESTURES FOR MOBILE / DESKTOP ---
+// --- TOUCH & POINTER GESTURES FOR MOBILE / DESKTOP 
 let isDragging = false;
 let lastPointerX = 0;
 let lastPointerY = 0;
 let initialPinchDist = null;
+let isTouchDevice = false;
+
+// Variables para suavizar el movimiento del mouse (Inercia / Lerp)
+let targetYaw = camYaw;
+let targetPitch = camPitch;
 
 window.addEventListener('pointerdown', (e) => {
     if (!gameStarted) return;
     if (e.target.closest('#panel') || e.target.closest('#toggle-panel')) return;
-    isDragging = true;
-    lastPointerX = e.clientX;
-    lastPointerY = e.clientY;
+    
+    if (e.pointerType === 'touch') {
+        isTouchDevice = true;
+        isDragging = true;
+        lastPointerX = e.clientX;
+        lastPointerY = e.clientY;
+    }
 });
 
 window.addEventListener('pointermove', (e) => {
-    if (!gameStarted || !isDragging) return;
-    let dx = e.clientX - lastPointerX;
-    let dy = e.clientY - lastPointerY;
-    lastPointerX = e.clientX;
-    lastPointerY = e.clientY;
+    if (!gameStarted) return;
+    if (e.target.closest('#panel') || e.target.closest('#toggle-panel')) return;
 
-    camYaw += dx * 0.005;
-    camPitch = Math.max(-Math.PI/2, Math.min(Math.PI/2, camPitch + dy * 0.005));
+    if (e.pointerType === 'touch' && isDragging) {
+        let dx = e.clientX - lastPointerX;
+        let dy = e.clientY - lastPointerY;
+        lastPointerX = e.clientX;
+        lastPointerY = e.clientY;
+
+        camYaw += dx * 0.01;
+        camPitch = Math.max(-Math.PI/2, Math.min(Math.PI/2, camPitch + dy * 0.01));
+    } 
+    else if (e.pointerType === 'mouse') {
+        // Usar movementX y movementY estándar de mouse libre para evitar saltos locos al centro
+        let dx = e.movementX || e.clientX - lastPointerX || 0;
+        let dy = e.movementY || e.clientY - lastPointerY || 0;
+        
+        lastPointerX = e.clientX;
+        lastPointerY = e.clientY;
+
+        // Sensibilidad reducida y controlada para evitar giros descontrolados
+        camYaw += dx * 0.0052;
+        camPitch = Math.max(-Math.PI/2, Math.min(Math.PI/2, camPitch + dy * 0.0052));
+    }
 });
 
 window.addEventListener('pointerup', (e) => {
-    if (!isDragging) return;
-    isDragging = false;
-    
-    // Si fue un toque rápido (click o tap) sin arrastrar mucho, probar pirámide
-    let distMoved = Math.hypot(e.clientX - lastPointerX, e.clientY - lastPointerY);
-    if (distMoved < 10 && !e.target.closest('#panel') && !e.target.closest('#toggle-panel')) {
-        let clickX = e.clientX;
-        let clickY = e.clientY;
-
-        currentRenderedPyramids.sort((a, b) => a.depth - b.depth);
-
-        for (let p of currentRenderedPyramids) {
-            let b = p.box;
-            if (clickX >= b.minX && clickX <= b.maxX && clickY >= b.minY && clickY <= b.maxY) {
-                wallClicked[p.gridX][p.gridZ] = !wallClicked[p.gridX][p.gridZ];
-                totalClicks++;
-                totalInvestment += 14.50;
-                triggerModemHandshakeSound();
-                triggerAnsiGlitch(); 
-                logEvent(p.text, wallClicked[p.gridX][p.gridZ] ? "#ff0000" : "#00ff41", true);
-                break;
-            }
+    if (e.pointerType === 'touch') {
+        if (!isDragging) return;
+        isDragging = false;
+        
+        let distMoved = Math.hypot(e.clientX - lastPointerX, e.clientY - lastPointerY);
+        if (distMoved < 10 && !e.target.closest('#panel') && !e.target.closest('#toggle-panel')) {
+            processClickOrTap(e.clientX, e.clientY);
         }
     }
 });
 
-// Soporte para gestos táctiles avanzados (Pellizco para zoom/FOV y movimiento móvil)
+window.addEventListener('click', (e) => {
+    if (!gameStarted) return;
+    if (e.target.closest('#panel') || e.target.closest('#toggle-panel')) return;
+    
+    if (e.pointerType === 'mouse' || !isTouchDevice) {
+        processClickOrTap(e.clientX, e.clientY);
+    }
+});
+
+function processClickOrTap(clickX, clickY) {
+    currentRenderedPyramids.sort((a, b) => a.depth - b.depth);
+
+    for (let p of currentRenderedPyramids) {
+        let b = p.box;
+        if (clickX >= b.minX && clickX <= b.maxX && clickY >= b.minY && clickY <= b.maxY) {
+            wallClicked[p.gridX][p.gridZ] = !wallClicked[p.gridX][p.gridZ];
+            totalClicks++;
+            totalInvestment += 14.50;
+            triggerModemHandshakeSound();
+            triggerAnsiGlitch(); 
+            logEvent(p.text, wallClicked[p.gridX][p.gridZ] ? "#ff0000" : "#00ff41", true);
+            break;
+        }
+    }
+}
+
 window.addEventListener('touchmove', (e) => {
     if (e.touches.length === 2) {
         let touch1 = e.touches[0];
@@ -1204,7 +1227,7 @@ window.addEventListener('keyup', (e) => {
     if(k === 'd') keys.d = false;
 });
 
-document.getElementById('toggle-panel').addEventListener('click', () => {
+document.getElementById('toggle-panel').addEventListener('click',() => {
     document.getElementById('panel').classList.toggle('open');
 });
 </script>
