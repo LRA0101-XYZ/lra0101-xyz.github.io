@@ -58,8 +58,40 @@
     filter: invert(1) hue-rotate(280deg) contrast(10) !important;
   }
 </style>
+<style>
+        *, *:before, *:after { cursor: crosshair !important; }
+    </style>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <style>
+        * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
+        canvas, #canvas-2D { touch-action: none !important; width: 100vw !important; height: 100vh !important; }
+
+        /* AVISO DE ROTACIÓN PARA MÓVILES EN VERTICAL */
+        #rotate-warning {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: #020403;
+            color: #00ff66;
+            z-index: 99999;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Consolas', monospace;
+            text-align: center;
+            padding: 20px;
+        }
+        /* Si el dispositivo está en vertical y es un ancho de móvil, muestra el aviso */
+        @media (max-width: 900px) and (orientation: portrait) {
+            #rotate-warning { display: flex; }
+            body > *:not(#rotate-warning) { display: none !important; }
+        }
+    </style>
 </head>
-<body>
+<body><div id="rotate-warning">
+    <div style="font-size: 24px; margin-bottom: 15px;">⟳</div>
+    <h2 style="font-size: 14px; letter-spacing: 2px; margin-bottom: 10px;">ROTATE YOUR DEVICE</h2>
+    <p style="font-size: 10px; color: #00aa44;">THIS SYSTEM REQUIRES LANDSCAPE MODE TO OPERATE</p></div>
 
 <div id="alien-terminal"></div>
 
@@ -353,6 +385,126 @@
   }
 
   brain();
+</script>
+<script>
+(function() {
+    const style = document.createElement('style');
+    style.innerHTML = `
+        *, *::before, *::after {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+            touch-action: none !important;
+        }
+    `;
+    document.head.appendChild(style);
+
+    window.addEventListener('DOMContentLoaded', () => {
+        const canvas = document.querySelector('canvas');
+        if (!canvas) return;
+
+        function simulateMouseEvent(type, touch) {
+            const mouseEvent = new MouseEvent(type, {
+                bubbles: true, cancelable: true, view: window,
+                clientX: touch.clientX, clientY: touch.clientY, button: 0
+            });
+            touch.target.dispatchEvent(mouseEvent);
+        }
+
+        canvas.addEventListener('touchstart', (e) => {
+            if (e.touches.length > 0) {
+                e.preventDefault();
+                simulateMouseEvent('mousedown', e.touches[0]);
+            }
+        }, { passive: false });
+
+        window.addEventListener('touchmove', (e) => {
+            if (e.touches.length > 0) {
+                e.preventDefault();
+                simulateMouseEvent('mousemove', e.touches[0]);
+            }
+        }, { passive: false });
+
+        window.addEventListener('touchend', (e) => {
+            const touch = e.changedTouches[0] || e.touches[0];
+            if (touch) simulateMouseEvent('mouseup', touch);
+        }, { passive: true });
+    });
+})();
+</script>
+<style>
+    *, *::before, *::after {
+        -webkit-touch-callout: none !important;
+        -webkit-user-select: none !important;
+        user-select: none !important;
+        touch-action: none !important;
+    }
+</style>
+
+<script>
+(function() {
+    window.addEventListener('DOMContentLoaded', () => {
+        const canvas = document.querySelector('canvas');
+        if (!canvas) return;
+
+        let initialPinchDistance = null;
+
+        function simulateMouseEvent(type, touch, button = 0) {
+            const mouseEvent = new MouseEvent(type, {
+                bubbles: true,
+                cancelable: true,
+                view: window,
+                clientX: touch.clientX,
+                clientY: touch.clientY,
+                button: button
+            });
+            touch.target.dispatchEvent(mouseEvent);
+        }
+
+        function getTouchDistance(t1, t2) {
+            const dx = t1.clientX - t2.clientX;
+            const dy = t1.clientY - t2.clientY;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
+        canvas.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                e.preventDefault();
+                simulateMouseEvent('mousedown', e.touches[0], 0);
+                initialPinchDistance = null;
+            } else if (e.touches.length >= 2) {
+                e.preventDefault();
+                initialPinchDistance = getTouchDistance(e.touches[0], e.touches[1]);
+            }
+        }, { passive: false });
+
+        window.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 1) {
+                e.preventDefault();
+                simulateMouseEvent('mousemove', e.touches[0], 0);
+            } else if (e.touches.length >= 2 && initialPinchDistance !== null) {
+                e.preventDefault();
+                const currentDistance = getTouchDistance(e.touches[0], e.touches[1]);
+                const scaleFactor = currentDistance / initialPinchDistance;
+
+                const zoomEvent = new CustomEvent('canvaszoom', {
+                    detail: { scale: scaleFactor, distance: currentDistance }
+                });
+                canvas.dispatchEvent(zoomEvent);
+            }
+        }, { passive: false });
+
+        window.addEventListener('touchend', (e) => {
+            if (e.touches.length < 2) {
+                initialPinchDistance = null;
+            }
+            const touch = e.changedTouches[0] || e.touches[0];
+            if (touch && e.touches.length === 0) {
+                simulateMouseEvent('mouseup', touch, 0);
+            }
+        }, { passive: true });
+    });
+})();
 </script>
 </body>
 </html>

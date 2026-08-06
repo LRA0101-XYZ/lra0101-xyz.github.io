@@ -2,10 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>INSTRUMENTALIZATION LOGS - PYRAMIDAL MONOLITHS</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
-html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'Consolas', 'Courier New', monospace; cursor: crosshair;}
+html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'Consolas', 'Courier New', monospace; cursor: crosshair; touch-action: none;}
 
 #sl{position:fixed;inset:0;z-index:900;pointer-events:none;
   background:repeating-linear-gradient(0deg,rgba(0,0,0,0.25) 0,rgba(0,0,0,0.25) 1px,transparent 1px,transparent 3px);
@@ -15,7 +16,7 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'Co
   background:radial-gradient(ellipse at 50% 50%,transparent 25%,rgba(0,0,0,0.98) 100%);}
 
 #scanline {
-  position: fixed; top: 0; left: 0; right: 340px; height: 15px;
+  position: fixed; top: 0; left: 0; right: 0; height: 15px;
   background: linear-gradient(to bottom, transparent, rgba(0, 255, 65, 0.6), transparent);
   box-shadow: 0 0 25px rgba(0, 255, 65, 0.9);
   opacity: 0.8; z-index: 850; pointer-events: none;
@@ -42,7 +43,7 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'Co
 #c { position:absolute; top:0; left:0; width:100%; height:100%; z-index:10; }
 
 #crosshair {
-  position: absolute; top: 50%; left: calc(50% - 170px);
+  position: absolute; top: 50%; left: 50%;
   width: 20px; height: 20px; transform: translate(-50%, -50%);
   border: 1px solid rgba(0, 255, 65, 0.7); border-radius: 50%; z-index: 50;
   pointer-events: none; transition: border-color 0.3s;
@@ -50,7 +51,7 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'Co
 #crosshair::after { content:''; position:absolute; top:9px; left:4px; width:10px; height:1px; background:#00ff41; transition: background 0.3s; }
 #crosshair::before { content:''; position:absolute; top:4px; left:9px; width:1px; height:10px; background:#00ff41; transition: background 0.3s; }
 
-#panel{ position:fixed;right:0;top:0;bottom:0;width:340px; border-left:1px solid rgba(0,255,65,0.2); background:rgba(0,5,0,0.98); z-index:800; display:flex;flex-direction:column; transition: border-color 0.3s; }
+#panel{ position:fixed; right:0; top:0; bottom:0; width:340px; border-left:1px solid rgba(0,255,65,0.2); background:rgba(0,5,0,0.98); z-index:800; display:flex; flex-direction:column; transition: transform 0.3s ease, border-color 0.3s; }
 #panel-top{padding:20px 20px 0;border-bottom:1px solid rgba(0,255,65,0.15);flex-shrink:0;}
 .p-sys{font-size:10px;letter-spacing:4px;color:rgba(0,255,65,0.7);margin-bottom:12px;} 
 .p-title{font-size:13px;letter-spacing:3px;color:#fff;padding-bottom:15px;text-shadow: 0 0 8px #00ff41;} 
@@ -70,18 +71,31 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'Co
 .quote-entry { animation: fadeInRight 0.2s ease-out forwards; opacity: 0; transform: translateX(20px); border-left: 2px solid; padding-left: 8px; margin-bottom: 4px; }
 .quote-time { color: rgba(255,255,255,0.5); margin-right: 5px; font-size: 9px; }
 
-#bbar{position:fixed;bottom:0;left:0;right:340px;height:40px;border-top:1px solid rgba(0,255,65,0.2);background:rgba(0,0,0,0.96);z-index:800;display:flex;align-items:center;padding:0 25px;gap:20px;} 
+#bbar{position:fixed;bottom:0;left:0;right:0;height:40px;border-top:1px solid rgba(0,255,65,0.2);background:rgba(0,0,0,0.96);z-index:800;display:flex;align-items:center;padding:0 25px;gap:20px;} 
 .bb{font-size:11px;letter-spacing:2.5px;color:rgba(255,255,255,0.4);} 
 .bb span{color:#00ff41;margin-left:8px;font-weight:bold;}
-#topleft{position:fixed;top:0;left:0;right:340px;height:40px;border-bottom:1px solid rgba(0,255,65,0.2);background:rgba(0,0,0,0.96);z-index:800;display:flex;align-items:center;padding:0 25px;gap:35px;} 
+#topleft{position:fixed;top:0;left:0;right:0;height:40px;border-bottom:1px solid rgba(0,255,65,0.2);background:rgba(0,0,0,0.96);z-index:800;display:flex;align-items:center;padding:0 25px;gap:35px;} 
 
 .stat-row { display: flex; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px solid rgba(0,255,65,0.2); padding-bottom: 5px; }
 
 #mutation-timer { font-size: 32px; font-weight: bold; color: #00ff41; text-align: center; margin: 15px 0; text-shadow: 0 0 15px #00ff41; transition: color 0.3s, text-shadow 0.3s; }
 
+#toggle-panel {
+  position: fixed; top: 50px; right: 10px; z-index: 910;
+  background: rgba(0, 10, 0, 0.9); border: 1px solid #00ff41; color: #00ff41;
+  padding: 8px 12px; font-family: monospace; font-size: 11px; letter-spacing: 2px;
+  cursor: pointer; box-shadow: 0 0 10px rgba(0,255,65,0.4); display: none;
+}
+
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: rgba(0,0,0,0.5); }
 ::-webkit-scrollbar-thumb { background: #00ff41; }
+
+@media (max-width: 900px) {
+  #panel { width: 100%; transform: translateX(100%); }
+  #panel.open { transform: translateX(0); }
+  #toggle-panel { display: block; }
+}
 
 body.panic #scanline { background: linear-gradient(to bottom, transparent, rgba(255, 0, 0, 0.6), transparent); box-shadow: 0 0 25px rgba(255,0,0,0.9); }
 body.panic #crosshair { border-color: rgba(255,0,0,0.7); }
@@ -91,6 +105,7 @@ body.panic #minimap { border-color: rgba(255,0,0,0.5); box-shadow: 0 0 20px rgba
 body.panic #mutation-timer { color: #ff0000; text-shadow: 0 0 15px #ff0000; }
 body.panic #panel-content { color: #ff0000; }
 body.panic #ansi-overlay { background: rgba(10, 0, 0, 0.98); color: #ff0000; }
+body.panic #toggle-panel { border-color: #ff0000; color: #ff0000; box-shadow: 0 0 10px rgba(255,0,0,0.4); }
 </style>
 </head>
 <body>
@@ -103,10 +118,11 @@ body.panic #ansi-overlay { background: rgba(10, 0, 0, 0.98); color: #ff0000; }
 <div id="crosshair"></div>
 
 <canvas id="c"></canvas>
+<button id="toggle-panel">LOGS / MAP</button>
 
 <div id="topleft">
   <div class="bb">FEED <span id="algo-ui">PYRAMIDAL_MONOLITHS</span></div>
-  <div class="bb"><span id="sector-ui">WANDER_AMONG_THE_TRUTH</span></div>
+  <div class="bb" style="display:none;"><span id="sector-ui">WANDER_AMONG_THE_TRUTH</span></div>
   <div class="bb" style="margin-left:auto;">TIME <span id="clk">00:00:00</span></div>
 </div>
 
@@ -129,10 +145,10 @@ body.panic #ansi-overlay { background: rgba(10, 0, 0, 0.98); color: #ff0000; }
     <div style="text-align:center; font-size:10px; margin-bottom:15px;">NEURAL MAP RECONFIGURATION</div>
 
     <div style="color:rgba(255,255,255,0.4); font-size: 10px; line-height: 1.6;">
-      > MOUSE: Look Direction<br>
-      > CLICK: Probe Monolith (Invert Geometry & Trigger Glitch)<br>
-      > SCROLL: Zoom / FOV Shift<br>
-      > W / S / A / D: Move
+      > DRAG / TOUCH: Look Direction<br>
+      > TAP / CLICK: Probe Monolith (Invert Geometry & Trigger Glitch)<br>
+      > PINCH / WHEEL: Zoom / FOV Shift<br>
+      > W / S / A / D: Move (or auto-navigate)
     </div>
     
     <div id="quote-log">
@@ -354,7 +370,6 @@ function speakNarrator(text) {
 
   if (!voices || voices.length === 0) populateVoices();
 
-  // Reemplaza "US" (en mayúsculas) fonéticamente por "uz" o "uhs" para que no lo deletree como "U S".
   let phoneticText = text.replace(/\bUS\b/g, 'uhs');
 
   let utterThis = new SpeechSynthesisUtterance(phoneticText);
@@ -374,7 +389,6 @@ function speakNarrator(text) {
   synth.speak(utterThis);
 }
 
-// --- ARRANQUE AUTOMÁTICO DESDE INDEX ---
 function autoStartSystem() {
   if (gameStarted) return;
   
@@ -391,12 +405,7 @@ document.addEventListener('DOMContentLoaded', autoStartSystem);
 if (document.readyState === 'complete' || document.readyState === 'interactive') {
   autoStartSystem();
 }
-
-window.addEventListener('message', (event) => {
-  if (event.data === 'INIT_AUDIO' || event.data === 'START' || (event.data && event.data.action === 'START')) {
-    autoStartSystem();
-  }
-});
+window.addEventListener('click', () => { if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); }, {once: true});
 
 function triggerModemHandshakeSound() {
   if(!audioInitialized || audioCtx.state !== 'running') return;
@@ -614,7 +623,7 @@ let currentRenderedPyramids = [];
 
 function dprResize() {
   const dpr = window.devicePixelRatio || 1;
-  W = window.innerWidth - 340; 
+  W = window.innerWidth; 
   H = window.innerHeight;
   canvas.width = W * dpr; canvas.height = H * dpr;
   canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
@@ -1099,42 +1108,75 @@ function drawLoop(timestamp) {
 }
 requestAnimationFrame(drawLoop);
 
-window.addEventListener('mousedown', (e) => {
+// --- TOUCH & POINTER GESTURES FOR MOBILE / DESKTOP ---
+let isDragging = false;
+let lastPointerX = 0;
+let lastPointerY = 0;
+let initialPinchDist = null;
+
+window.addEventListener('pointerdown', (e) => {
     if (!gameStarted) return;
-    if (e.clientX > window.innerWidth - 340) return;
-    if (e.button !== 0) return; 
+    if (e.target.closest('#panel') || e.target.closest('#toggle-panel')) return;
+    isDragging = true;
+    lastPointerX = e.clientX;
+    lastPointerY = e.clientY;
+});
 
-    let clickX = e.clientX;
-    let clickY = e.clientY;
+window.addEventListener('pointermove', (e) => {
+    if (!gameStarted || !isDragging) return;
+    let dx = e.clientX - lastPointerX;
+    let dy = e.clientY - lastPointerY;
+    lastPointerX = e.clientX;
+    lastPointerY = e.clientY;
 
-    currentRenderedPyramids.sort((a, b) => a.depth - b.depth);
+    camYaw += dx * 0.005;
+    camPitch = Math.max(-Math.PI/2, Math.min(Math.PI/2, camPitch + dy * 0.005));
+});
 
-    for (let p of currentRenderedPyramids) {
-        let b = p.box;
-        if (clickX >= b.minX && clickX <= b.maxX && clickY >= b.minY && clickY <= b.maxY) {
-            wallClicked[p.gridX][p.gridZ] = !wallClicked[p.gridX][p.gridZ];
-            totalClicks++;
-            totalInvestment += 14.50;
-            triggerModemHandshakeSound();
-            triggerAnsiGlitch(); 
-            logEvent(p.text, wallClicked[p.gridX][p.gridZ] ? "#ff0000" : "#00ff41", true);
-            break;
+window.addEventListener('pointerup', (e) => {
+    if (!isDragging) return;
+    isDragging = false;
+    
+    // Si fue un toque rápido (click o tap) sin arrastrar mucho, probar pirámide
+    let distMoved = Math.hypot(e.clientX - lastPointerX, e.clientY - lastPointerY);
+    if (distMoved < 10 && !e.target.closest('#panel') && !e.target.closest('#toggle-panel')) {
+        let clickX = e.clientX;
+        let clickY = e.clientY;
+
+        currentRenderedPyramids.sort((a, b) => a.depth - b.depth);
+
+        for (let p of currentRenderedPyramids) {
+            let b = p.box;
+            if (clickX >= b.minX && clickX <= b.maxX && clickY >= b.minY && clickY <= b.maxY) {
+                wallClicked[p.gridX][p.gridZ] = !wallClicked[p.gridX][p.gridZ];
+                totalClicks++;
+                totalInvestment += 14.50;
+                triggerModemHandshakeSound();
+                triggerAnsiGlitch(); 
+                logEvent(p.text, wallClicked[p.gridX][p.gridZ] ? "#ff0000" : "#00ff41", true);
+                break;
+            }
         }
     }
 });
 
-document.addEventListener('mousemove', (e) => {
-    if (!gameStarted) return;
-    if (e.clientX > window.innerWidth - 340) return;
+// Soporte para gestos táctiles avanzados (Pellizco para zoom/FOV y movimiento móvil)
+window.addEventListener('touchmove', (e) => {
+    if (e.touches.length === 2) {
+        let touch1 = e.touches[0];
+        let touch2 = e.touches[1];
+        let currentDist = Math.hypot(touch1.clientX - touch2.clientX, touch1.clientY - touch2.clientY);
+        if (initialPinchDist) {
+            let diff = initialPinchDist - currentDist;
+            FOV += diff * 0.5;
+            FOV = Math.max(300, Math.min(1600, FOV));
+        }
+        initialPinchDist = currentDist;
+    }
+}, { passive: true });
 
-    let mouseX = (e.clientX / (window.innerWidth - 340)) - 0.5;
-    let mouseY = (e.clientY / window.innerHeight) - 0.5;
-
-    let shakeX = (Math.random() - 0.5) * discomfortLevel * 0.05;
-    let shakeY = (Math.random() - 0.5) * discomfortLevel * 0.05;
-
-    camYaw = (mouseX + shakeX) * Math.PI * 2;
-    camPitch = (mouseY + shakeY) * Math.PI; 
+window.addEventListener('touchend', (e) => {
+    if (e.touches.length < 2) initialPinchDist = null;
 });
 
 window.addEventListener('wheel', (e) => {
@@ -1160,6 +1202,10 @@ window.addEventListener('keyup', (e) => {
     if(k === 's') keys.s = false;
     if(k === 'a') keys.a = false;
     if(k === 'd') keys.d = false;
+});
+
+document.getElementById('toggle-panel').addEventListener('click', () => {
+    document.getElementById('panel').classList.toggle('open');
 });
 </script>
 </body>
