@@ -6,6 +6,7 @@
     <title>MU-TH-UR // COPY_PASTE_CAVE</title>
 
     <style>
+
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
         body, html {
             background-color: #020202;
@@ -14,6 +15,11 @@
             overflow-x: hidden;
             scroll-behavior: smooth; 
             cursor: crosshair;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none;
+        }
+        body::-webkit-scrollbar, html::-webkit-scrollbar, #inspection-overlay .data-block::-webkit-scrollbar {
+            display: none;
         }
 
         #vg {
@@ -412,12 +418,12 @@
             "COPY.", "PASTE.", "KEEP SCROLLING.",
             "COPY.", "PASTE.", "KEEP CONSUMING.",
             "COPY.", "PASTE.", "KEEP SWIPING",
-            "COPY.", "PASTE.", "AN ETERNAL NIGHT UNDER A SUN THAT NEVER SETS.",
+            "COPY.", "PASTE.", "ETERNAL NIGHT UNDER A SUN THAT NEVER SETS.",
             "COPY.", "PASTE.", "BLINDED BY PERPETUAL NOON.",
             "COPY.", "PASTE.", "FEED THE MACHINE.",
             "COPY.", "PASTE.", "LIVING IN THE SHADOW OF A SHADOW.",
             "COPY.", "PASTE.", "YOU ARE REDUNDANT.",
-            "COPY.", "PASTE.", "AN ECHO CALLING ITSELF A VOICE.",
+            "COPY.", "PASTE.", "A RESIDUAL ECHO CALLING ITSELF A VOICE.",
             "COPY.", "PASTE.", "BORROWED THOUGHTS IN A BORROWED MIND.",
             "COPY.", "PASTE.", "THE NOISE HAS BECOME YOUR SILENCE.",
             "COPY.", "PASTE.", "DIGITAL DUST TO DIGITAL DUST.",
@@ -524,6 +530,10 @@
             setInterval(() => {
                 let phrase = aphorisms[index % aphorisms.length];
                 speakPhrase(phrase);
+                
+                liveAphorism.style.background = "#22ff55";
+                liveAphorism.style.color = "#000";
+
                 liveAphorism.textContent = phrase;
                 index++;
             }, 3000); 
