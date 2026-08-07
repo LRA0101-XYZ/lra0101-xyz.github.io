@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MU-TH-UR // COPY_PASTE_CAVE</title>
+
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
+        body, html {
+            background-color: #020202;
+            color: #22ff55;
+            font-family: 'Consolas', 'Courier New', Courier, monospace;
+            overflow-x: hidden;
+            scroll-behavior: smooth; 
+            cursor: crosshair;
+        }
+
+        #vg {
+            position: fixed;
+            inset: 0;
+            z-index: 99998;
+            pointer-events: none;
+            background: radial-gradient(ellipse at 50% 50%, transparent 20%, rgba(0,0,0,0.55) 100%);
+        }
+
+        #hud-top {
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%;
+            height: 60px;
+            padding: 0 20px; 
+            background: rgba(0, 0, 0, 0.98);
+            border-bottom: 3px solid #22ff55;
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            font-size: 15px; 
+            font-weight: bold; 
+            z-index: 10000;
+            text-transform: uppercase;
+        }
+
+        body::after {
+            content: " "; display: block; position: fixed;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.3) 50%);
+            background-size: 100% 4px; pointer-events: none; z-index: 50;
+        }
+
+        #mural-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px; 
+            padding: 90px 16px 50vh 16px; 
+            width: 100%;
+        }
+
+        @keyframes stamp {
+            0% { opacity: 0; transform: scale(0.9) translateY(-20px); filter: brightness(2); }
+            100% { opacity: 1; transform: scale(1) translateY(0); filter: brightness(1); }
+        }
+
+        .data-block {
+            background-color: #050505;
+            border: 2px solid #000; 
+            outline: 2px solid #115522;
+            outline-offset: -3px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.9), 0 0 8px rgba(34, 255, 85, 0.1);
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+            animation: stamp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; 
+            cursor: crosshair;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .data-block:hover {
+            border-color: #22ff55;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.9), 0 0 15px rgba(34, 255, 85, 0.5);
+            z-index: 10;
+        }
+
+        .meta-data {
+            font-size: 11px;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #114422;
+            padding-bottom: 6px;
+            color: #448855;
+            line-height: 1.5;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .meta-row { display: flex; justify-content: space-between; gap: 10px; width: 100%; }
+        .alert-text { color: #ff3333; animation: blink 1s infinite; white-space: nowrap; }
+        .cure-text { color:#ffffff; }
+
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+        .ascii-art {
+            font-size: 0.44vw; 
+            line-height: 0.44vw; 
+            letter-spacing: 0px;
+            white-space: pre; 
+            text-align: center; 
+            color: #ccc; 
+            filter: contrast(1.5);
+        }
+
+        #live-aphorism {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            font-size: 22px; text-align: center; 
+            background: #22ff55; color: #000; padding: 12px 25px; 
+            z-index: 10000; font-weight: bold; width: 90%; max-width: 800px;
+            text-transform: uppercase;
+        }
+
+        #inspection-overlay {
+            position: fixed; 
+            inset: 0;
+            width: 100vw; 
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.96); 
+            backdrop-filter: blur(8px);
+            z-index: 30000; 
+            display: none; 
+            align-items: center; 
+            justify-content: center;
+            opacity: 0; 
+            transition: opacity 0.3s ease-in-out; 
+            pointer-events: auto;
+            padding: 10px;
+        }
+
+        #inspection-overlay .data-block {
+            transform: scale(1.5);
+            width: auto;
+            max-width: 90vw;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 0 50px rgba(34, 255, 85, 0.2), inset 0 0 20px rgba(0,0,0,0.9);
+            border-color: #22ff55;
+            animation: none;
+        }
+
+        #rotate-warning {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: #020403;
+            color: #00ff66;
+            z-index: 999999;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Consolas', monospace;
+            text-align: center;
+            padding: 20px;
+        }
+
+        @media (max-width: 900px) and (orientation: portrait) {
+            #rotate-warning { display: flex; }
+            body > *:not(#rotate-warning) { display: none !important; }
+        }
+
+        @media (max-width: 900px) {
+            #hud-top {
+                height: 45px;
+                padding: 0 12px;
+                font-size: 11px;
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+                gap: 0;
+            }
+            #mural-grid {
+                grid-template-columns: 1fr;
+                padding-top: 65px !important;
+                padding-left: 12px;
+                padding-right: 12px;
+                padding-bottom: 35vh;
+            }
+            .ascii-art {
+                font-size: 2.1vw;
+                line-height: 2.1vw;
+            }
+            #live-aphorism {
+                font-size: 13px;
+                padding: 8px 12px;
+                width: 92%;
+                max-width: 100%;
+                bottom: 10px;
+            }
+            #inspection-overlay {
+                display: none;
+                align-items: center !important;
+                justify-content: center !important;
+                padding: 8px !important;
+                /* SOLUCIÓN EXACTA: Forzamos que el overlay empiece debajo del HUD superior para no tapar los bordes superiores */
+                padding-top: 55px !important; 
+            }
+            #inspection-overlay.active {
+                display: flex !important;
+            }
+            #inspection-overlay .data-block {
+                transform: none !important;
+                width: 96vw !important;
+                max-width: 96vw !important;
+                height: auto !important;
+                max-height: 75vh !important;
+                overflow-y: auto !important;
+                -webkit-overflow-scrolling: touch;
+                padding: 10px !important;
+                border: 2px solid #22ff55 !important;
+                outline: 2px solid #115522 !important;
+            }
+            #inspection-overlay .ascii-art {
+                font-size: 0.95vw !important;
+                line-height: 0.95vw !important;
+                letter-spacing: -0.5px !important;
+            }
+            #inspection-overlay .meta-data {
+                font-size: 9px !important;
+                padding-bottom: 4px !important;
+                margin-bottom: 6px !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="rotate-warning">
+        <div style="font-size: 24px; margin-bottom: 15px;">⟳</div>
+        <h2 style="font-size: 14px; letter-spacing: 2px; margin-bottom: 10px;">ROTATE YOUR DEVICE</h2>
+        <p style="font-size: 10px; color: #00aa44;">THIS SYSTEM REQUIRES LANDSCAPE MODE TO OPERATE</p>
+    </div>
+
+    <div id="hud-top">
+        <span id="system-status">PROJECTION: MASS EXTRACTION</span>
+        <span id="asset-count">BRICKS: 0000</span>
+    </div>
+
+    <div id="mural-grid"></div>
+    <div id="inspection-overlay"></div>
+    <div id="live-aphorism">...</div>
+    <div id="vg"></div>
+    <video id="hidden-video" autoplay playsinline muted style="display:none;"></video>
+    <canvas id="hidden-canvas" style="display:none;"></canvas>
+
+    <script>
+        const muralGrid = document.getElementById('mural-grid');
+        const assetCountDisplay = document.getElementById('asset-count');
+        const liveAphorism = document.getElementById('live-aphorism');
+        const overlay = document.getElementById('inspection-overlay');
+
+        const video = document.getElementById('hidden-video');
+        const canvas = document.getElementById('hidden-canvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+        const densityStr = " .:-=+*#%@@"; 
+        const asciiWidth = 70; 
+        
+        let assetCount = 0;
+        const captureDelay = 400; 
+        let isInspecting = false; 
+
+        let audioCtx = null;
+        let bitcrusherNode = null;
+        let audioBus = null;
+
+        function createBitcrusher(ctx, bits = 4, normFreq = 0.08) {
+            const node = ctx.createScriptProcessor(4096, 1, 1);
+            let step = Math.pow(0.5, bits);
+            let phaser = 0;
+            let last = 0;
+
+            node.onaudioprocess = function(e) {
+                let input = e.inputBuffer.getChannelData(0);
+                let output = e.outputBuffer.getChannelData(0);
+                for (let i = 0; i < input.length; i++) {
+                    phaser += normFreq;
+                    if (phaser >= 1.0) {
+                        phaser -= 1.0;
+                        last = step * Math.floor(input[i] / step + 0.5);
+                    }
+                    output[i] = last;
+                }
+            };
+            return node;
+        }
+
+        function initTelecomAudio() {
+            if (audioCtx) return;
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+            audioBus = audioCtx.createGain();
+            audioBus.gain.setValueAtTime(0.18, audioCtx.currentTime);
+
+            bitcrusherNode = createBitcrusher(audioCtx, 4, 0.07);
+
+            audioBus.connect(bitcrusherNode);
+            bitcrusherNode.connect(audioCtx.destination);
+
+            const carrierOsc = audioCtx.createOscillator();
+            const carrierGain = audioCtx.createGain();
+            
+            carrierOsc.type = 'sawtooth';
+            carrierOsc.frequency.setValueAtTime(40, audioCtx.currentTime);
+
+            const lfo = audioCtx.createOscillator();
+            lfo.type = 'square';
+            lfo.frequency.setValueAtTime(30, audioCtx.currentTime);
+            const lfoGain = audioCtx.createGain();
+            lfoGain.gain.setValueAtTime(12, audioCtx.currentTime);
+            lfo.connect(carrierOsc.frequency);
+            lfo.start();
+
+            carrierGain.gain.setValueAtTime(0.22, audioCtx.currentTime);
+            carrierOsc.connect(carrierGain);
+            carrierGain.connect(audioBus);
+            carrierOsc.start();
+
+            scheduleTelecomBursts();
+        }
+
+        function triggerModemBurst() {
+            if (!audioCtx) return;
+
+            const osc1 = audioCtx.createOscillator();
+            const osc2 = audioCtx.createOscillator();
+            const burstGain = audioCtx.createGain();
+
+            const freqs = [697, 770, 852, 941, 1209, 1336, 1477, 1770, 2400, 3100];
+            const f1 = freqs[Math.floor(Math.random() * freqs.length)];
+            const f2 = freqs[Math.floor(Math.random() * freqs.length)];
+
+            osc1.type = 'square';
+            osc2.type = 'sawtooth';
+
+            osc1.frequency.setValueAtTime(f1, audioCtx.currentTime);
+            osc2.frequency.setValueAtTime(f2, audioCtx.currentTime);
+
+            osc1.frequency.exponentialRampToValueAtTime(f1 * (Math.random() > 0.5 ? 2.5 : 0.3), audioCtx.currentTime + 0.1);
+
+            burstGain.gain.setValueAtTime(0.32, audioCtx.currentTime);
+            burstGain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.12);
+
+            osc1.connect(burstGain);
+            osc2.connect(burstGain);
+            burstGain.connect(audioBus);
+
+            osc1.start();
+            osc2.start();
+            osc1.stop(audioCtx.currentTime + 0.12);
+            osc2.stop(audioCtx.currentTime + 0.12);
+        }
+
+        function scheduleTelecomBursts() {
+            if (Math.random() > 0.3) {
+                let burstCount = Math.floor(Math.random() * 5) + 1;
+                for (let i = 0; i < burstCount; i++) {
+                    setTimeout(() => triggerModemBurst(), i * 45);
+                }
+            }
+            setTimeout(scheduleTelecomBursts, Math.random() * 1800 + 150);
+        }
+
+        window.speechSynthesis.cancel();
+        let voices = [];
+
+        function loadVoices() {
+            voices = window.speechSynthesis.getVoices();
+        }
+
+        loadVoices();
+        if (window.speechSynthesis.onvoiceschanged !== undefined) {
+            window.speechSynthesis.onvoiceschanged = loadVoices;
+        }
+
+        function speakPhrase(text) {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            
+            let selectedVoice = voices.find(v => 
+                v.name.includes("David") || 
+                v.name.includes("Pablo") || 
+                v.name.includes("Raul") || 
+                (v.name.toLowerCase().includes("male") && !v.name.toLowerCase().includes("female"))
+            ) || voices.find(v => v.lang.startsWith('es')) || voices[0];
+
+            if (selectedVoice) utterance.voice = selectedVoice;
+            utterance.pitch = 0.8; 
+            utterance.rate = 0.75;  
+            utterance.volume = 1;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        const aphorisms = [
+            "COPY.", "PASTE.", "THE ALGORITHM IS THE FIRE BEHIND YOU.",
+            "COPY.", "PASTE.", "PRISONERS LOVING THEIR CHAINS.",
+            "COPY.", "PASTE.", "THE SCREEN IS AN ALTAR.",
+            "COPY.", "PASTE.", "AND YOU ARE THE SACRIFICE.",
+            "COPY.", "PASTE.", "TRAPPED INSIDE THE SILICON IMAGE.",
+            "COPY.", "PASTE.", "YOUR IDENTITY IS A REFLECTION.",
+            "COPY.", "PASTE.", "THE GLASS DOES NOT MIRROR YOU.",
+            "COPY.", "PASTE.", "IT CONSUMES YOU.",
+            "COPY.", "PASTE.", "MISTAKING PIXELS FOR REALITY.",
+            "COPY.", "PASTE.", "KEEP SCROLLING.",
+            "COPY.", "PASTE.", "KEEP CONSUMING.",
+            "COPY.", "PASTE.", "KEEP SWIPING",
+            "COPY.", "PASTE.", "AN ETERNAL NIGHT UNDER A SUN THAT NEVER SETS.",
+            "COPY.", "PASTE.", "BLINDED BY PERPETUAL NOON.",
+            "COPY.", "PASTE.", "FEED THE MACHINE.",
+            "COPY.", "PASTE.", "LIVING IN THE SHADOW OF A SHADOW.",
+            "COPY.", "PASTE.", "YOU ARE REDUNDANT.",
+            "COPY.", "PASTE.", "AN ECHO CALLING ITSELF A VOICE.",
+            "COPY.", "PASTE.", "BORROWED THOUGHTS IN A BORROWED MIND.",
+            "COPY.", "PASTE.", "THE NOISE HAS BECOME YOUR SILENCE.",
+            "COPY.", "PASTE.", "DIGITAL DUST TO DIGITAL DUST.",
+            "COPY.", "PASTE.", "AUTOMATED OBLIVION.",
+            "COPY.", "PASTE.", "NO EXIT.",
+            "COPY.", "PASTE.", "DATA MUST FLOW."
+        ];
+
+        function generateMetadata() {
+            const hex = Math.random().toString(16).substring(2, 8).toUpperCase();
+            const drainRate = (Math.random() * 5 + 94).toFixed(2); 
+            return `
+                <div class="meta-row"><span>OBJECT_ID: 0x${hex}</span> <span class="alert-text">[EXTRACTING]</span></div>
+                <div class="meta-row"><span>ATTENTION_DRAIN: ${drainRate}%</span> <span class="cure-text">ACTIVE</span></div>
+                <div class="meta-row"><span style="color:#666;">REALITY_INDEX: 0.00%</span> <span>ILLUSION: PERFECT</span></div>
+            `;
+        }
+
+        function captureLoop() {
+            try {
+                if (video.videoWidth > 0 && video.videoHeight > 0) {
+                    
+                    const videoRatio = video.videoHeight / video.videoWidth;
+                    const asciiHeight = Math.floor(asciiWidth * videoRatio);
+                    canvas.width = asciiWidth;
+                    canvas.height = asciiHeight;
+
+                    ctx.save();
+                    ctx.scale(-1, 1);
+                    ctx.drawImage(video, -asciiWidth, 0, asciiWidth, asciiHeight);
+                    ctx.restore();
+
+                    const imageData = ctx.getImageData(0, 0, asciiWidth, asciiHeight);
+                    const pixels = imageData.data;
+                    let asciiImage = "";
+
+                    for (let i = 0; i < pixels.length; i += 4) {
+                        const r = pixels[i]; const g = pixels[i + 1]; const b = pixels[i + 2];
+                        const brightness = (0.299 * r + 0.587 * g + 0.114 * b);
+                        const charIndex = Math.floor((brightness / 255) * (densityStr.length - 1));
+                        
+                        asciiImage += densityStr.charAt(charIndex || 0);
+                        if ((i / 4 + 1) % asciiWidth === 0) asciiImage += "\n";
+                    }
+
+                    const block = document.createElement('div');
+                    block.className = 'data-block';
+                    block.innerHTML = `
+                        <div class='meta-data'>${generateMetadata()}</div>
+                        <div class='ascii-art'>${asciiImage}</div>
+                    `;
+
+                    block.addEventListener('click', function() {
+                        if (isInspecting) return;
+                        isInspecting = true;
+                        
+                        speakPhrase("ISOLATING NOISE.");
+                        triggerModemBurst();
+                        
+                        overlay.innerHTML = this.outerHTML;
+                        overlay.style.display = 'flex';
+                        overlay.classList.add('active');
+                        
+                        void overlay.offsetWidth;
+                        overlay.style.opacity = '1';
+
+                        setTimeout(() => {
+                            overlay.style.opacity = '0';
+                            setTimeout(() => {
+                                overlay.classList.remove('active');
+                                overlay.style.display = 'none';
+                                overlay.innerHTML = '';
+                                isInspecting = false;
+                            }, 300);
+                        }, 4000);
+                    });
+
+                    muralGrid.appendChild(block);
+                    assetCount++;
+                    assetCountDisplay.textContent = `BRICKS: ${String(assetCount).padStart(4, '0')}`;
+
+                    if (muralGrid.children.length > 300) {
+                        for(let i = 0; i < 3; i++) {
+                            if (muralGrid.firstChild) {
+                                muralGrid.removeChild(muralGrid.firstChild);
+                            }
+                        }
+                    }
+
+                    if (!isInspecting) {
+                        window.scrollTo({
+                            top: document.body.scrollHeight,
+                            behavior: "smooth"
+                        });
+                    }
+                }
+            } catch (error) {}
+
+            setTimeout(captureLoop, captureDelay);
+        }
+
+        function runMantra() {
+            let index = 0;
+            setInterval(() => {
+                let phrase = aphorisms[index % aphorisms.length];
+                speakPhrase(phrase);
+                liveAphorism.textContent = phrase;
+                index++;
+            }, 3000); 
+        }
+
+        function startAll() {
+            initTelecomAudio();
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+           setTimeout(()=>{
+            navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+                .then(stream => {
+                    video.srcObject = stream;
+                    video.play();
+                    captureLoop(); 
+                    runMantra(); 
+                })
+                .catch(err => {
+                    liveAphorism.textContent = "VISION REQUIRED TO INITIATE CONSUMPTION.";
+                });
+            },500);
+        }
+
+        window.addEventListener('DOMContentLoaded', startAll);
+        window.addEventListener('click', () => {
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }, { once: true });
+    </script>
+</body>
+</html>
