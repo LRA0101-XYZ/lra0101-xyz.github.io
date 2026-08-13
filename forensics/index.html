@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>FORENSIC ARCHIVE // SYSTEM</title>
+    <style>
+        body {
+            background-color: #000000;
+            color: #00FF00;
+            font-family: 'Consolas', monospace;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            box-sizing: border-box;
+            overflow: hidden;
+            text-shadow: 0 0 4px rgba(0, 255, 0, 0.4);
+            animation: respirarGlow 4s ease-in-out infinite alternate;
+        }
+
+        @keyframes respirarGlow {
+            0% {
+                filter: drop-shadow(0 0 2px rgba(0, 255, 0, 0.2));
+            }
+            100% {
+                filter: drop-shadow(0 0 8px rgba(0, 255, 0, 0.6));
+            }
+        }
+
+        #login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000000;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 40px;
+            box-sizing: border-box;
+            font-family: 'Consolas', monospace;
+            color: #00FF00;
+            transition: opacity 0.5s ease;
+        }
+
+        .login-console {
+            max-width: 600px;
+            font-size: 14px;
+            line-height: 1.6;
+            text-shadow: 0 0 6px rgba(0, 255, 0, 0.6);
+        }
+
+        /* Bloqueo por orientación estilo terminal gigante */
+        #orientation-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000000;
+            z-index: 10000;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 6vw;
+            box-sizing: border-box;
+            font-family: 'Consolas', monospace;
+            color: #00FF00;
+        }
+
+        .orientation-console {
+            width: 100%;
+            font-size: clamp(20px, 4.5vw, 42px);
+            line-height: 1.5;
+            text-shadow: 0 0 10px rgba(0, 255, 0, 0.9);
+            word-break: break-word;
+        }
+
+        .terminal-header {
+            border-bottom: 1px solid #00FF00;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            box-shadow: 0 1px 5px rgba(0, 255, 0, 0.3);
+        }
+        .terminal-body {
+            display: flex;
+            gap: 20px;
+            flex-grow: 1;
+            overflow: hidden;
+        }
+        .viewer {
+            flex: 2;
+            border: 1px solid #00FF00;
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            justify-content: space-between;
+            align-items: center;
+            box-sizing: border-box;
+            box-shadow: inset 0 0 10px rgba(0, 255, 0, 0.15);
+        }
+        .image-info {
+            width: 100%;
+            font-size: 13px;
+            margin-bottom: 10px;
+            color: #00FF00;
+            border-bottom: 1px dashed #00FF00;
+            padding-bottom: 5px;
+        }
+        .image-container {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            overflow: hidden;
+        }
+        .viewer img {
+            max-width: 100%;
+            max-height: 48vh;
+            border: 1px solid #00FF00;
+            box-shadow: 0 0 8px rgba(0, 255, 0, 0.3);
+        }
+        .controls-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .folder-selectors, .nav-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        .console-log {
+            flex: 1;
+            border: 1px solid #00FF00;
+            padding: 10px;
+            overflow-y: hidden;
+            font-size: 12px;
+            background-color: #050505;
+            box-sizing: border-box;
+            box-shadow: inset 0 0 10px rgba(0, 255, 0, 0.1);
+        }
+        button {
+            background: #000;
+            color: #00FF00;
+            border: 1px solid #00FF00;
+            font-family: 'Consolas', monospace;
+            padding: 6px 15px;
+            cursor: pointer;
+            box-shadow: 0 0 3px rgba(0, 255, 0, 0.3);
+            transition: all 0.1s ease;
+        }
+        button:hover, button.active {
+            background: #00FF00;
+            color: #000;
+            box-shadow: 0 0 10px #00FF00;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Bloqueo por orientación con orden exacto y tipografía de terminal expandida -->
+    <div id="orientation-overlay">
+        <div class="orientation-console">
+            SWITCH TO HORIZONTAL TO ACCES PHOTENICS<br><br>
+            FATAL_ERROR: INVALID_VIEWPORT_ORIENTATION<br>
+            CHECK: PORTRAIT_MODE_DETECTED [BLOCKED]<br>
+            ACTION_REQUIRED: SWITCH TO HORIZONTAL ASPECT RATIO.<br><br>
+            <span style="color: #00FF00; animation: respirarGlow 1s infinite alternate;">> WAITING FOR HARDWARE REPOSITION...</span>
+        </div>
+    </div>
+
+    <div id="login-overlay">
+        <div class="login-console" id="login-text">
+            INITIALIZING FORENSIC ARCHIVE SYSTEM...<br>
+            SECURE PORT: ESTABLISHED<br>
+            BYPASSING ENCRYPTION HASH... [OK]<br>
+            MOUNTING EVIDENCE VOLUMES...<br><br>
+            <span style="color: #00FF00;">LOADING INTERFACE...</span>
+        </div>
+    </div>
+
+    <div class="terminal-header">
+        <span>FORENSIC_ARCHIVE v4.0.2 // EVIDENCE_VIEWER // SECURE_NODE</span>
+        <span id="file-counter">NODE [0/0]</span>
+    </div>
+
+    <div class="terminal-body">
+        <div class="viewer">
+            <div class="image-info" id="img-tag-display">TARGET: NONE</div>
+            <div class="image-container">
+                <img id="display" src="" alt="SELECT_FILE">
+            </div>
+            
+            <div class="controls-container">
+                <div class="folder-selectors" id="folder-buttons"></div>
+                <div class="nav-controls">
+                    <button onclick="navegar(-1)">[ &lt; PREV ]</button>
+                    <button onclick="navegar(1)">[ NEXT &gt; ]</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="console-log" id="log">
+            > SYSTEM INITIALIZED.<br>
+            > MAPPING EVIDENCE TREE...<br>
+        </div>
+    </div>
+
+    <script>
+        function verificarOrientacion() {
+            const orientationOverlay = document.getElementById('orientation-overlay');
+            if (window.innerHeight > window.innerWidth) {
+                orientationOverlay.style.display = 'flex';
+            } else {
+                orientationOverlay.style.display = 'none';
+            }
+        }
+
+        window.addEventListener('resize', verificarOrientacion);
+        window.addEventListener('orientationchange', verificarOrientacion);
+        
+        window.addEventListener('DOMContentLoaded', () => {
+            verificarOrientacion();
+
+            setTimeout(() => {
+                const overlay = document.getElementById('login-overlay');
+                overlay.style.opacity = '0';
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                }, 500);
+
+                iniciarSistemaAudio();
+            }, 2000);
+        });
+
+        const estructuraCarpetas = [
+            {
+                nombre: "live",
+                archivos: [
+                    { archivo: "live (18).jpg", etiqueta: "EVIDENCE_LIVE_18.DAT" },
+                    { archivo: "live (19).jpg", etiqueta: "EVIDENCE_LIVE_19.DAT" },
+                    { archivo: "live (20).jpg", etiqueta: "EVIDENCE_LIVE_20.DAT" },
+                    { archivo: "live (21).jpg", etiqueta: "EVIDENCE_LIVE_21.DAT" },
+                    { archivo: "live (22).jpg", etiqueta: "EVIDENCE_LIVE_22.DAT" },
+                    { archivo: "live (23).jpg", etiqueta: "EVIDENCE_LIVE_23.DAT" },
+                    { archivo: "live (24).jpg", etiqueta: "EVIDENCE_LIVE_24.DAT" },
+                    { archivo: "live (25).jpg", etiqueta: "EVIDENCE_LIVE_25.DAT" },
+                    { archivo: "live (1).jpg", etiqueta: "EVIDENCE_LIVE_01.DAT" },
+                    { archivo: "live (2).jpg", etiqueta: "EVIDENCE_LIVE_02.DAT" },
+                    { archivo: "live (3).jpg", etiqueta: "EVIDENCE_LIVE_03.DAT" },
+                    { archivo: "live (4).jpg", etiqueta: "EVIDENCE_LIVE_04.DAT" },
+                    { archivo: "live (5).jpg", etiqueta: "EVIDENCE_LIVE_05.DAT" },
+                    { archivo: "live (6).jpg", etiqueta: "EVIDENCE_LIVE_06.DAT" },
+                    { archivo: "live (7).jpg", etiqueta: "EVIDENCE_LIVE_07.DAT" },
+                    { archivo: "live (8).jpg", etiqueta: "EVIDENCE_LIVE_08.DAT" },
+                    { archivo: "live (9).jpg", etiqueta: "EVIDENCE_LIVE_09.DAT" },
+                    { archivo: "live (10).jpg", etiqueta: "EVIDENCE_LIVE_10.DAT" },
+                    { archivo: "live (11).jpg", etiqueta: "EVIDENCE_LIVE_11.DAT" },
+                    { archivo: "live (12).jpg", etiqueta: "EVIDENCE_LIVE_12.DAT" },
+                    { archivo: "live (13).jpg", etiqueta: "EVIDENCE_LIVE_13.DAT" },
+                    { archivo: "live (14).jpg", etiqueta: "EVIDENCE_LIVE_14.DAT" },
+                    { archivo: "live (15).jpg", etiqueta: "EVIDENCE_LIVE_15.DAT" },
+                    { archivo: "live (16).jpg", etiqueta: "EVIDENCE_LIVE_16.DAT" },
+                    { archivo: "live (17).jpg", etiqueta: "EVIDENCE_LIVE_17.DAT" }
+                ]
+            },
+            {
+                nombre: "web",
+                archivos: [
+                    { archivo: "web (35).png", etiqueta: "FORENSIC_WEB_35.SEC" },
+                    { archivo: "web (1).png", etiqueta: "FORENSIC_WEB_01.SEC" },
+                    { archivo: "web (2).png", etiqueta: "FORENSIC_WEB_02.SEC" },
+                    { archivo: "web (3).png", etiqueta: "FORENSIC_WEB_03.SEC" },
+                    { archivo: "web (4).png", etiqueta: "FORENSIC_WEB_04.SEC" },
+                    { archivo: "web (5).png", etiqueta: "FORENSIC_WEB_05.SEC" },
+                    { archivo: "web (6).png", etiqueta: "FORENSIC_WEB_06.SEC" },
+                    { archivo: "web (7).png", etiqueta: "FORENSIC_WEB_07.SEC" },
+                    { archivo: "web (8).png", etiqueta: "FORENSIC_WEB_08.SEC" },
+                    { archivo: "web (9).png", etiqueta: "FORENSIC_WEB_09.SEC" },
+                    { archivo: "web (10).png", etiqueta: "FORENSIC_WEB_10.SEC" },
+                    { archivo: "web (11).png", etiqueta: "FORENSIC_WEB_11.SEC" },
+                    { archivo: "web (12).png", etiqueta: "FORENSIC_WEB_12.SEC" },
+                    { archivo: "web (13).png", etiqueta: "FORENSIC_WEB_13.SEC" },
+                    { archivo: "web (14).png", etiqueta: "FORENSIC_WEB_14.SEC" },
+                    { archivo: "web (15).png", etiqueta: "FORENSIC_WEB_15.SEC" },
+                    { archivo: "web (16).png", etiqueta: "FORENSIC_WEB_16.SEC" },
+                    { archivo: "web (17).png", etiqueta: "FORENSIC_WEB_17.SEC" },
+                    { archivo: "web (18).png", etiqueta: "FORENSIC_WEB_18.SEC" },
+                    { archivo: "web (19).png", etiqueta: "FORENSIC_WEB_19.SEC" },
+                    { archivo: "web (20).png", etiqueta: "FORENSIC_WEB_20.SEC" },
+                    { archivo: "web (21).png", etiqueta: "FORENSIC_WEB_21.SEC" },
+                    { archivo: "web (22).png", etiqueta: "FORENSIC_WEB_22.SEC" },
+                    { archivo: "web (23).png", etiqueta: "FORENSIC_WEB_23.SEC" },
+                    { archivo: "web (24).png", etiqueta: "FORENSIC_WEB_24.SEC" },
+                    { archivo: "web (25).png", etiqueta: "FORENSIC_WEB_25.SEC" },
+                    { archivo: "web (26).png", etiqueta: "FORENSIC_WEB_26.SEC" },
+                    { archivo: "web (27).png", etiqueta: "FORENSIC_WEB_27.SEC" },
+                    { archivo: "web (28).png", etiqueta: "FORENSIC_WEB_28.SEC" },
+                    { archivo: "web (29).png", etiqueta: "FORENSIC_WEB_29.SEC" },
+                    { archivo: "web (30).png", etiqueta: "FORENSIC_WEB_30.SEC" },
+                    { archivo: "web (31).png", etiqueta: "FORENSIC_WEB_31.SEC" },
+                    { archivo: "web (32).png", etiqueta: "FORENSIC_WEB_32.SEC" },
+                    { archivo: "web (33).png", etiqueta: "FORENSIC_WEB_33.SEC" },
+                    { archivo: "web (34).png", etiqueta: "FORENSIC_WEB_34.SEC" }
+                ]
+            },
+            {
+                nombre: "dev",
+                archivos: [
+                    { archivo: "dev (5).png", etiqueta: "EVIDENCE_DEV_01.LOG" },
+                    { archivo: "dev (1).png", etiqueta: "EVIDENCE_DEV_02.LOG" },
+                    { archivo: "dev (2).png", etiqueta: "EVIDENCE_DEV_03.LOG" },
+                    { archivo: "dev (3).png", etiqueta: "EVIDENCE_DEV_04.LOG" },
+                    { archivo: "dev (4).png", etiqueta: "EVIDENCE_DEV_05.LOG" }
+                ]
+            }
+        ];
+
+        let carpetaActiva = 0;
+        let indiceActual = 0;
+        let audioCtx = null;
+        let humGainNode = null;
+
+        function iniciarSistemaAudio() {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            const distortion = audioCtx.createWaveShaper();
+            
+            distortion.curve = makeDistortionCurve(60);
+            
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(55, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+            
+            osc.connect(distortion);
+            distortion.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            
+            humGainNode = gain;
+
+            setInterval(() => {
+                if (!audioCtx) return;
+                const randomGain = 0.04 + Math.random() * 0.08;
+                humGainNode.gain.setTargetAtTime(randomGain, audioCtx.currentTime, 0.3);
+            }, 800);
+
+            const log = document.getElementById('log');
+            log.innerHTML += `> FORENSIC AUDIO ENGINE ONLINE.<br>`;
+
+            inicializarBotonesCarpetas();
+            actualizarVisor();
+        }
+
+        function makeDistortionCurve(amount) {
+            const k = typeof amount === 'number' ? amount : 50;
+            const n_samples = 44100;
+            const curve = new Float32Array(n_samples);
+            const deg = Math.PI / 180;
+            for (let i = 0; i < n_samples; ++i) {
+                const x = (i * 2) / n_samples - 1;
+                curve[i] = ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x));
+            }
+            return curve;
+        }
+
+        function reproducirBitcrushClick() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            const crusher = audioCtx.createWaveShaper();
+            
+            crusher.curve = makeDistortionCurve(400);
+            osc.type = 'square';
+            
+            osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.08);
+            
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+            
+            osc.connect(crusher);
+            crusher.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.08);
+        }
+
+        function inicializarBotonesCarpetas() {
+            const contenedor = document.getElementById('folder-buttons');
+            contenedor.innerHTML = '';
+            estructuraCarpetas.forEach((folder, index) => {
+                const btn = document.createElement('button');
+                btn.innerText = `[ ${folder.nombre.toUpperCase()} ]`;
+                btn.id = `btn-folder-${index}`;
+                btn.onclick = () => {
+                    reproducirBitcrushClick();
+                    cambiarCarpeta(index);
+                };
+                contenedor.appendChild(btn);
+            });
+        }
+
+        function actualizarVisor() {
+            const folderObj = estructuraCarpetas[carpetaActiva];
+            const itemActual = folderObj.archivos[indiceActual];
+            const rutaCompleta = `${folderObj.nombre}/${itemActual.archivo}`;
+            
+            document.getElementById('display').src = rutaCompleta;
+            document.getElementById('img-tag-display').innerText = `TARGET EVIDENCE: [ ${itemActual.etiqueta} ]`;
+            document.getElementById('file-counter').innerText = `NODE [${indiceActual + 1}/${folderObj.archivos.length}]`;
+            
+            document.querySelectorAll('.folder-selectors button').forEach((b, i) => {
+                if (i === carpetaActiva) b.classList.add('active');
+                else b.classList.remove('active');
+            });
+
+            const log = document.getElementById('log');
+            log.innerHTML += `> EXAMINED: ./${folderObj.nombre}/${itemActual.etiqueta}<br>`;
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function cambiarCarpeta(index) {
+            carpetaActiva = index;
+            indiceActual = 0;
+            const log = document.getElementById('log');
+            log.innerHTML += `> ACCESSING EVIDENCE DIR: ${estructuraCarpetas[index].nombre.toUpperCase()}...<br>`;
+            actualizarVisor();
+        }
+
+        function navegar(direccion) {
+            reproducirBitcrushClick();
+            const totalArchivos = estructuraCarpetas[carpetaActiva].archivos.length;
+            indiceActual += direccion;
+            
+            if (indiceActual >= totalArchivos) {
+                indiceActual = 0;
+            } else if (indiceActual < 0) {
+                indiceActual = totalArchivos - 1;
+            }
+            actualizarVisor();
+        }
+    </script>
+
+</body>
+</html>
