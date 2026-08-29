@@ -618,7 +618,7 @@ html,body{
     <div class="sys-status">
       <span><span class="dot"></span><b>ENLACE</b> EST4BL3</span>
       <span>SUJ3T0S 4CT1V0S: <b>0417</b></span>
-      <span>N0D0: <b>GDL-04</b></span>
+      <span>N0D0: <b>ATJ-04</b></span>
       <span class="clock" id="clock">00:00:00</span>
     </div>
   </header>
@@ -658,7 +658,7 @@ html,body{
       <!-- ================= 01 LOGS ================= -->
       <section class="section visible" id="log">
         <div class="section-head">
-          <h1>L0GS D3L 1NSP3CT0R</h1>
+          <h1>L0GS D3 LR40101</h1>
           <span class="sub">CR0N1C4 // N4RR4D0R // 4CC3S0 N1V3L-1</span>
         </div>
         <div class="log-subnav" id="logSubnav"></div>
@@ -775,9 +775,9 @@ const LOGS = [
   {id:'LOG_0097', ts:'03:52:40', flag:null,
    text:'No soy de la escena ni soy del sistema. La escena no me deja acercarme del todo; el sistema no me llama por mi nombre completo, solo por designación. Camino entre los dos como quien cruza una frontera que nadie más ve.'},
   {id:'LOG_0098', ts:'23:58:03', flag:null,
-   text:'Llegué a la antipasarela cuando ya sonaba. 0X1D0 tenía la mesa cubierta de cacharros — dos ventiladores de una fuente de poder girando como pulmones de algo que no debería respirar. Alguien caminaba entre pinturas bajo una luz que no era luz de pasarela.'},
+   text:'Llegué a KWRI cuando ya sonaba — antipasarela, dice el programa, aunque nadie ahí usó esa palabra en voz alta. 0X1D0 tenía la mesa cubierta de cacharros — dos ventiladores de una fuente de poder girando como pulmones de algo que no debería respirar. Alguien caminaba entre pinturas bajo una luz que no era luz de pasarela.'},
   {id:'LOG_0099', ts:'00:14:51', flag:null,
-   text:'El evento de las palomas era otra cosa. Más quieto, más carne. 4V3 no hablaba mientras trabajaba. Vi el cableado antes que el ave: cinchos plásticos, un potenciómetro donde debería estar el pecho.'},
+   text:'Habitar el Nido llamaron a la otra muestra, y por una vez el nombre no mentía. Más quieto, más carne. 4V3 no hablaba mientras trabajaba. Vi el cableado antes que el ave: cinchos plásticos, un potenciómetro donde debería estar el pecho.'},
   {id:'LOG_0100', ts:'00:19:30', flag:null,
    text:'En los dos eventos vi lo mismo: más celulares en alto que ojos mirando directo. Una chica grababa la performance del piso a centímetros del cuerpo, más cerca de lo que yo me hubiera atrevido a acercarme con cualquiera de mis propias cámaras.'},
   {id:'LOG_0101', ts:'00:45:12', flag:null,
@@ -804,6 +804,12 @@ const LOGS = [
    text:'El sistema no filtra lo que no le sirve. Lo «diluye» hasta que ya no se distingue de todo lo demás — igual que el caudal del Ahogadero, que no limpia nada, solo revuelve la suciedad hasta que deja de notarse. Puede que mi archivo haga lo mismo. Puede que documentar sea, nada más, otra forma de «diluir».'},
   {id:'LOG_0112', ts:'02:01:14', flag:'PR10R1D4D',
    text:'PanoSys no vigila la fiesta. Deja que la fiesta se vigile a sí misma, y después indexa lo que ya subieron. Es más barato que instalar una cámara. Es más barato, incluso, que pedirlo.'},
+  {id:'LOG_0113', ts:'02:08:20', flag:null,
+   text:'El módulo que uso para leer el patrón de cada nodo no lo heredé de ningún inventario oficial. Lo armé yo, con lo que encontré, igual que ellos. Nodos, cables, un motor de síntesis que responde a la señal en vivo — no hay diferencia técnica entre mi dispositivo y los suyos. La única diferencia es para quién trabaja.'},
+  {id:'LOG_0114', ts:'02:15:47', flag:'PR10R1D4D',
+   text:'Lo llamé módulo de hipnosis antes de entender por qué. No somete forzando la voluntad — somete sosteniendo la mirada un segundo más de lo necesario, hasta que mirar deja de sentirse como elección. Construí exactamente lo que 0X1D0 y 4V3 dicen construir: algo que no le rinde cuentas a nadie. Se me olvidó preguntar a quién le rindo cuentas yo.'},
+  {id:'LOG_0115', ts:'02:24:03', flag:'REDACTADO',
+   text:'Probé el módulo conmigo primero, antes de llevarlo a ningún nodo. No recuerdo con precisión los «minutos» siguientes — el registro salta, sin corte visible, de encenderlo a apagarlo. Puede que funcione. Puede que ya no pueda distinguir si lo estoy «operando» yo, o si ya aprendió a operarse sin mí.'},
 ];
 
 /* ============================================================
@@ -1682,53 +1688,54 @@ const AudioEngine = (() => {
     }catch(e){}
   }
 
-  /* Un "blip" de habla sintética con ALIASING REAL, no solo cuantización
-     de amplitud: la onda se genera muestra por muestra en un buffer y se
-     sub-muestrea (sample-and-hold cada N samples), igual que reducir de
-     verdad el sample rate -> los armónicos se pliegan sobre sí mismos,
-     metálico e inarmónico, mucho más falso y agresivo que un oscilador
-     limpio pasado por un waveshaper. Encima, cuantización de amplitud
-     también. Dura más que el intervalo entre blips (ver speakLine) a
-     propósito -> se traslapan entre sí, nunca suena a uno-por-uno. */
+  /* Chispa, no burbuja: nada de tono sostenido con envolvente suave -> eso
+     es justo lo que suena a burbuja, por más aliasing que se le ponga
+     encima. Una chispa real es ruido filtrado en microimpulsos brevísimos
+     (3-12ms), varios por golpe, irregulares entre sí, sin resonancia
+     limpia. El registro de cada hablante (profile.base/range) desplaza
+     DÓNDE chispea en el espectro, no qué nota canta -> nunca hay nota. */
   function voiceBlip(profile){
     try{
       ensure();
       const t0 = actx.currentTime;
-      const freq = profile.base + (Math.random()*2-1)*profile.range;
-      const freq2 = freq * (0.7 + Math.random()*0.5); // quiebre de tono real dentro del buffer -> nunca un tono estable
-      const dur = 0.05 + Math.random()*0.045;
-      const len = Math.max(4, Math.floor(actx.sampleRate * dur));
-      const buffer = actx.createBuffer(1, len, actx.sampleRate);
-      const data = buffer.getChannelData(0);
-
-      const holdSamples = 2 + Math.floor(Math.random()*3); // sample rate efectivo MUY bajo -> alias agresivo
-      const bitSteps = profile.crushSteps || 6;
-      let phase = 0, held = 0;
-      for(let i=0;i<len;i++){
-        const t = i / actx.sampleRate;
-        const instFreq = freq + (freq2 - freq) * (t/dur);
-        phase += instFreq / actx.sampleRate;
-        if(i % holdSamples === 0){
-          const raw = profile.type === 'sawtooth' ? ((phase % 1) * 2 - 1) : Math.sign(Math.sin(phase * Math.PI * 2));
-          held = Math.round(raw * bitSteps) / bitSteps;
+      const hits = 2 + Math.floor(Math.random()*3); // 2-4 microimpulsos por blip
+      let t = t0;
+      for(let h=0; h<hits; h++){
+        const dur = 0.003 + Math.random()*0.009; // 3-12ms: brevísimo, nunca un tono que dure
+        const len = Math.max(2, Math.floor(actx.sampleRate * dur));
+        const buffer = actx.createBuffer(1, len, actx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for(let i=0;i<len;i++){
+          data[i] = (Math.random()*2 - 1) * Math.pow(1 - i/len, 0.55); // ruido puro, caída rápida pero con algo de crepitar, no un click 100% seco
         }
-        data[i] = held * Math.pow(1 - t/dur, 1.3); // corte seco, no cola suave
+        const src = actx.createBufferSource(); src.buffer = buffer;
+
+        const hp = actx.createBiquadFilter(); hp.type = 'highpass';
+        hp.frequency.value = Math.max(400, profile.base * 2.4) + Math.random() * profile.range * 9;
+
+        const peak = actx.createBiquadFilter(); peak.type = 'peaking';
+        peak.frequency.value = Math.max(600, profile.base * 3.2) + Math.random() * 700;
+        peak.Q.value = 2.5 + Math.random()*3.5;
+        peak.gain.value = 7 + Math.random()*6; // resalta una banda angosta -> se siente a chispa, no a hiss parejo
+
+        const g = actx.createGain();
+        g.gain.value = (0.14 + (profile.noiseAmt||0.25)*0.12) * (0.7 + Math.random()*0.5);
+
+        src.connect(hp); hp.connect(peak); peak.connect(g); g.connect(master);
+        src.start(t);
+        t += dur * 0.35 + Math.random()*0.004; // los microimpulsos se pisan un poco entre sí -> crepitar, no staccato limpio
       }
 
-      const src = actx.createBufferSource(); src.buffer = buffer;
-      const g = actx.createGain(); g.gain.value = 0.15;
-      src.connect(g); g.connect(master);
-      src.start(t0);
-
-      // capa de ruido de banda -> el grano industrial, mezclado por debajo del tono
-      if(Math.random() < (profile.noiseAmt || 0.25) + 0.3){
-        const buf = noiseBuffer(dur*0.65);
-        const nsrc = actx.createBufferSource(); nsrc.buffer = buf;
-        const bp = actx.createBiquadFilter(); bp.type = 'bandpass';
-        bp.frequency.value = freq * (2.2 + Math.random()*1.5); bp.Q.value = 2 + Math.random()*3;
-        const ng = actx.createGain(); ng.gain.value = 0.03 + (profile.noiseAmt || 0.25) * 0.07;
-        nsrc.connect(bp); bp.connect(ng); ng.connect(master);
-        nsrc.start(t0);
+      // chasquido gravísimo, opcional y brevísimo -> mantiene algo de
+      // identidad de registro por hablante sin volverse nota sostenida
+      if(Math.random() < 0.35){
+        const o = actx.createOscillator(); o.type = profile.type;
+        o.frequency.value = profile.base + (Math.random()*2-1)*profile.range;
+        const g2 = actx.createGain();
+        g2.gain.setValueAtTime(0.045, t0);
+        g2.gain.exponentialRampToValueAtTime(0.0004, t0 + 0.01);
+        o.connect(g2); g2.connect(master);
+        o.start(t0); o.stop(t0 + 0.014);
       }
     }catch(e){}
   }
