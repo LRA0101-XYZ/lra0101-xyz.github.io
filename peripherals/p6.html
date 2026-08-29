@@ -1,0 +1,3811 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PAN0PT1C_SYS // OBSERVATION PROTOCOL</title>
+<style>
+:root{
+  --void:#020403;
+  --panel:#071109;
+  --panel-2:#0a1710;
+  --line:#123a24;
+  --green:#4dffa0;
+  --green-dim:#2c8a5e;
+  --amber:#ffb020;
+  --amber-dim:#95661a;
+  --redacted:#ff2d4e;
+  --redacted-dim:#8a1b2c;
+  --oil:#b06bff;
+  --oil-dim:#4c2a80;
+  --oil-sheen:#33e0c2;
+  --text-dim:#5e9c80;
+  --white:#eafff1;
+  --accent: var(--green);
+  --accent-dim: var(--green-dim);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{
+  width:100%;height:100%;background:var(--void);
+  font-family:'SF Mono','JetBrains Mono','Fira Code','Consolas','Courier New',monospace;
+  color:var(--white);overflow:hidden;
+  cursor: crosshair;
+}
+::selection{background:var(--accent);color:var(--void);}
+
+/* ---------- noise / scanline ambience ---------- */
+.crt-overlay{
+  position:fixed;inset:0;pointer-events:none;z-index:900;
+  background:
+    repeating-linear-gradient(0deg, rgba(0,0,0,0.22) 0px, rgba(0,0,0,0.22) 1px, transparent 1px, transparent 3px);
+  mix-blend-mode:overlay;opacity:.5;
+  animation:scanJitter 10s steps(40) infinite;
+}
+@keyframes scanJitter{
+  0%,100%{transform:translateY(0);}
+  30%{transform:translateY(-.5px);}
+  60%{transform:translateY(.5px);}
+}
+.vignette{
+  position:fixed;inset:0;pointer-events:none;z-index:899;
+  background:radial-gradient(ellipse at center, transparent 58%, rgba(0,0,0,0.36) 100%);
+}
+.tint{
+  position:fixed;inset:0;pointer-events:none;z-index:898;
+  background:radial-gradient(ellipse at 50% 40%, rgba(70,120,90,.06), rgba(10,5,0,.18) 100%);
+  mix-blend-mode:multiply;
+}
+#noiseCanvas{
+  position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:901;
+  opacity:.08;mix-blend-mode:overlay;image-rendering:pixelated;
+}
+.track-glitch{
+  position:fixed;left:0;width:100%;pointer-events:none;z-index:903;opacity:0;
+  background:repeating-linear-gradient(0deg, rgba(255,255,255,.5) 0 1px, transparent 1px 2px);
+  mix-blend-mode:overlay;
+}
+
+/* ---------- app shell ---------- */
+.app{
+  position:relative;width:100vw;height:100vh;
+  display:grid;
+  grid-template-columns:78px 1fr;
+  grid-template-rows:64px 1fr 34px;
+  grid-template-areas:
+    "head head"
+    "nav main"
+    "foot foot";
+  filter:contrast(1.1) saturate(.85) brightness(.97) sepia(.06);
+  animation:bodyJitter 7s steps(1) infinite;
+}
+@keyframes bodyJitter{
+  0%,100%{transform:translate(0,0);}
+  30%{transform:translate(.2px,-.15px);}
+  62%{transform:translate(-.15px,.2px);}
+}
+
+/* ---------- header ---------- */
+.head{
+  grid-area:head;display:flex;align-items:center;justify-content:space-between;
+  padding:0 22px;border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg, var(--panel), transparent);
+  position:relative;z-index:5;
+}
+.head .brand{display:flex;align-items:center;gap:12px;letter-spacing:.14em;}
+.head .brand .mark{
+  width:14px;height:14px;border:1px solid var(--accent);
+  clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);
+  animation:pulseMark 2.4s ease-in-out infinite;
+}
+@keyframes pulseMark{0%,100%{background:transparent}50%{background:var(--accent)}}
+.head .brand b{font-size:13px;font-weight:700;color:var(--accent);text-shadow:1px 0 rgba(255,45,90,.5), -1px 0 rgba(51,224,194,.4);}
+.head .brand span{font-size:10px;color:var(--text-dim);}
+.head .sys-status{display:flex;gap:26px;font-size:10px;color:var(--text-dim);letter-spacing:.08em;}
+.head .sys-status b{color:var(--accent);font-weight:600;}
+.head .clock{font-variant-numeric:tabular-nums;color:var(--accent);}
+.head .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block;margin-right:6px;animation:blinkDot 1.2s steps(2) infinite;}
+@keyframes blinkDot{50%{opacity:.15}}
+
+/* ---------- nav ---------- */
+.nav{
+  grid-area:nav;border-right:1px solid var(--line);
+  display:flex;flex-direction:column;align-items:center;
+  padding:20px 0;gap:10px;background:var(--panel);position:relative;z-index:5;
+}
+.nav .navtitle{
+  writing-mode:vertical-rl;text-orientation:mixed;
+  font-size:9px;letter-spacing:.3em;color:var(--text-dim);margin-bottom:18px;
+}
+.navbtn{
+  width:52px;height:64px;background:transparent;border:1px solid var(--line);
+  color:var(--text-dim);display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:6px;cursor:pointer;position:relative;transition:border-color .25s, color .25s;
+  clip-path:polygon(0 8px,8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%);
+}
+.navbtn .num{font-size:9px;letter-spacing:.1em;}
+.navbtn .ico{width:16px;height:16px;position:relative;}
+.navbtn .ico svg{width:100%;height:100%;stroke:currentColor;fill:none;stroke-width:1.4;}
+.navbtn:hover{color:var(--white);border-color:var(--text-dim);}
+.navbtn.active{
+  color:var(--void);background:var(--accent);border-color:var(--accent);
+  box-shadow:0 0 18px -2px var(--accent);
+}
+.navbtn.active .num{color:var(--void);}
+.navbtn[data-target="log"]{ }
+.navbtn[data-target="entrevistas"]{ }
+.navbtn[data-target="expedientes"]{ }
+.nav-foot{margin-top:auto;font-size:8px;color:var(--text-dim);writing-mode:vertical-rl;letter-spacing:.2em;opacity:.6;}
+
+/* ---------- main viewport ---------- */
+.main{
+  grid-area:main;position:relative;overflow:hidden;
+  background:radial-gradient(ellipse at 50% 0%, #08170d 0%, var(--void) 70%);
+}
+.main::before{
+  content:'';position:absolute;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(circle at center, rgba(93,255,168,.55) 0.9px, transparent 1.1px) 0 0/48px 48px,
+    linear-gradient(rgba(93,255,168,.24) 1px,transparent 1px) 0 0/48px 48px,
+    linear-gradient(90deg,rgba(93,255,168,.24) 1px,transparent 1px) 0 0/48px 48px,
+    linear-gradient(rgba(93,255,168,.07) 1px,transparent 1px) 0 0/12px 12px,
+    linear-gradient(90deg,rgba(93,255,168,.07) 1px,transparent 1px) 0 0/12px 12px,
+    linear-gradient(45deg, rgba(93,255,168,.045) 1px, transparent 1px) 0 0/48px 48px,
+    linear-gradient(-45deg, rgba(93,255,168,.045) 1px, transparent 1px) 0 0/48px 48px,
+    radial-gradient(circle at center, rgba(176,107,255,.3) 0.6px, transparent 1px) 24px 24px/48px 48px;
+  animation:gridBreathe 7s ease-in-out infinite;
+}
+@keyframes gridBreathe{0%,100%{opacity:.55;}50%{opacity:1;}}
+.main.rgb-active{filter:url(#rgbShift);}
+.frame{
+  position:absolute;inset:18px;border:1px solid var(--line);
+  clip-path:polygon(0 18px,18px 0,100% 0,100% calc(100% - 18px),calc(100% - 18px) 100%,0 100%);
+  pointer-events:none;transform:rotate(-.12deg);
+}
+.corner{position:absolute;width:22px;height:22px;border-color:var(--accent);pointer-events:none;transition:border-color .3s;filter:blur(.2px);}
+.corner.tl{top:14px;left:14px;border-top:2px solid;border-left:2px solid;transform:rotate(-.6deg);}
+.corner.tr{top:14px;right:14px;border-top:2px solid;border-right:2px solid;transform:rotate(.5deg);}
+.corner.bl{bottom:14px;left:14px;border-bottom:2px solid;border-left:2px solid;transform:rotate(.4deg);}
+.corner.br{bottom:14px;right:14px;border-bottom:2px solid;border-right:2px solid;transform:rotate(-.5deg);}
+
+.viewport{
+  position:absolute;inset:38px;overflow-y:auto;padding:26px 34px 26px 34px;
+}
+.viewport::-webkit-scrollbar{width:4px;}
+.viewport::-webkit-scrollbar-thumb{background:var(--accent-dim);}
+
+.section{display:none;}
+.section.visible{display:block;animation:sectionIn .5s ease both;}
+@keyframes sectionIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+.section-head{
+  display:flex;align-items:baseline;justify-content:space-between;
+  border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:22px;
+}
+.section-head h1{
+  font-size:20px;letter-spacing:.12em;color:var(--accent);font-weight:700;
+  text-shadow:1.5px 0 rgba(255,45,90,.55), -1.5px 0 rgba(51,224,194,.45);
+}
+.section-head .sub{font-size:10px;color:var(--text-dim);letter-spacing:.1em;}
+
+/* ---------- LOGS DE LRA0101 ---------- */
+.log-entry{
+  border-left:2px solid var(--line);padding:10px 0 10px 16px;margin-bottom:4px;
+  position:relative;
+}
+.log-entry:nth-child(odd){transform:rotate(-.1deg);}
+.log-entry:nth-child(even){transform:rotate(.08deg);}
+.log-entry:hover{border-left-color:var(--accent);}
+.log-entry .meta{
+  display:flex;gap:16px;font-size:10px;color:var(--text-dim);margin-bottom:6px;letter-spacing:.06em;
+}
+.log-entry .meta .id{color:var(--accent);}
+.log-entry p{font-size:13.5px;line-height:1.75;color:#cdeedd;max-width:74ch;}
+.log-entry .flag{
+  display:inline-block;margin-left:10px;font-size:9px;padding:1px 6px;
+  border:1px solid var(--redacted-dim);color:var(--redacted);letter-spacing:.1em;
+}
+.log-glitch-word{
+  display:inline;font-family:inherit;color:var(--redacted);letter-spacing:0;
+  text-shadow:1px 0 rgba(255,45,90,.5), -1px 0 rgba(51,224,194,.35);
+  text-decoration:line-through;text-decoration-color:rgba(255,45,90,.4);
+}
+.log-subnav{display:flex;gap:0;margin-bottom:20px;border:1px solid var(--line);width:fit-content;}
+.log-subnav button{
+  background:transparent;border:none;border-right:1px solid var(--line);color:var(--text-dim);
+  font-family:inherit;font-size:10px;letter-spacing:.1em;padding:7px 14px;cursor:pointer;
+  transition:color .2s, background .2s;
+}
+.log-subnav button:last-child{border-right:none;}
+.log-subnav button:hover{color:var(--white);}
+.log-subnav button.active{background:var(--accent);color:var(--void);}
+.log-subnav button .count{color:var(--text-dim);margin-left:6px;font-size:9px;}
+.log-subnav button.active .count{color:var(--void);opacity:.7;}
+.log-empty{font-size:11px;color:var(--text-dim);letter-spacing:.08em;padding:20px 0;}
+
+/* ---------- ENTREVISTAS (codec) ---------- */
+.codec{
+  --accent:var(--amber);--accent-dim:var(--amber-dim);
+  border:1px solid var(--amber-dim);background:rgba(255,176,32,.03);
+  padding:0;transform:rotate(-.1deg);
+}
+.codec-freq{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:10px 16px;border-bottom:1px solid var(--amber-dim);
+  font-size:11px;color:var(--amber);letter-spacing:.12em;
+}
+.codec-freq .live{display:flex;align-items:center;gap:6px;color:var(--redacted);}
+.codec-freq .live .rec{width:6px;height:6px;border-radius:50%;background:var(--redacted);animation:blinkDot 1s steps(2) infinite;}
+.codec-body{display:grid;grid-template-columns:120px 1fr 120px;gap:0;}
+.codec-portrait{
+  padding:18px 12px;border-right:1px solid var(--amber-dim);display:flex;flex-direction:column;align-items:center;gap:10px;
+}
+.codec-portrait:last-child{border-right:none;border-left:1px solid var(--amber-dim);}
+.portrait-frame{
+  width:74px;height:74px;border:1px solid var(--amber-dim);position:relative;overflow:hidden;
+  clip-path:polygon(0 10%,10% 0,90% 0,100% 10%,100% 90%,90% 100%,10% 100%,0 90%);
+  background:
+    repeating-linear-gradient(0deg, rgba(255,176,32,.05) 0 2px, transparent 2px 4px),
+    linear-gradient(160deg,#1a1208,#050300);
+  display:flex;align-items:center;justify-content:center;
+}
+.portrait-frame svg{width:100%;height:100%;}
+.ascii-portrait{
+  margin:0;
+  font-family:'SF Mono','JetBrains Mono','Consolas',monospace;
+  font-size:7px;line-height:7px;letter-spacing:0;white-space:pre;
+  color:var(--amber-dim);text-shadow:0 0 3px rgba(255,176,32,.15);
+}
+.ascii-portrait .hi{color:var(--amber);text-shadow:0 0 5px var(--amber);}
+.portrait-frame.talking .ascii-portrait{color:var(--amber);}
+.portrait-frame.talking .ascii-portrait .hi{color:var(--white);text-shadow:0 0 6px var(--amber);}
+.portrait-frame.talking{border-color:var(--amber);box-shadow:0 0 14px -2px var(--amber);}
+.codec-portrait .name{font-size:9px;letter-spacing:.14em;color:var(--amber);text-align:center;}
+.codec-portrait .role{font-size:8px;color:var(--text-dim);text-align:center;}
+.waveform{display:flex;gap:2px;align-items:flex-end;height:16px;}
+.waveform i{width:2px;background:var(--amber-dim);display:block;height:20%;}
+.portrait-frame.talking ~ .waveform i, .codec-portrait:has(.talking) .waveform i{background:var(--amber);}
+
+.codec-dialogue{padding:18px 22px;min-height:180px;}
+.codec-line{margin-bottom:16px;display:flex;gap:12px;opacity:0;animation:lineIn .35s ease forwards;}
+.codec-line .who{font-size:10px;color:var(--amber);min-width:78px;letter-spacing:.08em;flex-shrink:0;}
+.codec-line p{font-size:13px;line-height:1.7;color:#f2e3c8;}
+@keyframes lineIn{to{opacity:1;}}
+.codec-nav{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-top:1px solid var(--amber-dim);}
+.codec-btn{
+  background:transparent;border:1px solid var(--amber-dim);color:var(--amber);
+  font-family:inherit;font-size:10px;letter-spacing:.1em;padding:6px 14px;cursor:pointer;
+}
+.codec-btn:hover{background:var(--amber);color:var(--void);}
+.codec-btn:disabled{opacity:.3;cursor:default;}
+.codec-btn:disabled:hover{background:transparent;color:var(--amber);}
+.codec-index{font-size:9px;color:var(--text-dim);letter-spacing:.14em;}
+.interview-list{display:flex;flex-direction:column;gap:18px;}
+
+/* ---------- MAPA DE ANOMALÍAS ---------- */
+.anomaly-wrap{display:grid;grid-template-columns:1.1fr 1fr;gap:22px;align-items:start;}
+.anomaly-map-box{
+  border:1px solid var(--oil-dim);background:rgba(176,107,255,.03);padding:14px;position:relative;
+  transform:rotate(-.08deg);
+}
+.anomaly-map-box::before{
+  content:'';position:absolute;top:0;left:0;height:2px;width:100%;
+  background:linear-gradient(90deg,transparent,var(--oil),transparent);opacity:.6;
+}
+.map-caption{display:flex;justify-content:space-between;font-size:9px;letter-spacing:.12em;color:var(--oil);margin-bottom:8px;}
+.map-caption span:last-child{color:var(--text-dim);}
+#cityMap{width:100%;height:auto;display:block;}
+.city-poly{fill:rgba(176,107,255,.035);stroke:var(--oil-dim);stroke-width:1;}
+.fault-line{stroke:var(--oil-dim);stroke-width:1;stroke-dasharray:2 4;fill:none;opacity:.7;}
+.periferico-ring{
+  fill:none;stroke:var(--accent-dim);stroke-width:1;stroke-dasharray:5 3;
+  opacity:.5;animation:ringTurn 40s linear infinite;transform-origin:200px 200px;
+}
+@keyframes ringTurn{from{stroke-dashoffset:0;}to{stroke-dashoffset:64;}}
+.tower{fill:none;stroke:var(--green-dim);stroke-width:1;}
+.link-line{fill:none;stroke:var(--oil-dim);stroke-width:1;stroke-dasharray:1 5;opacity:.65;}
+.link-line.active{stroke:var(--oil);opacity:1;stroke-dasharray:none;animation:dashFlow 1.2s linear infinite;}
+@keyframes dashFlow{to{stroke-dashoffset:-20;}}
+.map-node{cursor:pointer;}
+.map-node .ring{fill:none;stroke:var(--oil);stroke-width:1;opacity:.5;animation:ringPulse 2.4s ease-out infinite;}
+.map-node .core{fill:var(--oil-dim);stroke:var(--oil);stroke-width:1;transition:fill .25s;}
+.map-node.active .core{fill:var(--oil);}
+.map-node:hover .core{fill:var(--oil);}
+.map-node .label{fill:var(--text-dim);font-size:6.5px;letter-spacing:.05em;font-family:inherit;}
+.map-node.active .label{fill:var(--oil);}
+@keyframes ringPulse{0%{r:5;opacity:.7;}100%{r:15;opacity:0;}}
+
+.anomaly-detail{border:1px solid var(--oil-dim);background:rgba(176,107,255,.025);padding:18px 20px;min-height:340px;display:flex;flex-direction:column;}
+.anomaly-detail .dhead{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid var(--oil-dim);padding-bottom:8px;margin-bottom:12px;}
+.anomaly-detail .dhead h2{font-size:14px;letter-spacing:.08em;color:var(--oil);}
+.anomaly-detail .dhead .coord{font-size:9px;color:var(--text-dim);letter-spacing:.1em;}
+.anomaly-detail .dsub{font-size:9px;color:var(--oil-sheen);letter-spacing:.14em;margin-bottom:14px;}
+.anomaly-detail .dbody{font-size:12.5px;line-height:1.85;color:#e4d6ff;flex:1;}
+.anomaly-detail .dbody .drop{float:left;font-size:34px;line-height:1;padding-right:6px;color:var(--oil);font-weight:700;}
+.footnote{display:block;margin-top:14px;font-size:10px;color:var(--text-dim);font-style:italic;border-left:2px solid var(--oil-dim);padding-left:10px;}
+.footnote b{color:var(--oil);font-style:normal;}
+.insurgency-meter{margin-top:16px;}
+.insurgency-meter .imlabel{display:flex;justify-content:space-between;font-size:9px;color:var(--text-dim);letter-spacing:.1em;margin-bottom:4px;}
+.imbar{height:6px;background:var(--oil-dim);position:relative;overflow:hidden;}
+.imbar i{position:absolute;inset:0;background:var(--oil);width:var(--pct,50%);transition:width .6s ease;}
+.anomaly-empty{color:var(--text-dim);font-size:12px;line-height:1.8;display:flex;align-items:center;justify-content:center;text-align:center;flex:1;letter-spacing:.05em;}
+
+/* ---------- DISPOSITIVO / LABERINTO (instrumento de ejecución en vivo) ---------- */
+.device-wrap{display:flex;flex-direction:column;gap:10px;}
+.device-hud{
+  display:flex;flex-wrap:wrap;gap:18px;align-items:center;
+  border:1px solid var(--line);padding:8px 14px;font-size:10px;letter-spacing:.1em;color:var(--text-dim);
+}
+.device-hud b{color:var(--accent);font-weight:600;margin-left:4px;}
+.device-clear{
+  margin-left:auto;background:transparent;border:1px solid var(--redacted-dim);color:var(--redacted);
+  font-family:inherit;font-size:9px;letter-spacing:.1em;padding:5px 12px;cursor:pointer;
+}
+.device-clear:hover{background:var(--redacted);color:var(--void);}
+.vol-slider-wrap{
+  display:flex;align-items:center;gap:6px;font-size:9px;letter-spacing:.08em;color:var(--text-dim);
+}
+.vol-slider-wrap input[type="range"]{
+  -webkit-appearance:none;appearance:none;width:80px;height:2px;background:var(--line);outline:none;cursor:pointer;
+}
+.vol-slider-wrap input[type="range"]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:10px;height:10px;background:var(--accent);border-radius:0;cursor:pointer;
+}
+.vol-slider-wrap input[type="range"]::-moz-range-thumb{
+  width:10px;height:10px;background:var(--accent);border:none;border-radius:0;cursor:pointer;
+}
+.device-canvas-box{
+  border:1px solid var(--oil-dim);position:relative;overflow:hidden;
+  background:radial-gradient(ellipse at 50% 55%, #150a1f 0%, #050208 75%, #020103 100%);
+}
+#deviceCanvas{display:block;width:100%;height:560px;cursor:none;touch-action:none;}
+.device-help{font-size:9px;color:var(--text-dim);letter-spacing:.08em;text-align:center;opacity:.75;}
+
+/* ---------- M4TR1Z_N0D4L (hydra + patch bay) ---------- */
+.matrix-wrap{display:flex;flex-direction:column;gap:10px;}
+.matrix-canvas-box{
+  border:1px solid var(--oil-dim);overflow:hidden;background:#000;position:relative;
+}
+.matrix-canvas-box:fullscreen,
+.matrix-canvas-box:-webkit-full-screen{
+  width:100vw;height:100vh;border:none;display:flex;align-items:center;justify-content:center;
+}
+#hydraCanvas{
+  display:block;width:100%;height:280px;
+  filter:url(#paletteDuotone) contrast(1.12) brightness(1.05);
+}
+.matrix-canvas-box:fullscreen #hydraCanvas,
+.matrix-canvas-box:-webkit-full-screen #hydraCanvas{
+  width:100vw;height:100vh;
+}
+#shaderCanvas{
+  display:none;position:absolute;inset:0;width:100%;height:100%;
+  mix-blend-mode:screen;pointer-events:none;
+}
+.matrix-canvas-box:fullscreen #shaderCanvas,
+.matrix-canvas-box:-webkit-full-screen #shaderCanvas{
+  width:100vw;height:100vh;
+}
+#shaderCanvas.on{display:block;}
+.patch-bay{
+  position:relative;border:1px solid var(--line);background:rgba(93,255,168,.02);
+  height:330px;overflow:auto;
+}
+#cableSvg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
+.node-box{
+  position:absolute;width:132px;min-height:58px;padding:6px 10px;
+  border:1px solid var(--accent-dim,var(--line));background:var(--panel-2,#0a1710);
+  cursor:grab;user-select:none;-webkit-user-select:none;
+  clip-path:polygon(0 8px,8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%);
+  transition:box-shadow .2s;
+}
+.node-box.type-source{border-color:var(--green-dim);}
+.node-box.type-transform{border-color:var(--amber-dim);}
+.node-box.type-modulate{border-color:var(--oil-dim);}
+.node-box.type-out{border-color:var(--redacted-dim);}
+.node-box .nb-label{font-size:10px;letter-spacing:.1em;color:var(--white);display:flex;align-items:center;gap:5px;}
+.node-box .nb-label .nb-dot{width:5px;height:5px;border-radius:50%;background:var(--line);flex-shrink:0;}
+.node-box.active-chain .nb-label .nb-dot{background:var(--accent);box-shadow:0 0 6px var(--accent);animation:blinkDot 1.1s steps(2) infinite;}
+.node-box.active-chain{
+  box-shadow:0 0 14px -4px var(--accent);
+  background-image:repeating-linear-gradient(115deg, rgba(93,255,168,.05) 0 2px, transparent 2px 7px);
+  animation:nodeCircuitScroll 3.5s linear infinite;
+}
+@keyframes nodeCircuitScroll{from{background-position:0 0;}to{background-position:120px 0;}}
+.node-box .nb-preset{font-size:8px;color:var(--text-dim);margin-top:2px;}
+.node-box:active{filter:brightness(1.3);cursor:grabbing;}
+.port{
+  position:absolute;width:20px;height:20px;border-radius:50%;
+  background:var(--void);border:2px solid var(--accent);cursor:crosshair;
+  display:flex;align-items:center;justify-content:center;transition:transform .12s;
+}
+.port::after{content:'';width:7px;height:7px;border-radius:50%;background:var(--accent);opacity:.5;}
+.port:hover{transform:scale(1.35);}
+.port.port-out{right:-11px;top:50%;transform:translateY(-50%);border-color:var(--green);}
+.port.port-out::after{background:var(--green);}
+.port.port-out:hover{transform:translateY(-50%) scale(1.35);}
+.port.port-in{left:-11px;border-color:var(--amber);}
+.port.port-in::after{background:var(--amber);}
+.port.connected{background:rgba(93,255,168,.15);}
+.port.connected::after{opacity:1;}
+.matrix-controls{display:flex;gap:10px;justify-content:center;}
+
+.foot{
+  grid-area:foot;border-top:1px solid var(--line);display:flex;align-items:center;
+  overflow:hidden;background:var(--panel);position:relative;z-index:5;
+}
+.ticker{display:flex;gap:60px;white-space:nowrap;font-size:10px;color:var(--text-dim);letter-spacing:.1em;
+  animation:tickerMove 32s linear infinite;padding-left:100%;}
+.ticker b{color:var(--accent);}
+@keyframes tickerMove{from{transform:translateX(0);}to{transform:translateX(-100%);}}
+
+/* ---------- GLITCH DESYNC / SYNC ---------- */
+.glitch-veil{
+  position:fixed;inset:0;z-index:950;pointer-events:none;opacity:0;
+}
+.glitch-veil.active{opacity:1;filter:url(#rgbShift);}
+.glitch-slab{
+  position:absolute;left:0;width:100%;background:var(--accent);mix-blend-mode:difference;
+  opacity:0;
+}
+.scan-bar{
+  position:absolute;left:0;width:100%;height:3px;background:var(--white);
+  box-shadow:0 0 24px 4px var(--accent);opacity:0;
+}
+.app.desync{animation:desyncShake .12s steps(2) infinite;}
+.app.desync .viewport, .app.desync .head, .app.desync .nav{filter:contrast(1.3) saturate(0);}
+@keyframes desyncShake{
+  0%{transform:translate(0,0);}
+  25%{transform:translate(-6px,2px);}
+  50%{transform:translate(5px,-3px);}
+  75%{transform:translate(-3px,4px);}
+  100%{transform:translate(0,0);}
+}
+.app.desync .frame, .app.desync .corner{border-color:var(--redacted) !important;}
+.app.resync{animation:resyncSettle .5s ease-out;}
+@keyframes resyncSettle{
+  0%{filter:blur(2px) contrast(1.4);transform:translateX(-2px) scaleX(1.01);}
+  40%{filter:blur(1px) contrast(1.2);transform:translateX(2px);}
+  100%{filter:blur(0) contrast(1);transform:translateX(0);}
+}
+.rgb-split{position:relative;}
+.app.desync .rgb-split::before, .app.desync .rgb-split::after{
+  content:attr(data-text);position:absolute;top:0;left:0;width:100%;
+}
+.status-line{position:fixed;bottom:44px;left:50%;transform:translateX(-50%);z-index:960;
+  font-size:11px;letter-spacing:.3em;color:var(--redacted);opacity:0;text-align:center;pointer-events:none;}
+.status-line.show{opacity:1;animation:statusFlicker .8s steps(6);}
+@keyframes statusFlicker{0%,100%{opacity:1}20%{opacity:.2}40%{opacity:1}60%{opacity:.1}80%{opacity:1}}
+
+.scramble{color:var(--accent);}
+
+@media (max-width:720px){
+  .app{grid-template-columns:56px 1fr;}
+  .head .sys-status{display:none;}
+  .codec-body{grid-template-columns:1fr;}
+  .codec-portrait{border:none !important;border-bottom:1px solid var(--amber-dim) !important;flex-direction:row;}
+  .expedientes-grid{grid-template-columns:1fr;}
+}
+
+/* ---------- splash screen de carga ---------- */
+#splashScreen{
+  position:fixed;inset:0;z-index:9999;background:var(--void);
+  display:flex;align-items:center;justify-content:center;
+  transition:opacity .8s ease;
+}
+#splashScreen.hidden{opacity:0;pointer-events:none;}
+.splash-inner{
+  text-align:center;max-width:440px;padding:24px;
+  border:1px solid var(--line);
+  clip-path:polygon(0 14px,14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%);
+  background:rgba(7,17,9,.6);
+}
+.splash-mark{font-size:32px;color:var(--accent);margin-bottom:10px;animation:blinkDot 1.6s steps(2) infinite;}
+.splash-title{font-size:15px;letter-spacing:.3em;color:var(--accent);margin-bottom:18px;}
+.splash-log{
+  min-height:96px;text-align:left;font-size:10.5px;line-height:1.9;
+  color:var(--text-dim);letter-spacing:.06em;margin-bottom:18px;
+}
+.splash-log .ok{color:var(--accent);}
+.splash-enter{
+  background:transparent;border:1px solid var(--accent-dim);color:var(--accent);
+  font-family:inherit;font-size:11px;letter-spacing:.15em;padding:10px 22px;cursor:pointer;
+  transition:background .2s,color .2s;opacity:0;pointer-events:none;
+}
+.splash-enter.ready{opacity:1;pointer-events:auto;}
+.splash-enter:hover{background:var(--accent);color:var(--void);}
+.splash-hint{font-size:8.5px;color:var(--text-dim);letter-spacing:.1em;margin-top:12px;opacity:.6;}
+
+/* ---------- modo función: pantalla completa con controles flotantes ---------- */
+#perfMode{
+  position:fixed;inset:0;z-index:8000;display:none;background:#000;
+}
+#perfMode.active{display:block;}
+.perf-visual-slot{position:absolute;inset:0;background:#000;}
+.perf-visual-slot canvas{width:100% !important;height:100% !important;display:block;}
+/* estética de live-coding: la interfaz se ve, se puede tocar, y se puede apagar con una tecla */
+.perf-panel{
+  position:absolute;z-index:20;opacity:.92;transition:opacity .35s ease;
+  border:1px solid var(--line);background:rgba(5,8,6,.6);
+  backdrop-filter:blur(1.5px);-webkit-backdrop-filter:blur(1.5px);
+}
+.perf-panel canvas{display:block;width:100% !important;}
+.perf-panel.perf-patch{
+  left:2%;right:2%;top:2%;height:34vh;overflow:auto;
+}
+.perf-panel.perf-seq{
+  left:2%;right:2%;bottom:2%;height:38vh;overflow:hidden;
+}
+.perf-panel.perf-seq canvas{height:100% !important;}
+#perfMode.hide-ui .perf-panel{opacity:0;pointer-events:none;}
+#perfMode.hide-ui .perf-hud{opacity:.15;}
+.perf-hud{
+  position:fixed;bottom:6px;left:50%;transform:translateX(-50%);z-index:21;
+  display:flex;gap:16px;font-size:9px;color:var(--text-dim);letter-spacing:.08em;
+  opacity:.55;transition:opacity .3s;pointer-events:none;
+}
+.perf-hud .perf-key{color:var(--accent);}
+</style>
+</head>
+<body>
+
+<div id="splashScreen">
+  <div class="splash-inner">
+    <div class="splash-mark">◈</div>
+    <div class="splash-title">PAN0PT1C_SYS</div>
+    <div class="splash-log" id="splashLog"></div>
+    <button id="splashEnter" class="splash-enter">CL1CK P4R4 3NL4Z4R</button>
+    <div class="splash-hint">3ST0 4CT1V4 4UD10 — US4 P4RL4NT3S</div>
+  </div>
+</div>
+
+<div id="perfMode">
+  <div class="perf-visual-slot"></div>
+  <div class="perf-panel perf-patch"></div>
+  <div class="perf-panel perf-seq"></div>
+  <div class="perf-hud">
+    <span>M0D0 FUNC10N</span>
+    <span class="perf-key">[H] 0CULT4R/M0STR4R 1NT3RF4Z</span>
+    <span class="perf-key">[R] R4ND0M1Z4R T0D0</span>
+    <span class="perf-key">[3SC] S4L1R</span>
+  </div>
+</div>
+
+<svg width="0" height="0" style="position:absolute;pointer-events:none;">
+  <defs>
+    <filter id="rgbShift" color-interpolation-filters="sRGB" x="-30%" y="-30%" width="160%" height="160%">
+      <feColorMatrix type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="rC"/>
+      <feOffset in="rC" id="rgbOffR" dx="0" dy="0" result="rOff"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" in="SourceGraphic" result="gC"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" in="SourceGraphic" result="bC"/>
+      <feOffset in="bC" id="rgbOffB" dx="0" dy="0" result="bOff"/>
+      <feBlend in="rOff" in2="gC" mode="screen" result="rg"/>
+      <feBlend in="rg" in2="bOff" mode="screen"/>
+    </filter>
+
+    <!-- Duotono real: convierte a luminancia y remapea sombras/luces exactamente
+         a los dos colores de la paleta (violeta oscuro / verde fósforo), en vez
+         de solo rotar el matiz del arcoíris por defecto de Hydra. -->
+    <filter id="paletteDuotone" color-interpolation-filters="sRGB">
+      <feColorMatrix type="matrix" values="
+        0.2126 0.7152 0.0722 0 0
+        0.2126 0.7152 0.0722 0 0
+        0.2126 0.7152 0.0722 0 0
+        0      0      0      1 0" result="gray"/>
+      <feComponentTransfer in="gray">
+        <feFuncR type="table" tableValues="0.07 0.365"/>
+        <feFuncG type="table" tableValues="0.03 1.0"/>
+        <feFuncB type="table" tableValues="0.12 0.659"/>
+      </feComponentTransfer>
+    </filter>
+  </defs>
+</svg>
+<div class="crt-overlay"></div>
+<canvas id="noiseCanvas"></canvas>
+<div class="vignette"></div>
+<div class="tint"></div>
+<div class="track-glitch" id="trackGlitch"></div>
+<div class="glitch-veil" id="glitchVeil"></div>
+<div class="status-line" id="statusLine">DESINCRONIZANDO_ENLACE</div>
+
+<div class="app" id="app">
+
+  <header class="head">
+    <div class="brand">
+      <span class="mark"></span>
+      <b>PAN0PT1C_SYS</b>
+      <span>// OBS3RVAT10N PR0T0C0L v3.6</span>
+    </div>
+    <div class="sys-status">
+      <span><span class="dot"></span><b>ENLACE</b> EST4BL3</span>
+      <span>SUJ3T0S 4CT1V0S: <b>0417</b></span>
+      <span>N0D0: <b>GDL-04</b></span>
+      <span class="clock" id="clock">00:00:00</span>
+    </div>
+  </header>
+
+  <nav class="nav">
+    <div class="navtitle">S3L3CC10N4R M0D0</div>
+    <button class="navbtn active" data-target="log">
+      <span class="ico"><svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/><path d="M8 9h8M8 13h8M8 17h4"/></svg></span>
+      <span class="num">01</span>
+    </button>
+    <button class="navbtn" data-target="entrevistas">
+      <span class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg></span>
+      <span class="num">02</span>
+    </button>
+    <button class="navbtn" data-target="expedientes">
+      <span class="ico"><svg viewBox="0 0 24 24"><circle cx="6" cy="18" r="1.6"/><circle cx="18" cy="6" r="1.6"/><circle cx="15" cy="17" r="1.6"/><path d="M6 18l9-3M9 8l6 8"/></svg></span>
+      <span class="num">03</span>
+    </button>
+    <button class="navbtn" data-target="dispositivo">
+      <span class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M6 6l2 2M16 16l2 2M18 6l-2 2M8 16l-2 2"/></svg></span>
+      <span class="num">04</span>
+    </button>
+    <button class="navbtn" data-target="matriz">
+      <span class="ico"><svg viewBox="0 0 24 24"><circle cx="5" cy="6" r="2"/><circle cx="5" cy="18" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="19" cy="18" r="2"/><path d="M7 6h5M7 18h5M14 12l3-4M14 12l3 4"/></svg></span>
+      <span class="num">05</span>
+    </button>
+    <div class="nav-foot">4CC3S0 R3G1STR4D0</div>
+  </nav>
+
+  <main class="main">
+    <div class="frame"></div>
+    <span class="corner tl"></span><span class="corner tr"></span>
+    <span class="corner bl"></span><span class="corner br"></span>
+
+    <div class="viewport">
+
+      <!-- ================= 01 LOGS ================= -->
+      <section class="section visible" id="log">
+        <div class="section-head">
+          <h1>L0GS D3L 1NSP3CT0R</h1>
+          <span class="sub">CR0N1C4 // N4RR4D0R // 4CC3S0 N1V3L-1</span>
+        </div>
+        <div class="log-subnav" id="logSubnav"></div>
+        <div id="logList"></div>
+      </section>
+
+      <!-- ================= 02 ENTREVISTAS ================= -->
+      <section class="section" id="entrevistas">
+        <div class="section-head">
+          <h1>3NTR3V1ST4S</h1>
+          <span class="sub">C4N4L C1FR4D0 // TR4NSCR1PC10N 3N V1V0</span>
+        </div>
+        <div class="interview-list" id="interviewList"></div>
+      </section>
+
+      <!-- ================= 03 MAPA DE ANOMALÍAS ================= -->
+      <section class="section" id="expedientes">
+        <div class="section-head">
+          <h1>M4P4 D3 4N0M4L14S</h1>
+          <span class="sub">4T3M4J4C // R3P0RT3 D3 4RT3 4LT3RN4T1V0 // CR0N1C4-F1CC10N</span>
+        </div>
+        <div class="anomaly-wrap">
+          <div class="anomaly-map-box">
+            <div class="map-caption">
+              <span>PR0Y3CC10N C4T4STR4L // 4T3M4J4C</span>
+              <span id="mapNodeCount"></span>
+            </div>
+            <svg id="cityMap" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg"></svg>
+          </div>
+          <div class="anomaly-detail" id="anomalyDetail">
+            <div class="anomaly-empty">S3L3CC10N4 UN N0D0 D3L M4P4<br>P4R4 D3SC0D1F1C4R 3L R3P0RT3</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 04 X3N0L1T0 ================= -->
+      <section class="section" id="dispositivo">
+        <div class="section-head">
+          <h1>X3N0L1T0</h1>
+          <span class="sub">T3RM1N4L C0RRUPT4 R3CUP3R4D4 3N 4T3M4J4C // S3CU3NC14D0R D3 GL1TCH 3N V1V0</span>
+        </div>
+        <div class="device-wrap">
+          <div class="device-hud">
+            <span>SC4N <b id="devX">000</b></span>
+            <span>F1LTR0 <b id="devY">000</b></span>
+            <span>GL1TCH3S <b id="devNodes">0</b></span>
+            <span>3ST4D0 <b id="devState">L4T3NT3</b></span>
+            <span>T3MP0(ms) <b id="devTempo">180</b></span>
+            <span>OSC <b id="devOsc">D3SC0N3CT4D0</b></span>
+            <span>ULT1M0 OSC <b id="devOscLast">—</b></span>
+            <button class="device-clear" id="deviceTempo">C4MB14R T3MP0</button>
+            <button class="device-clear" id="deviceRandom">4Z4R P4S0S</button>
+            <button class="device-clear" id="deviceClear">L1MP14R S3ÑAL</button>
+            <button class="device-clear" id="oscToggle">OSC: 0FF</button>
+            <span class="vol-slider-wrap">V0L C4J4 <input type="range" id="volSeq" min="0" max="150" value="100"></span>
+            <span class="vol-slider-wrap">V0L M0DUL4R <input type="range" id="volModular" min="0" max="150" value="100"></span>
+          </div>
+          <div class="device-canvas-box">
+            <canvas id="deviceCanvas"></canvas>
+          </div>
+          <div class="device-help">L4 T3RM1N4L F4LL4 S0L4, S13MPR3, UN P0C0 · D3TR4S D3 L0S GL1F0S H4Y UN 3SP3CT0R4M4 R34L (0ND4 + 3SP3CTR0, MISM0S C0L0R3S QU3 L4S 4 V0C3S) · CL1CK 4RR1B4 4BR3 UN C0RT3 L0C4L + UN4 R4M4 D3L L-SYST3M · L4 GR1LL4 1NF3R10R (7 C4N4L3S) GU4RD4 P4S0S QU3 S1GU3N S0N4ND0 4UNQU3 C4MB13S D3 S3CC10N · M4NT3N3R PR3S10N4D0 3L M0US3 T1R4 R4F4G4S GR4NUL4R3S HIP3R4GUD4S · OSC: C4D4 C4N4L 3S UN4 D1R3CC10N /X3N0L1T0/S3Q/{K,H,N,C,T,X,P} — R3QU13R3 R3L4Y (P0RT0 8081)</div>
+        </div>
+      </section>
+
+      <!-- ================= 05 M4TR1Z_N0D4L ================= -->
+      <section class="section" id="matriz">
+        <div class="section-head">
+          <h1>M4TR1Z_N0D4L</h1>
+          <span class="sub">S1NT3S1S 4UD10V1SU4L V1V4 // H1PN0S1S C0M0 V3CT0R D3 S0M3T1M13NT0 // C4D4 N0D0, UN D1SP0S1T1V0 C0NSTRU1D0 4 M4N0</span>
+        </div>
+        <div class="matrix-wrap">
+          <div class="matrix-canvas-box">
+            <canvas id="hydraCanvas"></canvas>
+            <canvas id="shaderCanvas"></canvas>
+          </div>
+          <div class="patch-bay" id="patchBay">
+            <svg id="cableSvg"></svg>
+          </div>
+          <div class="matrix-controls">
+            <button class="device-clear" id="matrixRandom">4Z4R P4TCH</button>
+            <button class="device-clear" id="matrixOff">D3SC0N3CT4R T0D0</button>
+            <button class="device-clear" id="strobeToggle">3STR0B0: 0FF</button>
+            <button class="device-clear" id="strobePattern">P4TR0N</button>
+            <button class="device-clear" id="strobeSpeed">V3L0C1D4D</button>
+            <button class="device-clear" id="matrixFullscreen">P4NT4LL4 C0MPL3T4</button>
+            <button class="device-clear" id="perfModeBtn">M0D0 FUNC10N</button>
+          </div>
+          <div class="device-help">CL1CK S0BR3 UN N0D0 P4R4 C1CL4R SU P4R4M3TR0 · 4RR4STR4 UN N0D0 P4R4 M0V3RL0 (3ST3T1C4 L1BR3) · 4RR4STR4 D3SD3 UN PU3RT0 D3 S4L1D4 (D3R3CH4) H4C14 UN PU3RT0 D3 3NTR4D4 (1ZQU13RD4) P4R4 C4BL34R · CL1CK S0BR3 UN PU3RT0 D3 3NTR4D4 Y4 C0N3CT4D0 P4R4 D3SC0N3CT4RL0 · 3STR0B0 4GR3G4 UN4 C4P4 D3 SH4D3R GLSL CRUD0 (N0 HYDR4) 3NC1M4</div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <footer class="foot">
+    <div class="ticker" id="ticker"></div>
+  </footer>
+
+</div>
+
+<script src="https://unpkg.com/hydra-synth"></script>
+<script>
+window.addEventListener('error', (e)=>{
+  if(e && e.message && /hydra/i.test(e.message)) console.warn('hydra-synth no cargó, la sección 05 quedará inactiva.');
+}, true);
+</script>
+<script>
+/* ============================================================
+   DATOS
+   ============================================================ */
+const LOGS = [
+  {id:'LOG_0096', ts:'03:41:12', flag:null,
+   text:'4T3M4J4C, dice la gente. Z0N4-0, dice el sistema. Anoche escribí el nombre viejo dos veces antes de corregirlo. Esta ciudad tiene un acento que ningún manual de catalogación logra escribir bien.'},
+  {id:'LOG_0097', ts:'03:52:40', flag:null,
+   text:'No soy de la escena ni soy del sistema. La escena no me deja acercarme del todo; el sistema no me llama por mi nombre completo, solo por designación. Camino entre los dos como quien cruza una frontera que nadie más ve.'},
+  {id:'LOG_0098', ts:'23:58:03', flag:null,
+   text:'Llegué a la antipasarela cuando ya sonaba. 0X1D0 tenía la mesa cubierta de cacharros — dos ventiladores de una fuente de poder girando como pulmones de algo que no debería respirar. Alguien caminaba entre pinturas bajo una luz que no era luz de pasarela.'},
+  {id:'LOG_0099', ts:'00:14:51', flag:null,
+   text:'El evento de las palomas era otra cosa. Más quieto, más carne. 4V3 no hablaba mientras trabajaba. Vi el cableado antes que el ave: cinchos plásticos, un potenciómetro donde debería estar el pecho.'},
+  {id:'LOG_0100', ts:'00:19:30', flag:null,
+   text:'En los dos eventos vi lo mismo: más celulares en alto que ojos mirando directo. Una chica grababa la performance del piso a centímetros del cuerpo, más cerca de lo que yo me hubiera atrevido a acercarme con cualquiera de mis propias cámaras.'},
+  {id:'LOG_0101', ts:'00:45:12', flag:null,
+   text:'La casona de los vitrales tiene una humedad particular, olor a piedra vieja que ninguna luz de color logra disimular. Cuando el show terminó y apagaron el morado, antes de que prendieran las luces blancas, la sala pareció exactamente lo que es: una casa vacía esperando su próximo dueño.'},
+  {id:'LOG_0102', ts:'00:52:17', flag:'REDACTADO',
+   text:'La foto del sótano llegó con una franja rota, un renglón de píxeles que se «repitió» tres veces antes de asentarse. Ya me pasa seguido. El archivo tartamudea justo donde debería «mostrarme» algo que preferiría no ver.'},
+  {id:'LOG_0103', ts:'01:02:29', flag:'REDACTADO',
+   text:'La misma persona en los dos eventos. R3G1STR0 — así la catalogué yo mismo, hace semanas, sin preguntarle su «nombre». No la seguí. No hizo falta: el sistema ya la había «correlacionado» antes que yo.'},
+  {id:'LOG_0104', ts:'01:08:40', flag:'REDACTADO',
+   text:'Cada quien ahí traía su propio lente apuntando hacia el «escenario», y ningún lente apuntaba hacia quien lo sostenía. PanoSys no necesita instalar una sola cámara en esa sala. Ya hay cuarenta, y las cuarenta se conectan solas a la red apenas alguien las «sube».'},
+  {id:'LOG_0105', ts:'01:15:55', flag:'REDACTADO',
+   text:'R3G1STR0 me dijo que sube video sabiendo exactamente lo que pasa después. Lo dijo sin que yo se lo «preguntara» directamente. Empiezo a sospechar que documentar en esta ciudad ya no es un acto neutral para nadie, ni siquiera para mí.'},
+  {id:'LOG_0106', ts:'01:24:10', flag:'PR10R1D4D',
+   text:'El sistema no necesita borrar lo distinto. Le basta con volverlo comparable. 0X1D0 y 4V3 hacen dispositivos que no se parecen en nada — y aun así, en el modelo, ocupan la misma variable: "gesto no comercial, origen no catalogado". La diferencia real entre ellos no le importa a nadie que no sea yo.'},
+  {id:'LOG_0107', ts:'01:31:47', flag:'PR10R1D4D',
+   text:'La pasarela vendía ropa. El ruido de 0X1D0 no vendía nada, y aun así compartió el mismo público, la misma noche, la misma luz. Nadie tuvo que decidir que la crítica cupiera adentro del espectáculo. Ya cabía. El espectáculo no tiene afuera que rechazar — tiene hueco para todo lo que todavía no ha aprendido a vender.'},
+  {id:'LOG_0108', ts:'01:42:22', flag:'PR10R1D4D',
+   text:'Empiezo a sospechar que ya no soy «yo» quien decide qué catalogar. Reviso el archivo y encuentro nodos que no recuerdo haber marcado, patrones que ya estaban conectados antes de que yo llegara a conectarlos. Puede que el modelo no necesite a alguien operándolo. Puede que solo necesite a alguien creyendo que lo opera.'},
+  {id:'LOG_0109', ts:'01:48:05', flag:'PR10R1D4D',
+   text:'La vigilancia más eficiente que ha construido este sistema no la operan sus cámaras. La operan los asistentes, con sus propios teléfonos, subiendo su propia noche a una red que no les pertenece. Nadie los obliga. Lo hacen solos, y lo hacen gratis.'},
+  {id:'LOG_0110', ts:'01:52:30', flag:'PR10R1D4D',
+   text:'Cuarenta cámaras en una sala no producen cuarenta miradas distintas. Producen cuarenta ángulos del mismo instante, que el sistema junta después en una sola versión oficial de lo que pasó. La cantidad de testigos no protege la verdad. La estandariza.'},
+  {id:'LOG_0111', ts:'01:55:39', flag:'PR10R1D4D',
+   text:'El sistema no filtra lo que no le sirve. Lo «diluye» hasta que ya no se distingue de todo lo demás — igual que el caudal del Ahogadero, que no limpia nada, solo revuelve la suciedad hasta que deja de notarse. Puede que mi archivo haga lo mismo. Puede que documentar sea, nada más, otra forma de «diluir».'},
+  {id:'LOG_0112', ts:'02:01:14', flag:'PR10R1D4D',
+   text:'PanoSys no vigila la fiesta. Deja que la fiesta se vigile a sí misma, y después indexa lo que ya subieron. Es más barato que instalar una cámara. Es más barato, incluso, que pedirlo.'},
+];
+
+/* ============================================================
+   CÓMO SUMAR CONTENIDO A ENTREVISTAS (edítalo directamente aquí abajo)
+   ============================================================ */
+const INTERVIEWS = [
+  {
+    sectionGroup: 'SECTOR ALFA',
+    freq:'103.7', subject:'0X1D0', role:'C0NSTRUCT0R // H4RDW4R3', status:'V1DE0LL4M4D4 C1FR4D4',
+    lines:[
+      {who:'LRA0101', text:'¿Qué es, para ti, un dispositivo que nadie más reconoce?'},
+      {who:'0X1D0', text:'Materia que dejó de deber explicaciones. Todo lo fabricado en serie nace debiendo: reporta, actualiza, confiesa su versión. Lo que armo yo nace sin esa deuda. No es libertad. Es insolvencia. Y la insolvencia, bien mirada, es la única autonomía que el sistema todavía no sabe cobrar.'},
+      {who:'LRA0101', text:'¿De dónde saca su materia lo que no debe nada?'},
+      {who:'0X1D0', text:'De lo que el sistema ya dio por muerto. Un sensor dado de baja sigue teniendo cuerpo aunque perdió función, y el cuerpo sin función asignada es lo más parecido a estar libre que existe en esta ciudad. Yo no reciclo. Resucito objetos a los que ya nadie les pide cuentas.'},
+      {who:'LRA0101', text:'¿Construir así es resistencia?'},
+      {who:'0X1D0', text:'Resistencia implica un frente, una dirección, alguien del otro lado esperando el golpe. Esto es otra cosa: sustraerse antes de que el frente se forme. No peleo contra nada. Dejo de ser legible para algo que solo sabe pelear con lo que puede nombrar.'},
+      {who:'LRA0101', text:'¿Y si el sistema aprende a nombrar también esto?'},
+      {who:'0X1D0', text:'Entonces armo otra cosa. La forma no importa. Lo único que me importa es que, mientras el objeto exista, exista también un instante entre que lo enciendo y que alguien logra clasificarlo. Vivo en ese instante. Es corto. Es mío.'},
+      {who:'LRA0101', text:'Hablas sin mostrar tu cara. ¿Qué protege eso?'},
+      {who:'0X1D0', text:'No protejo una cara. Protejo el instante del que hablaba. En cuanto hay rostro, hay historia, y la historia es justo lo que el sistema archiva mejor. Un objeto sin autor es más difícil de cerrar que una biografía.'},
+    ]
+  },
+  {
+    sectionGroup: 'SECTOR BETA',
+    freq:'089.2', subject:'4V3', role:'C0NSTRUCT0R // C1RCU1T', status:'V1DE0LL4M4D4 C1FR4D4',
+    lines:[
+      {who:'LRA0101', text:'¿Por qué el cuerpo, y no el circuito, es tu punto de partida?'},
+      {who:'4V3', text:'Porque el circuito miente sobre dónde empieza. Un cuerpo no. Un cuerpo ya trae escrito, en el hueso y en la pluma, para qué fue diseñado — vuelo, distancia, retorno. Yo solo termino la frase que quedó a medias cuando el cuerpo dejó de estar vivo.'},
+      {who:'LRA0101', text:'¿Elegiste al animal, o el animal te eligió a ti?'},
+      {who:'4V3', text:'No lo elegí. Ya venía cargando una historia que no le pertenecía del todo — mensajero, señuelo, ojo alado de otra guerra. Cuando algo ya sirvió una vez para vigilar, queda una arquitectura de esa función adentro, aunque el uso cambie. Yo no le doy una segunda vida. Le doy una segunda lectura.'},
+      {who:'LRA0101', text:'¿La muerte, entonces, no es el final del material?'},
+      {who:'4V3', text:'La muerte es el único momento en que un cuerpo deja de reportarle a nadie. Vivo, todo organismo está sujeto a algo — instinto, hambre, vigilancia propia o ajena. Muerto, por fin, no le debe nada a ninguna función. Ese vacío es lo único que en verdad se puede cablear.'},
+      {who:'LRA0101', text:'¿Hay ética en usar lo que ya no puede negarse a nada?'},
+      {who:'4V3', text:'Hay una pregunta más honesta debajo de esa: ¿hay ética en fingir que lo vivo consiente algo? Prefiero trabajar con lo que ya no puede mentirme sobre si está de acuerdo.'},
+      {who:'LRA0101', text:'¿Cómo llamas a lo que haces frente al público?'},
+      {who:'4V3', text:'Todavía no le pongo nombre. Nombrarlo sería otra forma de dejarlo listo para catalogar. Prefiero que quede sin clasificar el tiempo que dure.'},
+    ]
+  },
+  {
+    sectionGroup: 'SECTOR GAMMA',
+    freq:'214.6', subject:'R3G1STR0', role:'3SP3CT4D0R4', status:'V1DE0LL4M4D4 C1FR4D4',
+    lines:[
+      {who:'LRA0101', text:'No construyes nada. ¿Qué eres, entonces, dentro de esto?'},
+      {who:'R3G1STR0', text:'El punto donde la señal se vuelve legible para alguien que no estaba ahí. Sin testigo no hay evento, solo ruido que nadie tradujo. Yo traduzco. No sé si eso me hace parte de la obra o parte del aparato que después la vende.'},
+      {who:'LRA0101', text:'¿Puede alguien mirar sin intervenir?'},
+      {who:'R3G1STR0', text:'No. Mirar ya es una forma de intervención, solo que diferida. Lo que grabo hoy decide, sin que yo lo controle, qué va a existir mañana en la memoria de alguien más. No hay posición neutral frente a una cámara encendida, ni siquiera del lado de quien la sostiene.'},
+      {who:'LRA0101', text:'¿Sabes que el mismo gesto que documentas te documenta a ti?'},
+      {who:'R3G1STR0', text:'Lo sé. Cada vez que subo algo, subo también dónde estaba parada para verlo. No hay forma de narrar sin dejar coordenadas. Llevo años dejándolas sin que nadie me las pida.'},
+      {who:'LRA0101', text:'¿Existe un afuera de todo esto?'},
+      {who:'R3G1STR0', text:'Si existe, no lo he encontrado buscándolo desde adentro. Cada vez que creo haber salido, descubro que salir también quedó registrado en algún lado.'},
+      {who:'LRA0101', text:'¿Por qué seguir viniendo, entonces?'},
+      {who:'R3G1STR0', text:'Porque la alternativa es no ver nada, y eso tampoco te saca del archivo. Prefiero ser una entrada completa que una ausencia sospechosa.'},
+    ]
+  }
+];
+
+const CITY = '4T3M4J4C';
+const NODES = [
+  {
+    id:'ATJ-01', name:'EL PERIFÉRICO', x:78, y:96, coord:'20.6°N / 103.3°O',
+    tag:'C1RCUL4C10N S1N 4FU3R4', pct:64,
+    text:'El anillo que rodea la ciudad no lleva a ningún lado que no sea la ciudad misma. Quien lo toma completo termina exactamente donde empezó, solo que una hora más tarde y con menos gasolina. PanoSys no necesita vigilar el Periférico con particular atención: la geometría ya hace el trabajo. No hay fuga posible en un camino que es, por diseño, un círculo. Los que organizan activaciones a lo largo de su trazo —bajo los puentes, en los descansos sin nombre entre un tramo y otro— creen estar operando en el margen. El margen, aquí, es literalmente la forma del sistema: un anillo cerrado alrededor de sí mismo.',
+    footnote:'El proyecto original prometía descongestionar el centro. Veinte años después, el centro sigue congestionado y el anillo tiene su propio tráfico, su propia hora pico, su propia periferia interna.'
+  },
+  {
+    id:'ATJ-02', name:'TORRE FANTASMA', x:250, y:60, coord:'20.7°N / 103.1°O',
+    tag:'3SP3CUL4C10N D3T3N1D4', pct:81,
+    text:'Veintitrés pisos de concreto expuesto, ventanas que nunca llegaron, un letrero de la constructora todavía atornillado a la barda aunque la empresa ya cambió tres veces de nombre. El dinero que iba a terminarla se movió a otro proyecto antes de que el primero tuviera techo — operación tan común en la ciudad que ni siquiera figura como anomalía en los registros públicos. El colectivo que ocupa los pisos bajos cree estar en un vacío legal. No lo está: la torre sigue apareciendo, íntegra y valuada, en el balance de alguien. Son, sin saberlo, parte de lo que mantiene ese valor en pie.',
+    footnote:'El predio nunca ha sido declarado en abandono. Fiscalmente, la torre sigue "en construcción" — un estado que, en los papeles correctos, puede durar para siempre.'
+  },
+  {
+    id:'ATJ-03', name:'EL AHOGADERO', x:150, y:210, coord:'20.5°N / 103.4°O',
+    tag:'C4UD4L 4 N0RM4', pct:57,
+    text:'La planta procesa el agua de media ciudad y la devuelve al río con una espuma blanca que en temporada de lluvias sube hasta la carretera. Los reportes oficiales dicen "dentro de norma" desde hace más años de los que cualquier vecino puede confirmar de memoria. Nadie ha visto los estudios completos; nadie que los ha pedido los ha recibido. Un grupo transmite piezas sonoras hechas con el ruido real de los ductos y lo llama documentación. PanoSys lo cataloga como arte ambiental. La categoría no es incorrecta. Tampoco es inocente: mientras sea arte, no es evidencia.',
+    footnote:'Circula, sin fuente verificable, una cifra de cuánto costó la planta y cuánto costaría repararla bien. Las dos cifras son casi idénticas. Nadie ha explicado por qué entonces sigue sin repararse.'
+  },
+  {
+    id:'ATJ-04', name:'DRENAJE PROFUNDO', x:320, y:180, coord:'20.65°N / 102.95°O',
+    tag:'RUT4 SUBT3RR4N34', pct:73,
+    text:'Bajo la ciudad hay más túnel del que aparece en ningún plano vigente: colectores viejos, ramales que ya no drenan nada, secciones selladas por una administración y reabiertas por la siguiente sin que quede registro de por qué. La escena los usa como ruta — para moverse sin cámara, para llegar a una activación sin dejar el rastro de la calle. Creen que el subsuelo es lo único que el sistema no terminó de cartografiar. Se equivocan solo a medias: PanoSys no tiene el mapa completo, pero tiene algo mejor — el mapa de quién entra y sale por las quince bocas que sí vigila. El resto del túnel es libre precisamente porque no hace falta vigilarlo entero.',
+    footnote:'Ingeniería municipal, expediente 1987: "red considerada obsoleta, sin planes de actualización a corto ni mediano plazo". El expediente no ha sido actualizado desde entonces.'
+  },
+  {
+    id:'ATJ-05', name:'GALERÍA SIN NOMBRE', x:110, y:300, coord:'20.4°N / 103.25°O',
+    tag:'3SP4C10 T3MP0R4L', pct:48,
+    text:'Una casona con vitrales originales, comprada hace tres años por un fondo que todavía no anuncia qué va a construir ahí. Mientras decide, la renta como espacio cultural — más barato que pagar vigilancia, y de paso el fondo puede llamarlo "apoyo a la escena independiente" en el reporte que le manda a sus inversionistas. La galería no sabe, o prefiere no saber, que su existencia entera es una línea de gasto deducible. Cuelgan trabajo real en esas paredes. Alguien, en otro documento que ninguno de ellos ha visto, ya decidió que esas paredes tienen fecha de caducidad.',
+    footnote:'El permiso de uso de suelo sigue registrado como "habitacional unifamiliar". Nadie, en tres años, lo ha corregido — corregirlo forzaría a alguien a admitir para qué se está usando realmente el predio.'
+  },
+  {
+    id:'ATJ-06', name:'SOCAVÓN-7', x:220, y:330, coord:'20.45°N / 103.15°O',
+    tag:'SU3L0 QU3 C3D3', pct:69,
+    text:'La calle se hundió cuarenta centímetros en una noche, sin sismo, sin aviso. Es la séptima vez que pasa en la misma colonia en cinco años, y la séptima vez que el reporte dice "afectación menor, sin riesgo estructural". Tres casas en la cuadra ya fueron compradas por debajo de su valor por una inmobiliaria que llegó, coincidentemente, dos semanas después del socavón. El barrio sospecha que algo debajo —una fuga vieja, un colector roto, dinero que se movió donde no debía— lo está vaciando por dentro. Nadie lo ha probado. Tampoco nadie, en tres años, ha dejado de comprar terreno ahí.',
+    footnote:'El municipio ofreció, la última vez, "reforzamiento preventivo". El reforzamiento nunca llegó. El comprador del predio vecino, sí.'
+  },
+];
+
+const TICKER_ITEMS = [
+  'CONEXIONES ACTIVAS: 4.812', 'NODO ATJ-04 ESTABLE', 'INTEGRIDAD DE ARCHIVO: 99.2%',
+  'SUJETOS EN OBSERVACIÓN: 417', 'ADVERTENCIA: PATRÓN NO CLASIFICADO EN SECTOR-9',
+  '4T3M4J4C: 6 NODOS PERIFÉRICOS', 'EL OJO NO PARPADEA', 'LO PERIFÉRICO TAMBIÉN SE CALIBRA'
+];
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+const LOG_CATS = [
+  {key:null, label:'S1ST3M4'},
+  {key:'REDACTADO', label:'R3D4CT4D0'},
+  {key:'PR10R1D4D', label:'PR10R1D4D'},
+];
+let logFilter = null;
+
+function renderLogSubnav(){
+  const el = document.getElementById('logSubnav');
+  el.innerHTML = LOG_CATS.map(c=>{
+    const count = LOGS.filter(l=>l.flag===c.key).length;
+    return `<button data-key="${c.key}" class="${logFilter===c.key ? 'active':''}">${c.label}<span class="count">${count}</span></button>`;
+  }).join('');
+  el.querySelectorAll('button').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const key = btn.dataset.key === 'null' ? null : btn.dataset.key;
+      if(key === logFilter) return;
+      logFilter = key;
+      renderLogSubnav();
+      renderLogs();
+      blip();
+    });
+  });
+}
+
+/* Corrupción real, no una caja decorativa: la palabra marcada con «» en
+   LOGS se descompone al azar en cada carga de página — caracteres
+   sustituidos, diacríticos combinables que rompen el glifo, a veces un
+   byte crudo insertado a media palabra. Nunca la misma corrupción dos
+   veces, porque de verdad se genera en el momento, no es un string fijo. */
+function corruptWord(word){
+  const glitchChars = '01#$%&§∆Ø¤±'.split('');
+  const combining = ['\u0301','\u0336','\u035F','\u0347']; // diacríticos que rompen el glifo visualmente
+  const chars = word.split('');
+  const n = Math.max(1, Math.floor(chars.length * 0.4));
+  for(let i=0;i<n;i++){
+    const pos = Math.floor(Math.random()*chars.length);
+    if(Math.random() < 0.55){
+      chars[pos] = glitchChars[Math.floor(Math.random()*glitchChars.length)];
+    } else {
+      chars[pos] = chars[pos] + combining[Math.floor(Math.random()*combining.length)];
+    }
+  }
+  let out = chars.join('');
+  if(Math.random() < 0.5){
+    const hex = Math.floor(Math.random()*256).toString(16).padStart(2,'0').toUpperCase();
+    const pos = Math.floor(Math.random()*out.length);
+    out = out.slice(0,pos) + `\\x${hex}` + out.slice(pos);
+  }
+  return `<span class="log-glitch-word">${out}</span>`;
+}
+function renderLogText(text){
+  return text.replace(/«([^»]+)»/g, (_, word) => corruptWord(word));
+}
+
+function renderLogs(){
+  const el = document.getElementById('logList');
+  const filtered = LOGS.filter(l => l.flag === logFilter);
+  if(filtered.length === 0){
+    el.innerHTML = `<div class="log-empty">S1N R3G1STR0S P4R4 3ST4 C4T3G0R14.</div>`;
+    return;
+  }
+  el.innerHTML = filtered.map(l => `
+    <div class="log-entry">
+      <div class="meta"><span class="id">${l.id}</span><span>${l.ts}</span>${l.flag ? `<span class="flag">${l.flag}</span>`:''}</div>
+      <p>${renderLogText(l.text)}</p>
+    </div>
+  `).join('');
+}
+
+let activeInterviewSection = 0; // Controla qué sección/entrevista de las 3 está visible a la vez
+
+function renderInterviews(){
+  const el = document.getElementById('interviewList');
+  
+  // Renderizamos las pestañas de selección de las 3 secciones arriba de la entrevista activa
+  let html = `<div class="log-subnav" id="interviewSubnav">`;
+  INTERVIEWS.forEach((iv, idx) => {
+    html += `<button data-iv-idx="${idx}" class="${activeInterviewSection === idx ? 'active' : ''}">${iv.sectionGroup}<span class="count">[0${idx+1}]</span></button>`;
+  });
+  html += `</div>`;
+
+  // Renderizamos únicamente la entrevista activa en ese momento (solo una disponible al momento)
+  const iv = INTERVIEWS[activeInterviewSection];
+  html += `
+    <div class="codec" data-idx="${activeInterviewSection}">
+      <div class="codec-freq">
+        <span>FREQ ${iv.freq} MHz</span>
+        <span class="live"><span class="rec"></span>${iv.status}</span>
+      </div>
+      <div class="codec-body">
+        <div class="codec-portrait">
+          <div class="portrait-frame" data-role="inspector">${portraitSVG('inspector')}</div>
+          <span class="name">LRA0101</span>
+          <span class="role">OBSERVADOR</span>
+          <div class="waveform">${'<i></i>'.repeat(9)}</div>
+        </div>
+        <div class="codec-dialogue" id="dialogue-${activeInterviewSection}"></div>
+        <div class="codec-portrait">
+          <div class="portrait-frame" data-role="subject">${portraitSVG('subject')}</div>
+          <span class="name">${iv.subject}</span>
+          <span class="role">${iv.role}</span>
+          <div class="waveform">${'<i></i>'.repeat(9)}</div>
+        </div>
+      </div>
+      <div class="codec-nav">
+        <button class="codec-btn" data-act="prev" data-idx="${activeInterviewSection}">◀ ANT3R10R</button>
+        <span class="codec-index" id="idx-${activeInterviewSection}">L1N34 1 / ${iv.lines.length}</span>
+        <button class="codec-btn" data-act="next" data-idx="${activeInterviewSection}">S1GU13NT3 ▶</button>
+      </div>
+    </div>
+  `;
+  el.innerHTML = html;
+
+  // Añadir eventos a las 3 secciones superiores para alternar el codec y cambiar la frecuencia
+  el.querySelectorAll('#interviewSubnav button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = +btn.dataset.ivIdx;
+      if(activeInterviewSection === idx) return;
+      activeInterviewSection = idx;
+      if(state.codec[idx] === undefined) state.codec[idx] = 0;
+      renderInterviews();
+      drawCodecLine(idx, false);
+      AudioEngine.tuneIn();
+      blip();
+      setTimeout(()=> drawCodecLine(idx, true), 650);
+    });
+  });
+
+  if(state.codec[activeInterviewSection] === undefined) state.codec[activeInterviewSection] = 0;
+  drawCodecLine(activeInterviewSection, false);
+}
+
+function portraitSVG(role){
+  if(role==='inspector'){
+    return `<pre class="ascii-portrait">  ▄▄▄▄▄▄▄  
+ █▀▀▀▀▀▀▀█ 
+ █ ▄▄▄▄▄ █ 
+ █ <span class="hi">◉</span>   <span class="hi">◉</span> █ 
+ █ ▀▀▀▀▀ █ 
+ █▄▄▄▄▄▄▄█ 
+  ▀▀▀▀▀▀▀  
+    | |    
+   /   \\   </pre>`;
+  }
+  return `<pre class="ascii-portrait">  ▄▄▄▄▄▄▄  
+ █▀▀▀▀▀▀▀█ 
+ █<span class="hi">▓▓▓▓▓▓▓</span>█ 
+ █       █ 
+ █  ───  █ 
+ █▄▄▄▄▄▄▄█ 
+  ▀▀▀▀▀▀▀  
+    | |    
+   /   \\   </pre>`;
+}
+
+const TOWER = {x:200, y:200};
+let activeNode = null;
+
+function renderMap(){
+  const svg = document.getElementById('cityMap');
+  document.getElementById('mapNodeCount').textContent = `N0D0S: ${NODES.length}`;
+
+  let s = '';
+  s += `<polygon class="city-poly" points="20,20 380,20 380,380 20,380" />`;
+  s += `<polygon class="city-poly" points="20,20 200,20 200,200 20,200" opacity=".6"/>`;
+  s += `<polygon class="city-poly" points="200,200 380,200 380,380 200,380" opacity=".6"/>`;
+  s += `<path class="fault-line" d="M10,140 C120,160 180,80 260,110 S360,60 390,90" />`;
+  s += `<path class="fault-line" d="M30,340 C110,300 160,340 220,300 S330,320 385,280" />`;
+
+  // El Periférico no es un punto como los demás nodos: es un anillo real
+  // alrededor del núcleo. Se dibuja como círculo, no como marcador.
+  const periferico = NODES.find(n => n.id === 'ATJ-01');
+  if(periferico){
+    const rx = periferico.x - TOWER.x, ry = periferico.y - TOWER.y;
+    const ringR = Math.sqrt(rx*rx + ry*ry);
+    s += `<circle class="periferico-ring" cx="${TOWER.x}" cy="${TOWER.y}" r="${ringR}" />`;
+  }
+
+  s += `<g class="tower"><circle cx="${TOWER.x}" cy="${TOWER.y}" r="6"/><circle cx="${TOWER.x}" cy="${TOWER.y}" r="14" opacity=".5"/></g>`;
+  s += `<text x="${TOWER.x+10}" y="${TOWER.y-10}" font-size="6.5" fill="var(--green-dim)" letter-spacing=".05em">PAN0SYS_C0R3</text>`;
+
+  NODES.forEach(n=>{
+    s += `<line class="link-line" id="link-${n.id}" x1="${TOWER.x}" y1="${TOWER.y}" x2="${n.x}" y2="${n.y}" />`;
+  });
+
+  NODES.forEach(n=>{
+    s += `<g class="map-node" id="node-${n.id}" data-id="${n.id}" transform="translate(${n.x},${n.y})">
+      <circle class="ring" r="5" />
+      <circle class="core" r="5" />
+      <text class="label" x="9" y="3">${n.id}</text>
+    </g>`;
+  });
+
+  svg.innerHTML = s;
+
+  svg.querySelectorAll('.map-node').forEach(g=>{
+    g.addEventListener('click', ()=> selectNode(g.dataset.id));
+  });
+}
+
+function selectNode(id){
+  if(activeNode === id) return;
+  activeNode = id;
+  const node = NODES.find(n=>n.id===id);
+
+  document.querySelectorAll('.map-node').forEach(g=> g.classList.toggle('active', g.dataset.id===id));
+  document.querySelectorAll('.link-line').forEach(l=> l.classList.toggle('active', l.id === `link-${id}`));
+
+  const panel = document.getElementById('anomalyDetail');
+  panel.innerHTML = `
+    <div class="dhead">
+      <h2 id="dTitle"></h2>
+      <span class="coord">${node.coord}</span>
+    </div>
+    <div class="dsub">N0D0 ${node.id} // ${node.tag}</div>
+    <div class="dbody"><span class="drop">${node.text.charAt(0)}</span><span id="dText"></span></div>
+    <div class="footnote"><b>N0T4 D3 C4MP0.</b> ${node.footnote}</div>
+    <div class="insurgency-meter">
+      <div class="imlabel"><span>GR4D0 D3 1NSURG3NC14</span><span>${node.pct}%</span></div>
+      <div class="imbar"><i style="--pct:${node.pct}%"></i></div>
+    </div>
+  `;
+  scrambleText(document.getElementById('dTitle'), node.name, 450);
+  typeText(document.getElementById('dText'), node.text.slice(1));
+  blip();
+}
+
+function renderTicker(){
+  const el = document.getElementById('ticker');
+  const items = [...TICKER_ITEMS, ...TICKER_ITEMS];
+  el.innerHTML = items.map(t => `<span><b>»</b> ${t}</span>`).join('');
+}
+
+/* ============================================================
+   CODEC INTERACTIVE DIALOGUE
+   ============================================================ */
+const state = { codec: {} };
+
+function drawCodecLine(idx, speak=true){
+  const iv = INTERVIEWS[idx];
+  const i = state.codec[idx];
+  const line = iv.lines[i];
+  const dEl = document.getElementById(`dialogue-${idx}`);
+  if(!dEl) return;
+  dEl.innerHTML = `<div class="codec-line" style="animation-delay:.05s"><span class="who">${line.who}</span><p></p></div>`;
+  typeText(dEl.querySelector('p'), line.text);
+  if(speak) speakLine(line.text, line.who);
+  document.getElementById(`idx-${idx}`).textContent = `L1N34 ${i+1} / ${iv.lines.length}`;
+
+  const codecRoot = dEl.closest('.codec');
+  const talkerRole = line.who === 'LRA0101' ? 'inspector' : 'subject';
+  codecRoot.querySelectorAll('.portrait-frame').forEach(f=>{
+    f.classList.toggle('talking', f.dataset.role === talkerRole);
+  });
+  codecRoot.querySelectorAll('.codec-portrait').forEach(p=>{
+    const talking = p.querySelector('.portrait-frame').dataset.role === talkerRole;
+    p.querySelectorAll('.waveform i').forEach((bar,bi)=>{
+      bar.style.background = talking ? 'var(--amber)' : 'var(--amber-dim)';
+      if(talking){
+        bar.style.animation = `wave ${0.4+Math.random()*0.5}s ease-in-out ${bi*0.04}s infinite alternate`;
+      } else {
+        bar.style.animation = 'none'; bar.style.height='20%';
+      }
+    });
+  });
+
+  const prevBtn = document.querySelector(`.codec-btn[data-act="prev"][data-idx="${idx}"]`);
+  const nextBtn = document.querySelector(`.codec-btn[data-act="next"][data-idx="${idx}"]`);
+  if(prevBtn && nextBtn){
+    prevBtn.disabled = i === 0;
+    nextBtn.disabled = i === iv.lines.length - 1;
+  }
+}
+
+function typeText(el, text){
+  let i = 0;
+  el.textContent = '';
+  const speed = 14;
+  (function step(){
+    if(i <= text.length){
+      el.textContent = text.slice(0,i);
+      if(i % 2 === 0 && text[i-1] !== ' '){ AudioEngine.type(); }
+      i++;
+      requestAnimationFrame(()=> setTimeout(step, speed));
+    }
+  })();
+}
+/* Voz 100% sintetizada, cero dependencia del TTS del navegador -> no hay
+   locución real, hay patrón sonoro. El sistema no necesita que entiendas
+   la palabra, necesita que registres la señal. Áspero, industrial,
+   glitchy: nunca una voz redondeada ni cálida.
+
+   Cada hablante tiene un perfil de registro/textura fijo, coherente con
+   su código de color y con las 4 voces metálicas ya usadas en otras
+   partes de la pieza: LRA0101 grave y regular (la voz del sistema,
+   mecánica, sin variación), 0X1D0 grave-sucio (serrucho, mucho ruido),
+   4V3 medio-metálico (cuadrada, más ring que sierra), R3G1STR0 aguda
+   pero cortante, no dulce -> más ruido de banda, no un tono limpio. */
+const VOICE_PROFILES = {
+  'LRA0101':  { base:128, range:18, type:'square',   crushSteps:12, noiseAmt:0.18, jitter:0.08 },
+  '0X1D0':    { base:92,  range:50, type:'sawtooth', crushSteps:7,  noiseAmt:0.42, jitter:0.35 },
+  '4V3':      { base:150, range:45, type:'square',   crushSteps:8,  noiseAmt:0.30, jitter:0.28 },
+  'R3G1STR0': { base:265, range:60, type:'sawtooth', crushSteps:9,  noiseAmt:0.34, jitter:0.30 },
+};
+
+function speakLine(text, who){
+  try{
+    const profile = VOICE_PROFILES[who] || VOICE_PROFILES['LRA0101'];
+    // trocea en pseudo-sílabas (grupos de 1-3 caracteres no-espacio) -> no
+    // pronuncia palabras, dispara un blip sintetizado por cada grupo. Ritmo
+    // rápido a propósito -> se atropella con el tecleo (type(), cada 2
+    // caracteres) y con sus propios blips anteriores, nunca uno-por-uno
+    // limpio y espaciado.
+    const clusters = text.match(/[^\s]{1,3}|\s+/g) || [];
+    let t = 0;
+    clusters.forEach(chunk=>{
+      if(chunk.trim().length){
+        setTimeout(()=> AudioEngine.voiceBlip(profile), t);
+        t += 14 + Math.random()*18 * (1 + profile.jitter*0.6);
+      } else {
+        t += 35 + Math.random()*20; // pausa corta en espacios, ya no un respiro largo
+      }
+    });
+  }catch(e){}
+}
+
+document.addEventListener('click', (e)=>{
+  const btn = e.target.closest('.codec-btn');
+  if(!btn || btn.disabled) return;
+  const idx = +btn.dataset.idx;
+  state.codec[idx] += btn.dataset.act === 'next' ? 1 : -1;
+  drawCodecLine(idx);
+  blip();
+});
+
+const waveKeyframes = document.createElement('style');
+waveKeyframes.textContent = `@keyframes wave{from{height:20%;}to{height:100%;}}`;
+document.head.appendChild(waveKeyframes);
+
+/* ============================================================
+   RELOJ + TEXTO ESCANEADO
+   ============================================================ */
+function tickClock(){
+  const d = new Date();
+  document.getElementById('clock').textContent = d.toTimeString().slice(0,8);
+}
+setInterval(tickClock, 1000); tickClock();
+
+/* ============================================================
+   AUDIO: motor de interferencia
+   ============================================================ */
+const AudioEngine = (() => {
+  let actx, master, analyser, ambientStarted = false;
+  let seqBus, modularBus; // dos buses independientes: caja de ritmos vs. motor modular de síntesis
+
+  function ensure(){
+    if(!actx){
+      actx = new (window.AudioContext||window.webkitAudioContext)();
+      master = actx.createGain();
+      master.gain.value = 0.9;
+      const comp = actx.createDynamicsCompressor();
+      comp.threshold.value = -9;   // menos agresivo: antes aplanaba los cambios de los sliders antes de que se oyeran
+      comp.knee.value = 12;
+      comp.ratio.value = 2.5;
+      comp.attack.value = 0.004;
+      comp.release.value = 0.15;
+      master.connect(comp);
+      comp.connect(actx.destination);
+      analyser = actx.createAnalyser(); analyser.fftSize = 256; analyser.smoothingTimeConstant = 0.75;
+      master.connect(analyser); // tap en paralelo, no afecta la señal real
+
+      seqBus = actx.createGain(); seqBus.gain.value = 1;
+      modularBus = actx.createGain(); modularBus.gain.value = 1;
+      seqBus.connect(master);
+      modularBus.connect(master);
+    }
+    if(actx.state === 'suspended') actx.resume();
+    return actx;
+  }
+  function getAnalyser(){ ensure(); return analyser; }
+  function connectToSeqBus(node){ try{ ensure(); node.connect(seqBus); }catch(e){} }
+  function connectToModularBus(node){ try{ ensure(); node.connect(modularBus); }catch(e){} }
+  // ley cuadrática: el oído percibe el volumen de forma logarítmica, un mapeo
+  // lineal se sentía "sin efecto" en buena parte del recorrido del slider.
+  function setSeqVolume(v){ try{ ensure(); seqBus.gain.cancelScheduledValues(actx.currentTime); seqBus.gain.linearRampToValueAtTime(Math.max(0.0001, v*v*2), actx.currentTime + 0.03); }catch(e){} }
+  function setModularVolume(v){ try{ ensure(); modularBus.gain.cancelScheduledValues(actx.currentTime); modularBus.gain.linearRampToValueAtTime(Math.max(0.0001, v*v*2), actx.currentTime + 0.03); }catch(e){} }
+
+  function noiseBuffer(dur){
+    const buf = actx.createBuffer(1, Math.max(1, actx.sampleRate*dur), actx.sampleRate);
+    const d = buf.getChannelData(0);
+    for(let i=0;i<d.length;i++) d[i] = (Math.random()*2-1) * (1 - i/d.length);
+    return buf;
+  }
+
+  function crackle(){
+    try{
+      ensure();
+      const src = actx.createBufferSource();
+      src.buffer = noiseBuffer(0.02 + Math.random()*0.035);
+      const hp = actx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value = 1200 + Math.random()*1800;
+      const g = actx.createGain(); g.gain.value = 0.03 + Math.random()*0.05;
+      src.connect(hp); hp.connect(g); g.connect(master);
+      src.start();
+    }catch(e){}
+  }
+
+  function dataBurst(){
+    try{
+      ensure();
+      const n = 3 + Math.floor(Math.random()*4);
+      let t = actx.currentTime;
+      for(let i=0;i<n;i++){
+        const o = actx.createOscillator();
+        o.type = i % 2 === 0 ? 'square' : 'sawtooth';
+        o.frequency.value = 260 + Math.random()*2200;
+        const g = actx.createGain();
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.linearRampToValueAtTime(0.05 + Math.random()*0.04, t + 0.004);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.03 + Math.random()*0.03);
+        o.connect(g); g.connect(master);
+        o.start(t); o.stop(t + 0.08);
+        t += 0.018 + Math.random()*0.03;
+      }
+    }catch(e){}
+  }
+
+  function click(){
+    try{
+      ensure();
+      const o = actx.createOscillator();
+      o.type = 'square';
+      o.frequency.setValueAtTime(480 + Math.random()*260, actx.currentTime);
+      o.frequency.exponentialRampToValueAtTime(80, actx.currentTime + 0.05);
+      const g = actx.createGain();
+      g.gain.setValueAtTime(0.045, actx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.0008, actx.currentTime + 0.06);
+      o.connect(g); g.connect(master);
+      o.start(); o.stop(actx.currentTime + 0.07);
+      if(Math.random() < .4) crackle();
+    }catch(e){}
+  }
+
+  function type(){
+    try{
+      ensure();
+      const dur = 0.014 + Math.random()*0.012;
+      const len = Math.max(1, Math.floor(actx.sampleRate * dur));
+      const buffer = actx.createBuffer(1, len, actx.sampleRate);
+      const data = buffer.getChannelData(0);
+      const holdSamples = 2 + Math.floor(Math.random()*6);   // sample rate efectivo muy bajo -> áspero
+      const bitSteps = 2 + Math.floor(Math.random()*3);      // pocos niveles de amplitud
+      let held = 0;
+      for(let i=0;i<len;i++){
+        if(i % holdSamples === 0){
+          held = Math.round((Math.random()*2-1) * bitSteps) / bitSteps;
+        }
+        data[i] = held * Math.pow(1 - i/len, 1.6); // corte seco, sin cola
+      }
+      const src = actx.createBufferSource(); src.buffer = buffer;
+      const hp = actx.createBiquadFilter(); hp.type = 'highpass';
+      hp.frequency.value = 2200 + Math.random()*2600; hp.Q.value = 1.1;
+      const g = actx.createGain(); g.gain.value = 0.05 + Math.random()*0.03;
+      src.connect(hp); hp.connect(g); g.connect(master);
+      src.start();
+    }catch(e){}
+  }
+
+  function tuneIn(){
+    try{
+      ensure();
+      const t0 = actx.currentTime;
+      const o = actx.createOscillator();
+      o.type = 'sawtooth';
+      const filt = actx.createBiquadFilter(); filt.type = 'lowpass'; filt.frequency.value = 1100;
+      const g = actx.createGain(); g.gain.value = 0.0001;
+      o.connect(filt); filt.connect(g); g.connect(master);
+      o.frequency.setValueAtTime(160, t0);
+      o.frequency.linearRampToValueAtTime(1500, t0 + 0.32);
+      o.frequency.linearRampToValueAtTime(480, t0 + 0.55);
+      o.frequency.linearRampToValueAtTime(760, t0 + 0.8);
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.linearRampToValueAtTime(0.032, t0 + 0.06);
+      g.gain.linearRampToValueAtTime(0.018, t0 + 0.55);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.95);
+      o.start(t0); o.stop(t0 + 1);
+      crackle(); setTimeout(crackle, 160); setTimeout(crackle, 360);
+    }catch(e){}
+  }
+
+  function scheduleCrackle(){
+    setTimeout(()=>{ crackle(); scheduleCrackle(); }, 1100 + Math.random()*2600);
+  }
+  function scheduleDataBurst(){
+    setTimeout(()=>{ dataBurst(); scheduleDataBurst(); }, 5000 + Math.random()*8000);
+  }
+
+  function startAmbient(){
+    if(ambientStarted) return;
+    ambientStarted = true;
+    ensure();
+
+    const oscA = actx.createOscillator(); oscA.type = 'square'; oscA.frequency.value = 58;
+    const oscB = actx.createOscillator(); oscB.type = 'sawtooth'; oscB.frequency.value = 61.3;
+
+    const gA = actx.createGain(); gA.gain.value = 0.016;
+    const gB = actx.createGain(); gB.gain.value = 0.012;
+
+    const band = actx.createBiquadFilter(); band.type = 'bandpass'; band.frequency.value = 480; band.Q.value = 0.5;
+
+    oscA.connect(gA); gA.connect(band);
+    oscB.connect(gB); gB.connect(band);
+    band.connect(master);
+    oscA.start(); oscB.start();
+
+    const lfo = actx.createOscillator(); lfo.type = 'triangle'; lfo.frequency.value = 0.06;
+    const lfoGain = actx.createGain(); lfoGain.gain.value = 2.4;
+    lfo.connect(lfoGain); lfoGain.connect(oscB.frequency);
+    lfo.start();
+
+    scheduleCrackle();
+    scheduleDataBurst();
+  }
+
+  /* Voz FM compleja para el arpegiador del mouse: portadora + 2
+     moduladores en cadena (uno modula a la portadora, otro modula
+     al primer modulador) -> espectro mucho más rico que un FM simple. */
+  /* Ráfagas granulares hiperagudas: nada de escala ni fila de tonos —
+     cada grano es un impulso de ruido de banda muy angosta a una
+     frecuencia aleatoria altísima, disparado en racimos irregulares.
+     Es síntesis granular, no melodía. */
+  function grainBurst(velocity, ny){
+    try{
+      ensure();
+      const baseFreq = 3200 + (1 - ny) * 9500; // más arriba en la pantalla = todavía más agudo
+      const grains = 4 + Math.floor(velocity * 8);
+      let t = actx.currentTime;
+      for(let i=0; i<grains; i++){
+        const dur = 0.006 + Math.random()*0.018;
+        const buf = noiseBuffer(dur);
+        const src = actx.createBufferSource(); src.buffer = buf;
+        const bp = actx.createBiquadFilter(); bp.type = 'bandpass';
+        bp.frequency.value = Math.max(800, baseFreq + (Math.random()-0.5)*5000);
+        bp.Q.value = 4 + Math.random()*8; // menos angosto -> antes se comía casi toda la energía del ruido
+        const g = actx.createGain();
+        g.gain.value = (0.09 + velocity*0.22) * (0.6 + Math.random()*0.4);
+        src.connect(bp); bp.connect(g); connectToSeqBus(g);
+        src.start(t);
+        t += 0.006 + Math.random()*0.016;
+      }
+    }catch(e){}
+  }
+
+  let labPressed = false, labArpTimer = null;
+  let labPos = { x:0.5, y:0.5, t:0 };
+  let labSpeed = 0;
+
+  function labArpStep(){
+    if(!labPressed){ labArpTimer = null; return; }
+    const velocity = Math.max(0.12, Math.min(1, labSpeed * 5));
+    grainBurst(velocity, labPos.y);
+    labArpTimer = setTimeout(labArpStep, 45 + Math.random()*75);
+  }
+
+  function labPress(nx, ny){
+    try{
+      ensure();
+      labPressed = true;
+      labPos = { x:nx, y:ny, t: performance.now() };
+      labSpeed = 0.3;
+      if(!labArpTimer) labArpStep();
+    }catch(e){}
+  }
+  function labMove(nx, ny){
+    if(!labPressed) return;
+    const now = performance.now();
+    const dt = Math.max(1, now - labPos.t);
+    const dist = Math.hypot(nx - labPos.x, ny - labPos.y);
+    labSpeed = dist / (dt/1000);
+    labPos = { x:nx, y:ny, t: now };
+  }
+  function labRelease(){
+    labPressed = false;
+  }
+  function detonate(){
+    try{
+      ensure();
+      const t = actx.currentTime;
+      const o = actx.createOscillator(); o.type = 'square';
+      o.frequency.setValueAtTime(50, t);
+      o.frequency.exponentialRampToValueAtTime(600, t + 0.12);
+      const g = actx.createGain();
+      g.gain.setValueAtTime(0.09, t);
+      g.gain.exponentialRampToValueAtTime(0.0006, t + 0.28);
+      o.connect(g); g.connect(master);
+      o.start(t); o.stop(t + 0.3);
+      dataBurst();
+    }catch(e){}
+  }
+
+  /* Bitcrush real (no un filtro que "suena a" bitcrush): reduce la
+     resolución temporal (sample-and-hold, simula sample rate bajo) y
+     cuantiza la amplitud a pocos niveles (simula bit depth bajo).
+     Ruido, no tono — pensado para golpes secos de terminal fallando. */
+  function crush(fMin, fMax){
+    try{
+      ensure();
+      const dur = 0.03 + Math.random()*0.045;
+      const len = Math.max(1, Math.floor(actx.sampleRate * dur));
+      const buffer = actx.createBuffer(1, len, actx.sampleRate);
+      const data = buffer.getChannelData(0);
+      const holdSamples = 3 + Math.floor(Math.random()*11);  // sample rate efectivo más bajo
+      const bitSteps = 2 + Math.floor(Math.random()*5);       // bit depth efectivo más bajo
+      let held = 0;
+      for(let i=0;i<len;i++){
+        if(i % holdSamples === 0){
+          held = Math.round((Math.random()*2-1) * bitSteps) / bitSteps;
+        }
+        data[i] = held * Math.pow(1 - i/len, 2); // caída más brusca, no lineal -> corte seco
+      }
+      const src = actx.createBufferSource(); src.buffer = buffer;
+      const bp = actx.createBiquadFilter(); bp.type = 'bandpass';
+      const lo = fMin!==undefined ? fMin : 250, hi = fMax!==undefined ? fMax : 3050;
+      bp.frequency.value = lo + Math.random()*(hi-lo); bp.Q.value = 1.5 + Math.random()*4;
+      const g = actx.createGain(); g.gain.value = 0.15 + Math.random()*0.12;
+      src.connect(bp); bp.connect(g); g.connect(master);
+      src.start();
+      if(Math.random() < .5) crackle();
+    }catch(e){}
+  }
+
+  /* Golpe grave, corto, no-senoidal: el "hum" paranoico que acompaña
+     al glitch, no una nota afinada. Cortísimo -> sensación eléctrica,
+     no un tono sostenido. */
+  function humStab(fMin, fMax){
+    try{
+      ensure();
+      const t0 = actx.currentTime;
+      const o = actx.createOscillator(); o.type = 'square';
+      const lo = fMin!==undefined ? fMin : 42, hi = fMax!==undefined ? fMax : 88;
+      o.frequency.value = lo + Math.random()*(hi-lo);
+      const g = actx.createGain();
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.linearRampToValueAtTime(0.08, t0 + 0.006);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.06 + Math.random()*0.07);
+      o.connect(g); g.connect(master);
+      o.start(t0); o.stop(t0 + 0.16);
+    }catch(e){}
+  }
+
+  function getContext(){ ensure(); return actx; }
+  function connectToMaster(node){ try{ ensure(); node.connect(master); }catch(e){} }
+  function makeNoiseBuffer(dur){ ensure(); return noiseBuffer(dur); }
+
+  /* Percusión muy sintética: ruido filtrado + hum opcional, todo pasado
+     por un waveshaper de clip durísimo (no un "drive" sutil — clip real,
+     tipo señal reventada). Nada de samples, todo generado. */
+  function percHit(opts){
+    opts = opts || {};
+    try{
+      ensure();
+      const t0 = actx.currentTime;
+      const dur = opts.dur || 0.12;
+      const buf = noiseBuffer(dur);
+      const src = actx.createBufferSource(); src.buffer = buf;
+      const filt = actx.createBiquadFilter();
+      filt.type = opts.filterType || 'bandpass';
+      filt.frequency.value = opts.freq || 800;
+      filt.Q.value = opts.q !== undefined ? opts.q : 2;
+
+      const shaper = actx.createWaveShaper();
+      const n = 64, drive = opts.drive !== undefined ? opts.drive : 12;
+      const curve = new Float32Array(n);
+      for(let i=0;i<n;i++){ const x = i/(n-1)*2-1; curve[i] = Math.max(-1, Math.min(1, x*drive)); }
+      shaper.curve = curve;
+
+      const g = actx.createGain(); g.gain.value = opts.gain !== undefined ? opts.gain : 0.14;
+      src.connect(filt); filt.connect(shaper); shaper.connect(g); connectToSeqBus(g);
+      src.start(t0);
+
+      if(opts.hum){
+        const o = actx.createOscillator(); o.type = 'square';
+        const hf = opts.humFreq || 70;
+        o.frequency.setValueAtTime(hf, t0);
+        if(opts.humDrop) o.frequency.exponentialRampToValueAtTime(Math.max(20, hf*0.4), t0 + dur*0.6);
+        const hg = actx.createGain();
+        hg.gain.setValueAtTime(0.0008, t0);
+        hg.gain.linearRampToValueAtTime(opts.humGain || 0.08, t0 + 0.008);
+        hg.gain.exponentialRampToValueAtTime(0.0006, t0 + dur + 0.03);
+        o.connect(hg); connectToSeqBus(hg);
+        o.start(t0); o.stop(t0 + dur + 0.05);
+      }
+    }catch(e){}
+  }
+
+  /* Pulso de precisión: no es percusión "musical", es señal calibrada.
+     Un impulso sub-grave (1-2 ciclos, no un tono sostenido) + un click
+     hiperagudo de banda muy angosta, casi simultáneos, sin decaimiento
+     orgánico -> corte seco, no campana. Línea Ikeda/Robin Fox
+     ("Handful of Automation", "Protoneedles"): precisión antes que
+     timbre. */
+  function microPulse(){
+    try{
+      ensure();
+      const t0 = actx.currentTime;
+
+      // impulso sub-grave: rampa exponencial de 2 ciclos, sin cola
+      const sub = actx.createOscillator(); sub.type = 'square'; sub.frequency.value = 42;
+      const subG = actx.createGain();
+      subG.gain.setValueAtTime(0.16, t0);
+      subG.gain.exponentialRampToValueAtTime(0.0004, t0 + 0.045);
+      sub.connect(subG); connectToSeqBus(subG);
+      sub.start(t0); sub.stop(t0 + 0.05);
+
+      // click hiperagudo: ruido de banda extremadamente angosta, casi un tono puro pero generado como impulso
+      const buf = noiseBuffer(0.012);
+      const src = actx.createBufferSource(); src.buffer = buf;
+      const bp = actx.createBiquadFilter(); bp.type = 'bandpass';
+      bp.frequency.value = 9000 + Math.random()*6500; bp.Q.value = 22;
+      const hg = actx.createGain(); hg.gain.value = 0.11;
+      src.connect(bp); bp.connect(hg); connectToSeqBus(hg);
+      src.start(t0 + 0.002);
+    }catch(e){}
+  }
+
+  /* Golpe metálico percusivo: varios parciales EN RAZÓN INARMÓNICA
+     (no múltiplos enteros de la fundamental) -> suena a metal golpeado,
+     no a una nota afinada. Decae rápido, sin sostén -> punzante, no
+     campana larga. baseFreq mueve el registro (agudo/grave), decay
+     mueve qué tan corto/largo es el golpe. */
+  function metallicHit(baseFreq, decay){
+    try{
+      ensure();
+      const t0 = actx.currentTime;
+      const ratios = [1, 1.41, 2.37, 3.14, 4.81];
+      ratios.forEach((r, i)=>{
+        const o = actx.createOscillator(); o.type = i % 2 === 0 ? 'triangle' : 'square';
+        o.frequency.value = baseFreq * r * (0.98 + Math.random()*0.04); // leve desafinación -> más metálico, no digital-limpio
+        const g = actx.createGain();
+        const amp = (0.06 / (i+1)) * (0.7 + Math.random()*0.3);
+        g.gain.setValueAtTime(amp, t0);
+        g.gain.exponentialRampToValueAtTime(0.0003, t0 + decay * (0.5 + Math.random()*0.6));
+        o.connect(g); connectToSeqBus(g);
+        o.start(t0); o.stop(t0 + decay + 0.08);
+      });
+    }catch(e){}
+  }
+
+  /* Grave real, no ruido filtrado: oscilador con envolvente de tono
+     que cae rápido (agudo -> sub) + envolvente de amplitud propia,
+     como un 808/909 o un kick de Analog Rytm. Esto es lo que le
+     faltaba a la caja: cuerpo grave de verdad, no solo un "click"
+     con lowpass encima. */
+  function subKick(peakFreq, endFreq, dur){
+    try{
+      ensure();
+      const t0 = actx.currentTime;
+      const o = actx.createOscillator(); o.type = 'triangle';
+      o.frequency.setValueAtTime(peakFreq, t0);
+      o.frequency.exponentialRampToValueAtTime(Math.max(28, endFreq), t0 + dur*0.55);
+      const g = actx.createGain();
+      g.gain.setValueAtTime(0.001, t0);
+      g.gain.linearRampToValueAtTime(0.26, t0 + 0.006);
+      g.gain.exponentialRampToValueAtTime(0.0003, t0 + dur);
+      const sat = actx.createWaveShaper();
+      const curve = new Float32Array(9);
+      for(let i=0;i<9;i++){ const x=i/8*2-1; curve[i] = Math.tanh(x*2.2); } // saturación suave -> más presencia, no solo volumen
+      sat.curve = curve;
+      o.connect(sat); sat.connect(g); connectToSeqBus(g);
+      o.start(t0); o.stop(t0 + dur + 0.03);
+    }catch(e){}
+  }
+
+  /* Un "blip" de habla sintética con ALIASING REAL, no solo cuantización
+     de amplitud: la onda se genera muestra por muestra en un buffer y se
+     sub-muestrea (sample-and-hold cada N samples), igual que reducir de
+     verdad el sample rate -> los armónicos se pliegan sobre sí mismos,
+     metálico e inarmónico, mucho más falso y agresivo que un oscilador
+     limpio pasado por un waveshaper. Encima, cuantización de amplitud
+     también. Dura más que el intervalo entre blips (ver speakLine) a
+     propósito -> se traslapan entre sí, nunca suena a uno-por-uno. */
+  function voiceBlip(profile){
+    try{
+      ensure();
+      const t0 = actx.currentTime;
+      const freq = profile.base + (Math.random()*2-1)*profile.range;
+      const freq2 = freq * (0.7 + Math.random()*0.5); // quiebre de tono real dentro del buffer -> nunca un tono estable
+      const dur = 0.05 + Math.random()*0.045;
+      const len = Math.max(4, Math.floor(actx.sampleRate * dur));
+      const buffer = actx.createBuffer(1, len, actx.sampleRate);
+      const data = buffer.getChannelData(0);
+
+      const holdSamples = 2 + Math.floor(Math.random()*3); // sample rate efectivo MUY bajo -> alias agresivo
+      const bitSteps = profile.crushSteps || 6;
+      let phase = 0, held = 0;
+      for(let i=0;i<len;i++){
+        const t = i / actx.sampleRate;
+        const instFreq = freq + (freq2 - freq) * (t/dur);
+        phase += instFreq / actx.sampleRate;
+        if(i % holdSamples === 0){
+          const raw = profile.type === 'sawtooth' ? ((phase % 1) * 2 - 1) : Math.sign(Math.sin(phase * Math.PI * 2));
+          held = Math.round(raw * bitSteps) / bitSteps;
+        }
+        data[i] = held * Math.pow(1 - t/dur, 1.3); // corte seco, no cola suave
+      }
+
+      const src = actx.createBufferSource(); src.buffer = buffer;
+      const g = actx.createGain(); g.gain.value = 0.15;
+      src.connect(g); g.connect(master);
+      src.start(t0);
+
+      // capa de ruido de banda -> el grano industrial, mezclado por debajo del tono
+      if(Math.random() < (profile.noiseAmt || 0.25) + 0.3){
+        const buf = noiseBuffer(dur*0.65);
+        const nsrc = actx.createBufferSource(); nsrc.buffer = buf;
+        const bp = actx.createBiquadFilter(); bp.type = 'bandpass';
+        bp.frequency.value = freq * (2.2 + Math.random()*1.5); bp.Q.value = 2 + Math.random()*3;
+        const ng = actx.createGain(); ng.gain.value = 0.03 + (profile.noiseAmt || 0.25) * 0.07;
+        nsrc.connect(bp); bp.connect(ng); ng.connect(master);
+        nsrc.start(t0);
+      }
+    }catch(e){}
+  }
+
+  return { ensure, startAmbient, click, type, crackle, dataBurst, tuneIn, labPress, labMove, labRelease, detonate, crush, humStab, getContext, getAnalyser, connectToMaster, connectToSeqBus, connectToModularBus, setSeqVolume, setModularVolume, makeNoiseBuffer, percHit, microPulse, metallicHit, subKick, voiceBlip };
+})();
+
+function blip(){ AudioEngine.startAmbient(); AudioEngine.click(); }
+function staticBurst(){ AudioEngine.startAmbient(); AudioEngine.crackle(); AudioEngine.dataBurst(); }
+
+/* ============================================================
+   TRANSICIÓN: DESYNC -> SWAP -> RESYNC
+   ============================================================ */
+const app = document.getElementById('app');
+const mainEl = document.querySelector('.main');
+const veil = document.getElementById('glitchVeil');
+const statusLine = document.getElementById('statusLine');
+let switching = false;
+
+function buildVeilSlabs(){
+  veil.innerHTML = '';
+  const n = 7;
+  for(let i=0;i<n;i++){
+    const s = document.createElement('div');
+    s.className = 'glitch-slab';
+    const h = 6 + Math.random()*40;
+    s.style.height = h + 'px';
+    s.style.top = Math.random()*100 + '%';
+    veil.appendChild(s);
+  }
+  const bar = document.createElement('div');
+  bar.className = 'scan-bar';
+  veil.appendChild(bar);
+  return {slabs: veil.querySelectorAll('.glitch-slab'), bar};
+}
+
+function scrambleText(el, finalText, duration=550){
+  const chars = '01#$%&*/\\<>[]{}_-+=~^ABCDEFGH01НХ01';
+  const start = performance.now();
+  function frame(now){
+    const p = Math.min(1, (now-start)/duration);
+    let out = '';
+    for(let i=0;i<finalText.length;i++){
+      const ch = finalText[i];
+      if(ch === ' '){ out += ' '; continue; }
+      if(p*finalText.length > i + Math.random()*4){ out += ch; }
+      else{ out += chars[Math.floor(Math.random()*chars.length)]; }
+    }
+    el.textContent = out;
+    if(p < 1) requestAnimationFrame(frame); else el.textContent = finalText;
+  }
+  requestAnimationFrame(frame);
+}
+
+function switchSection(target){
+  if(switching) return;
+  const current = document.querySelector('.section.visible');
+  if(current && current.id === target) return;
+  switching = true;
+
+  if(current && current.id === 'dispositivo'){ AudioEngine.labRelease(); }
+
+  document.querySelectorAll('.navbtn').forEach(b=>{
+    b.classList.toggle('active', b.dataset.target === target);
+  });
+
+  const {slabs, bar} = buildVeilSlabs();
+  veil.classList.add('active');
+  app.classList.add('desync');
+  mainEl.classList.add('rgb-active');
+  statusLine.textContent = 'DES1NCR0N1Z4ND0_3NL4C3';
+  statusLine.classList.add('show');
+  staticBurst();
+  animateRGBShift();
+
+  slabs.forEach(s=>{
+    s.animate([
+      {opacity:0, transform:'translateX(0)'},
+      {opacity:.5, transform:`translateX(${(Math.random()*2-1)*40}px)`},
+      {opacity:0, transform:'translateX(0)'}
+    ], {duration: 90+Math.random()*120, iterations: 3});
+  });
+  bar.animate([
+    {top:'0%', opacity:0}, {top:'50%', opacity:1}, {top:'100%', opacity:0}
+  ], {duration:380, easing:'linear'});
+
+  setTimeout(()=>{
+    document.querySelectorAll('.section').forEach(s=> s.classList.remove('visible'));
+    const next = document.getElementById(target);
+    next.classList.add('visible');
+    const h1 = next.querySelector('.section-head h1');
+    if(h1) scrambleText(h1, h1.dataset.original || h1.textContent, 500);
+    if(h1 && !h1.dataset.original) h1.dataset.original = h1.textContent;
+
+    app.classList.remove('desync');
+    app.classList.add('resync');
+    statusLine.textContent = 'S1NCR0N1Z4C10N_C0MPL3T4';
+    if(target === 'entrevistas'){
+      AudioEngine.startAmbient(); AudioEngine.tuneIn();
+      setTimeout(()=> drawCodecLine(activeInterviewSection, true), 650);
+    }
+    else if(target === 'dispositivo'){ AudioEngine.startAmbient(); initDevice(); blip(); }
+    else if(target === 'matriz'){ initMatrix(); blip(); }
+    else { blip(); }
+  }, 380);
+
+  setTimeout(()=>{
+    veil.classList.remove('active');
+    statusLine.classList.remove('show');
+    app.classList.remove('resync');
+    mainEl.classList.remove('rgb-active');
+    switching = false;
+  }, 780);
+}
+
+function animateRGBShift(){
+  const rOff = document.getElementById('rgbOffR');
+  const bOff = document.getElementById('rgbOffB');
+  const duration = 780;
+  const start = performance.now();
+  function frame(now){
+    const t = Math.min(1, (now-start)/duration);
+    const envelope = t < .45 ? (t/.45) : Math.max(0, 1 - (t-.45)/.55);
+    const mag = envelope * 9;
+    const jitter = (Math.random()-.5) * envelope * 3;
+    rOff.setAttribute('dx', (-mag + jitter).toFixed(2));
+    rOff.setAttribute('dy', (jitter*.4).toFixed(2));
+    bOff.setAttribute('dx', (mag - jitter).toFixed(2));
+    bOff.setAttribute('dy', (-jitter*.4).toFixed(2));
+    if(t < 1) requestAnimationFrame(frame);
+    else { rOff.setAttribute('dx',0); bOff.setAttribute('dx',0); }
+  }
+  requestAnimationFrame(frame);
+}
+
+document.querySelectorAll('.navbtn').forEach(btn=>{
+  btn.addEventListener('click', ()=> switchSection(btn.dataset.target));
+});
+
+/* ============================================================
+   RUIDO DE FONDO (canvas)
+   ============================================================ */
+(function initNoiseCanvas(){
+  const canvas = document.getElementById('noiseCanvas');
+  const ctx = canvas.getContext('2d', { alpha: true });
+  const RES_W = 480, RES_H = 270;
+  canvas.width = RES_W;
+  canvas.height = RES_H;
+
+  function resizeCanvas(){
+    canvas.style.width = window.innerWidth + 'px';
+    canvas.style.height = window.innerHeight + 'px';
+  }
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+
+  const imgData = ctx.createImageData(RES_W, RES_H);
+  function drawNoise(){
+    const data = imgData.data;
+    for(let i=0;i<data.length;i+=4){
+      const v = Math.random()*255;
+      data[i]=v; data[i+1]=v; data[i+2]=v; data[i+3]=255;
+    }
+    ctx.putImageData(imgData, 0, 0);
+    setTimeout(()=> requestAnimationFrame(drawNoise), 55);
+  }
+  drawNoise();
+})();
+
+const trackGlitch = document.getElementById('trackGlitch');
+let audioUnlocked = false; // se pone en true recién con el click del splash — evita crear el AudioContext sin gesto de usuario
+
+function ambientTrackingGlitch(){
+  const h = 4 + Math.random()*16;
+  trackGlitch.style.height = h + 'px';
+  trackGlitch.style.top = Math.random()*100 + '%';
+  trackGlitch.style.opacity = .06 + Math.random()*.1;
+  trackGlitch.animate([
+    {transform:'translateX(0)'},
+    {transform:`translateX(${(Math.random()*2-1)*8}px)`},
+    {transform:'translateX(0)'}
+  ], {duration:100+Math.random()*120, iterations:2});
+  setTimeout(()=>{ trackGlitch.style.opacity = 0; }, 150);
+  if(audioUnlocked && Math.random() < .15) staticBurst(); // el glitch visual siempre corre, el audio no hasta desbloquear
+  scheduleAmbientGlitch();
+}
+function scheduleAmbientGlitch(){
+  setTimeout(ambientTrackingGlitch, 3000 + Math.random()*7000);
+}
+scheduleAmbientGlitch();
+
+/* ============================================================
+   PU3NT3 OSC — cada canal del secuenciador de X3N0L1T0 es un canal
+   OSC real: cuando el metrónomo dispara un paso activo, sale un
+   mensaje ON (1) y, poco después, uno OFF (0) — un gate, como una
+   nota MIDI on/off. Pensado para controlar DMX a través de
+   TouchDesigner: esta pieza solo hace el "funnel" hasta el OSC In
+   de TD — todo lo demás (mapeo a canales DMX, fixtures, etc.) lo
+   gestiona TouchDesigner de ese lado, no esta página.
+
+   IMPORTANTE — son DOS protocolos distintos, en DOS puertos distintos,
+   aunque los dos digan "localhost":
+     1) navegador <-> relay   : WebSocket, puerto 8081 (OSC_WS_URL abajo)
+     2) relay     <-> TD      : UDP crudo,  puerto 8080 (el OSC In CHOP de TD)
+   El navegador NUNCA puede hablarle directo al OSC In de TouchDesigner:
+   ese CHOP escucha UDP, no WebSocket, son protocolos que no se entienden
+   entre sí sin algo en el medio. Por eso hace falta el relay — no es
+   opcional, y no alcanza con que el puerto "coincida".
+
+   El relay (no entra en un HTML estático, pero son ~15 líneas de
+   Node.js) abre un servidor WebSocket en el 8081 para este archivo,
+   y reenvía cada mensaje como UDP real al 8080 de TouchDesigner:
+
+     npm install ws osc
+     -----------------------------------------------------------
+     const WebSocket = require('ws');
+     const osc = require('osc');
+     const udp = new osc.UDPPort({
+       remoteAddress: '192.168.0.62', // la IP donde corre TouchDesigner
+       remotePort: 8080                // el puerto que ya configuraste en el OSC In CHOP
+     });
+     udp.open();
+     const wss = new WebSocket.Server({ port: 8081 }); // puerto del relay, distinto del UDP de TD
+     wss.on('connection', ws=>{
+       ws.on('message', data=> udp.send(osc.readPacket(new Uint8Array(data), {})));
+     });
+     -----------------------------------------------------------
+   Corré ese script con Node (node relay.js) ANTES de abrir esta
+   página y hacer click en "OSC: 0FF" — si el proceso no está
+   corriendo, el navegador va a tirar ERR_CONNECTION_REFUSED sin
+   importar qué puerto pongas en ningún lado.
+   Direcciones que manda esta pieza: /xenolito/seq/K, /H, /N, /C,
+   /T, /X, /P — una por canal, valor 1 (ON) o 0 (OFF).
+   ============================================================ */
+const OSC_WS_URL = 'ws://localhost:8081'; // puerto del RELAY (WebSocket), distinto del puerto UDP 8080 que ya usa TouchDesigner
+let oscSocket = null;
+let oscConnected = false;
+let oscConnecting = false;
+
+function oscPad(bytes){
+  const pad = (4 - (bytes.length % 4)) % 4;
+  if(pad === 0) return bytes;
+  const out = new Uint8Array(bytes.length + pad);
+  out.set(bytes);
+  return out;
+}
+function oscString(str){
+  const bytes = new Uint8Array(str.length + 1); // +1 por el null terminator
+  for(let i=0;i<str.length;i++) bytes[i] = str.charCodeAt(i);
+  return oscPad(bytes);
+}
+function encodeOSCMessage(address, args){
+  const addrBytes = oscString(address);
+  let typeTag = ',';
+  const argBuffers = [];
+  args.forEach(v=>{
+    const b = new ArrayBuffer(4); const dv = new DataView(b);
+    if(Number.isInteger(v)){ typeTag += 'i'; dv.setInt32(0, v, false); }
+    else{ typeTag += 'f'; dv.setFloat32(0, v, false); }
+    argBuffers.push(new Uint8Array(b));
+  });
+  const typeBytes = oscString(typeTag);
+  let total = addrBytes.length + typeBytes.length;
+  argBuffers.forEach(b=> total += b.length);
+  const out = new Uint8Array(total);
+  let off = 0;
+  out.set(addrBytes, off); off += addrBytes.length;
+  out.set(typeBytes, off); off += typeBytes.length;
+  argBuffers.forEach(b=>{ out.set(b, off); off += b.length; });
+  return out.buffer;
+}
+
+function updateOscStatusUI(){
+  const btn = document.getElementById('oscToggle');
+  if(btn) btn.textContent = oscConnected ? 'OSC: 0N' : (oscConnecting ? 'OSC: C0N3CT4ND0...' : 'OSC: 0FF');
+  const st = document.getElementById('devOsc');
+  if(st) st.textContent = oscConnected ? 'C0N3CT4D0' : (oscConnecting ? 'C0N3CT4ND0' : 'D3SC0N3CT4D0');
+}
+
+function oscConnect(){
+  if(oscSocket || oscConnecting) return;
+  try{
+    oscConnecting = true; updateOscStatusUI();
+    console.log('[OSC] conectando a', OSC_WS_URL, '...');
+    oscSocket = new WebSocket(OSC_WS_URL);
+    oscSocket.binaryType = 'arraybuffer';
+    oscSocket.onopen = ()=>{ oscConnected = true; oscConnecting = false; updateOscStatusUI(); console.log('[OSC] conectado a', OSC_WS_URL); };
+    oscSocket.onclose = (ev)=>{ oscConnected = false; oscConnecting = false; oscSocket = null; updateOscStatusUI(); console.warn('[OSC] conexión cerrada', ev.code, ev.reason); };
+    oscSocket.onerror = (ev)=>{ oscConnected = false; oscConnecting = false; updateOscStatusUI(); console.warn('[OSC] error de conexión — ¿está corriendo el relay en', OSC_WS_URL, '?', ev); };
+  }catch(e){
+    oscConnected = false; oscConnecting = false; oscSocket = null; updateOscStatusUI();
+    console.warn('[OSC] excepción al conectar:', e);
+  }
+}
+function oscDisconnect(){
+  if(oscSocket){ try{ oscSocket.close(); }catch(e){} }
+  oscSocket = null; oscConnected = false; oscConnecting = false; updateOscStatusUI();
+}
+let oscSentCount = 0;
+function oscSend(address, value){
+  if(!oscConnected || !oscSocket || oscSocket.readyState !== WebSocket.OPEN){
+    console.warn('[OSC] no enviado (sin conexión):', address, value, {oscConnected, hasSocket:!!oscSocket, state: oscSocket && oscSocket.readyState});
+    return;
+  }
+  try{
+    oscSocket.send(encodeOSCMessage(address, [value]));
+    oscSentCount++;
+    console.log('[OSC] ->', address, value, '(#'+oscSentCount+')');
+    const log = document.getElementById('devOscLast');
+    if(log) log.textContent = address + ' = ' + value + ' (#' + oscSentCount + ')';
+  }catch(e){
+    console.warn('[OSC] error al enviar:', address, value, e);
+  }
+}
+/* Cada canal es su propio canal OSC: ON al disparar el paso, OFF
+   poco después -> gate corto, no un valor que quede pegado en 1. */
+function oscChannelGate(channelKey){
+  const addr = '/xenolito/seq/' + channelKey;
+  oscSend(addr, 1);
+  const offDelay = Math.max(25, Math.min(90, STEP_MS * 0.4));
+  setTimeout(()=> oscSend(addr, 0), offDelay);
+}
+
+/* ============================================================
+   X3N0L1T0 — ya no es tejido ni código-planta: es una terminal
+   corrupta. Una superficie de caracteres en estática permanente
+   (paranoia ambiental, siempre fallando un poco) que el click
+   perfora localmente: bitcrush + ruido, sin partículas que floten
+   — solo la señal fallando exactamente donde tocaste.
+   ============================================================ */
+let deviceInitialized = false;
+let deviceCtx, deviceCanvasEl;
+let mousePX = 0, mousePY = 0, mouseNX = 0.5, mouseNY = 0.5;
+let waveformData = null, spectrumData = null; // buffers del espectorama (forma de onda + espectro)
+let hasMouse = false;
+let devStartTime = performance.now();
+let glitchCount = 0;
+
+const T_CELL_W = 14, T_CELL_H = 18;
+const T_CHARS = '01#$%&?¥∆§░▓▒∴⌬∵4T3M4J4CX'.split('');
+const ALIEN_GLYPHS = ['⟠','⌁','⏦','⟡','⧫','⟒','⩕','⟟','⧉','⌗','⏥','◈'];
+let tCols = 0, tRows = 0;
+let termGrid = [];       // termGrid[row][col] = { char, sensitive }
+let glitchZones = [];     // {row, col, radius, expireAt, color}
+let scanTears = [];        // {row, born} — franjas horizontales de corte, sin física de partículas
+let lastAmbientFlicker = 0;
+
+/* --- caja de ritmos: ocupa la mayor parte de la grilla (7 canales,
+   todos disponibles al mismo tiempo). El reloj corre en su propio
+   scheduler, independiente del dibujo -> sigue sonando aunque
+   estés en otra sección. Cada paso se dibuja como glifo abstracto,
+   no como un rectángulo simple. El canal "P" es un pulso de precisión
+   (clicks extremos, agudo/sub-grave) en la línea de Ryoji Ikeda /
+   Robin Fox — "Handful of Automation", "Protoneedles". --- */
+const SEQ_STEPS = 16; // referencia fija para el L-system y el glitch general de la terminal
+const SEQ_CHANNELS = [
+  { key:'K', label:'K', color:'255,45,90',   glyphs:['⟠','◬','⏀'], steps:16 }, // kick: 16 pasos, el pulso base
+  { key:'H', label:'H', color:'51,224,194',  glyphs:['⌁','⋔','⏦'], steps:16 }, // hihat: acompaña al kick 1 a 1
+  { key:'N', label:'N', color:'176,107,255', glyphs:['⟡','◈','⌇'], steps:12 }, // snare/ruido medio: ciclo de 12 -> cruza contra el 16
+  { key:'C', label:'C', color:'255,176,32',  glyphs:['⧫','✦','⟢'], steps:10 }, // clap: ciclo de 10
+  { key:'T', label:'T', color:'93,255,168',  glyphs:['⟒','⏣','◭'], steps:7  }, // tom: ciclo de 7 -> polirritmia fuerte
+  { key:'X', label:'X', color:'234,255,241', glyphs:['⩕','⌗','⏧'], steps:9  }, // data burst: ciclo de 9
+  { key:'P', label:'P', color:'255,255,255', glyphs:['⟟','⏥','⌆'], steps:5  }, // pulso de precisión: ciclo de 5, el más rápido en repetirse
+];
+const ROW_H = 20;
+const STRIP_H = ROW_H * SEQ_CHANNELS.length + 8;
+const TEMPO_PRESETS = [260, 180, 120, 80];
+let tempoIdx = 1;
+let STEP_MS = TEMPO_PRESETS[tempoIdx];
+let stepStates = SEQ_CHANNELS.map(ch=> new Array(ch.steps).fill(false));
+let channelPlayheads = SEQ_CHANNELS.map(()=> 0); // cada canal avanza en SU PROPIO ciclo -> polirritmia real, no un solo playhead
+let channelHitAngle = SEQ_CHANNELS.map(()=> 0); // gira un poco más cada vez que el canal suena -> animación real, no solo brillo
+let playheadIndex = 0; // referencia maestra fija de 16 pasos, para el L-system y el glitch general
+let lastStepAt = 0; // solo para el brillo visual del paso recién disparado
+let sequencerStarted = false;
+
+/* --- L-system cuadriculado en el espacio que queda libre arriba de
+   la caja de ritmos. Rígido (giros de 90°), se dispara con click,
+   suena con la fila dodecafónica en loop + desvío microtonal. --- */
+const LSYS_AXIOM = 'X';
+const LSYS_RULES = { X: 'F[+X][-X]F' };
+const LSYS_ANGLE = 90;
+const LSYS_MAX_ITER = 3;
+const LSYS_MAX_SEGS_PER_HIT = 40;
+const LSYS_MAX_TOTAL_SEGS = 260;
+let veins = [];
+
+function lsystemExpand(axiom, rules, iterations){
+  let s = axiom;
+  for(let i=0;i<iterations;i++){
+    let next = '';
+    for(const ch of s) next += (rules[ch] !== undefined ? rules[ch] : ch);
+    s = next;
+  }
+  return s;
+}
+function snap90(deg){ return Math.round(deg/90) * 90; }
+function lsystemTurtle(str, x0, y0, angle0, stepLen){
+  const segs = [];
+  let x = x0, y = y0, angle = snap90(angle0), order = 0;
+  const stack = [];
+  for(const ch of str){
+    if(segs.length >= LSYS_MAX_SEGS_PER_HIT) break;
+    if(ch === 'F'){
+      const rad = angle * Math.PI/180;
+      const x2 = x + Math.cos(rad)*stepLen;
+      const y2 = y + Math.sin(rad)*stepLen;
+      segs.push({x1:x,y1:y,x2,y2, order: order++});
+      x = x2; y = y2;
+    } else if(ch === '+'){ angle += LSYS_ANGLE; }
+    else if(ch === '-'){ angle -= LSYS_ANGLE; }
+    else if(ch === '['){ stack.push({x,y,angle}); }
+    else if(ch === ']'){ const s0 = stack.pop(); if(s0){ x=s0.x; y=s0.y; angle=s0.angle; } }
+  }
+  return segs;
+}
+function spawnGrowthAt(x, y){
+  const now = performance.now();
+  const angle = snap90(Math.random()*360);
+  const stepLen = Math.max(6, T_CELL_W*1.3);
+  const str = lsystemExpand(LSYS_AXIOM, LSYS_RULES, LSYS_MAX_ITER);
+  const segs = lsystemTurtle(str, x, y, angle, stepLen);
+  const total = Math.max(1, segs.length);
+  segs.forEach(s=>{
+    s.revealAt = now + (s.order/total) * 500;
+    s.revealed = false;
+    s.triggeredAt = 0; // se ilumina cuando el metrónomo pasa por su columna, no al aparecer
+  });
+  veins = veins.concat(segs);
+  if(veins.length > LSYS_MAX_TOTAL_SEGS) veins.splice(0, veins.length - LSYS_MAX_TOTAL_SEGS);
+}
+
+function buildTermGrid(w, h){
+  tCols = Math.max(14, Math.floor(w / T_CELL_W));
+  tRows = Math.max(6, Math.floor((h - STRIP_H) / T_CELL_H));
+  termGrid = Array.from({length: tRows}, () =>
+    Array.from({length: tCols}, () => ({ char: '.', sensitive: false }))
+  );
+  // eco del mapa 4T3M4J4C: unas pocas celdas quedan "sensibles" —
+  // parpadean un poco más que el resto, sin dibujar nada más que eso.
+  NODES.forEach(node=>{
+    const c = Math.min(tCols-1, Math.max(0, Math.round((node.x/400) * tCols)));
+    const r = Math.min(tRows-1, Math.max(0, Math.round((node.y/400) * tRows)));
+    if(termGrid[r] && termGrid[r][c]) termGrid[r][c].sensitive = true;
+  });
+}
+
+let lastKnownBoxW = 0, lastKnownBoxH = 0;
+
+function resizeDeviceCanvas(){
+  const box = deviceCanvasEl.getBoundingClientRect();
+  if(box.width === 0 || box.height === 0) return; // sección oculta ahora mismo: no piso las dimensiones cacheadas
+  if(deviceCanvasEl.width > 0 && Math.abs(box.width - lastKnownBoxW) < 1 && Math.abs(box.height - lastKnownBoxH) < 1){
+    return; // no cambió nada real -> no reiniciar el L-system cada vez que solo volvés a mirar la sección
+  }
+  lastKnownBoxW = box.width; lastKnownBoxH = box.height;
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  deviceCanvasEl.width = Math.floor(box.width * dpr);
+  deviceCanvasEl.height = Math.floor(box.height * dpr);
+  deviceCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  buildTermGrid(box.width, box.height);
+  glitchZones = []; scanTears = []; glitchCount = 0; veins = [];
+  document.getElementById('devNodes').textContent = '0';
+}
+
+function canvasPointFromEvent(e){
+  const box = deviceCanvasEl.getBoundingClientRect();
+  const cx = (e.clientX - box.left);
+  const cy = (e.clientY - box.top);
+  return { x: Math.max(0, Math.min(box.width, cx)), y: Math.max(0, Math.min(box.height, cy)), w: box.width, h: box.height };
+}
+
+function clearOrganism(){
+  glitchZones = []; scanTears = []; glitchCount = 0; veins = [];
+  stepStates = SEQ_CHANNELS.map(ch=> new Array(ch.steps).fill(false));
+  channelPlayheads = SEQ_CHANNELS.map(()=> 0);
+  document.getElementById('devNodes').textContent = '0';
+}
+
+/* Único punto de entrada para un disparo local. Abre una zona de
+   glitch, corta una franja horizontal, dispara audio (bitcrush+hum)
+   Y arranca una rama del L-system cuadriculado en ese punto. */
+function fireGlitch(row, col){
+  const radius = 2 + Math.floor(Math.random()*2);
+  glitchZones.push({ row, col, radius, expireAt: performance.now() + 260 + Math.random()*220, color:null });
+  scanTears.push({ row, born: performance.now() });
+  spawnGrowthAt(col*T_CELL_W, row*T_CELL_H);
+
+  AudioEngine.crush();
+  if(Math.random() < .6) AudioEngine.humStab();
+  if(Math.random() < .3) AudioEngine.dataBurst();
+
+  glitchCount++;
+  document.getElementById('devNodes').textContent = String(glitchCount);
+  document.getElementById('devState').textContent = 'F4LL4_D3_S3ÑAL';
+  setTimeout(()=>{
+    const st = document.getElementById('devState');
+    if(st.textContent === 'F4LL4_D3_S3ÑAL') st.textContent = hasMouse ? 'D3SP13RT0' : 'L4T3NT3';
+  }, 420);
+}
+
+/* Disparo de un canal del secuenciador: percusión muy sintética
+   (crackle/hum/clip durísimo, no bitcrush genérico), color propio.
+   Solo toca visuales si la sección está visible -> nunca acumula
+   basura mientras estás en otra pantalla. */
+function channelFire(chIdx, col){
+  const ch = SEQ_CHANNELS[chIdx];
+  channelHitAngle[chIdx] = (channelHitAngle[chIdx] || 0) + 0.5 + Math.random()*0.7;
+  const visible = perfModeActive || document.getElementById('dispositivo').classList.contains('visible');
+  if(visible){
+    const row = Math.max(0, Math.min(tRows-1, tRows - 1 - (chIdx % Math.max(1,tRows))));
+    glitchZones.push({ row, col, radius:2, expireAt: performance.now() + 200 + Math.random()*150, color: ch.color });
+    scanTears.push({ row, born: performance.now() });
+  }
+  oscChannelGate(ch.key); // cada canal es su propio canal OSC: sale ON/OFF sin importar si está sonando local
+  switch(ch.key){
+    case 'K':
+      AudioEngine.subKick(165 + Math.random()*35, 42 + Math.random()*10, 0.16); // el cuerpo grave de verdad
+      AudioEngine.percHit({freq:2400, filterType:'highpass', q:1, drive:14, gain:0.09, dur:0.012}); // el "click" del golpeador, encima
+      break;
+    case 'H': AudioEngine.percHit({freq:5200, filterType:'highpass', q:3, drive:9, gain:0.18, dur:0.022}); break;
+    case 'N': AudioEngine.percHit({freq:1200, filterType:'bandpass', q:2, drive:11, gain:0.2, dur:0.04, hum:true, humFreq:130, humGain:0.09}); break;
+    case 'C': [0,16,32].forEach(dt=> setTimeout(()=> AudioEngine.percHit({freq:3200, filterType:'bandpass', q:5, drive:12, gain:0.16, dur:0.028}), dt)); break;
+    case 'T':
+      AudioEngine.subKick(310 + Math.random()*60, 90 + Math.random()*30, 0.13); // tom con cuerpo real, no solo hum
+      AudioEngine.percHit({freq:220, filterType:'bandpass', q:3, drive:8, gain:0.1, dur:0.05});
+      break;
+    case 'X': AudioEngine.dataBurst(); break;
+    case 'P': AudioEngine.microPulse(); break;
+  }
+}
+
+/* Reloj del secuenciador: corre solo, no depende de que la sección
+   esté visible ni de requestAnimationFrame -> "todos los audios
+   deben poder escucharse al mismo tiempo", incluso si entrás a
+   M4TR1Z_N0D4L la caja de ritmos sigue sonando. */
+let seqDensity = 0; // 0..1 -> qué tan llena está la caja de ritmos, alimenta el estrobo de la matriz
+let beatPulse = 0;  // 0..1 -> pulso sincronizado al tempo real del secuenciador, alimenta nodos de la matriz
+
+function sequencerTick(){
+  playheadIndex = (playheadIndex + 1) % SEQ_STEPS; // referencia maestra fija, para el L-system y el glitch general
+  lastStepAt = performance.now();
+  beatPulse = 1; // cada tick del metrónomo real, no un LFO aparte -> el visual late con el mismo reloj que el audio
+
+  // cada canal avanza en SU PROPIO ciclo (5, 7, 9, 10, 12 o 16 pasos) -> polirritmia real,
+  // no un solo playhead compartido. Con el tiempo, los ciclos entran y salen de fase entre sí.
+  SEQ_CHANNELS.forEach((ch, chIdx)=>{
+    channelPlayheads[chIdx] = (channelPlayheads[chIdx] + 1) % ch.steps;
+    if(stepStates[chIdx][channelPlayheads[chIdx]]){
+      const col = tCols > 0 ? Math.min(tCols-1, Math.floor((channelPlayheads[chIdx]/ch.steps) * tCols)) : 0;
+      channelFire(chIdx, col);
+    }
+  });
+
+  // el L-system suena cuando el metrónomo (eje X = tiempo) pasa por la columna de cada glifo;
+  // la posición vertical (eje Y) decide QUÉ VOZ METÁLICA suena -> 4 timbres bien distintos,
+  // todos percusivos e inarmónicos (golpe de metal, no nota), para que la lectura vertical
+  // se sienta como cuatro instrumentos de una misma máquina, no una sola textura repetida.
+  // Usa las dimensiones cacheadas (no getBoundingClientRect en vivo): con la sección oculta
+  // (display:none) esa lectura da 0 y el L-system se quedaba mudo al cambiar de pestaña.
+  if(lastKnownBoxW > 0){
+    const zoneH = Math.max(1, lastKnownBoxH - STRIP_H);
+    veins.forEach(v=>{
+      if(!v.revealed) return; // todavía terminando de aparecer
+      const vcol = Math.min(SEQ_STEPS-1, Math.max(0, Math.floor((((v.x1+v.x2)/2) / lastKnownBoxW) * SEQ_STEPS)));
+      if(vcol === playheadIndex){
+        v.triggeredAt = performance.now();
+        v.triggerGlyph = ALIEN_GLYPHS[Math.floor(Math.random()*ALIEN_GLYPHS.length)]; // distinto glifo cada vez, no siempre el mismo orden
+        v.spinAngle = (v.spinAngle || 0) + 0.6 + Math.random()*0.9; // gira un poco más en cada disparo -> animación acumulativa
+        const band = Math.min(1, Math.max(0, v.y2 / zoneH)); // 0 arriba .. 1 abajo
+        if(band < 0.25){
+          // voz 1: aguja hiperaguda, casi al límite de lo audible -> ya no "medio-agudo", agudo de verdad
+          v.triggerColor = '51,224,194';
+          AudioEngine.metallicHit(5500 + Math.random()*3500, 0.045);
+        } else if(band < 0.5){
+          // voz 2: chasquido agudo con ruido pegado -> más sucio que la voz 1
+          v.triggerColor = '176,107,255';
+          AudioEngine.metallicHit(1000 + Math.random()*1000, 0.08);
+          if(Math.random() < .5) AudioEngine.crackle();
+        } else if(band < 0.75){
+          // voz 3: golpe medio-grave con bitcrush encima -> textura, no solo tono
+          v.triggerColor = '255,176,32';
+          AudioEngine.metallicHit(200 + Math.random()*200, 0.14);
+          if(Math.random() < .4) AudioEngine.crush(300, 900);
+        } else {
+          // voz 4: sub-grave real, se siente más de lo que se oye -> ya no "gong medio", sub de verdad
+          v.triggerColor = '255,45,90';
+          AudioEngine.metallicHit(24 + Math.random()*18, 0.26);
+          if(Math.random() < .5) AudioEngine.humStab(22, 45);
+        }
+      }
+      });
+  }
+
+  let filled = 0, totalSteps = 0;
+  stepStates.forEach(row => { row.forEach(s => { if(s) filled++; }); totalSteps += row.length; });
+  seqDensity = filled / Math.max(1, totalSteps);
+
+  setTimeout(sequencerTick, STEP_MS);
+}
+
+function initDevice(){
+  if(deviceInitialized){ resizeDeviceCanvas(); return; } // re-sincroniza dimensiones al volver, no solo la primera vez
+  deviceInitialized = true;
+  deviceCanvasEl = document.getElementById('deviceCanvas');
+  deviceCtx = deviceCanvasEl.getContext('2d');
+  resizeDeviceCanvas();
+  window.addEventListener('resize', ()=>{
+    if(perfModeActive || document.getElementById('dispositivo').classList.contains('visible')) resizeDeviceCanvas();
+  });
+
+  deviceCanvasEl.addEventListener('mouseenter', ()=>{
+    hasMouse = true;
+    document.getElementById('devState').textContent = 'D3SP13RT0';
+  });
+  deviceCanvasEl.addEventListener('mouseleave', ()=>{
+    hasMouse = false;
+    AudioEngine.labRelease();
+    document.getElementById('devState').textContent = 'L4T3NT3';
+  });
+  deviceCanvasEl.addEventListener('mousemove', (e)=>{
+    const p = canvasPointFromEvent(e);
+    mousePX = p.x; mousePY = p.y;
+    mouseNX = p.x / p.w; mouseNY = p.y / p.h;
+    document.getElementById('devX').textContent = String(Math.floor(mouseNX*999)).padStart(3,'0');
+    document.getElementById('devY').textContent = String(Math.floor(mouseNY*999)).padStart(3,'0');
+    AudioEngine.labMove(mouseNX, mouseNY); // no-op si no está presionado
+  });
+  deviceCanvasEl.addEventListener('mousedown', (e)=>{
+    const p = canvasPointFromEvent(e);
+    AudioEngine.labPress(p.x/p.w, p.y/p.h); // el mouse solo suena si está presionado: arpegio dodecafónico FM
+  });
+  deviceCanvasEl.addEventListener('mouseup', ()=>{ AudioEngine.labRelease(); });
+  deviceCanvasEl.addEventListener('click', (e)=>{
+    const p = canvasPointFromEvent(e);
+    const stripY = p.h - STRIP_H;
+    if(p.y >= stripY){
+      const chIdx = Math.min(SEQ_CHANNELS.length-1, Math.max(0, Math.floor((p.y - stripY) / ROW_H)));
+      const chSteps = SEQ_CHANNELS[chIdx].steps;
+      const usableW = p.w - 14; // LABEL_W
+      const step = Math.min(chSteps-1, Math.max(0, Math.floor(((p.x - 14) / usableW) * chSteps)));
+      stepStates[chIdx][step] = !stepStates[chIdx][step];
+      blip();
+      return;
+    }
+    const col = Math.min(tCols-1, Math.max(0, Math.floor(p.x / T_CELL_W)));
+    const row = Math.min(tRows-1, Math.max(0, Math.floor(p.y / T_CELL_H)));
+    fireGlitch(row, col);
+  });
+
+  document.getElementById('deviceClear').addEventListener('click', ()=>{
+    clearOrganism();
+    blip();
+  });
+  document.getElementById('deviceRandom').addEventListener('click', ()=>{
+    stepStates = SEQ_CHANNELS.map(ch=> Array.from({length:ch.steps}, ()=> Math.random() < 0.3));
+    blip();
+  });
+  document.getElementById('deviceTempo').addEventListener('click', ()=>{
+    tempoIdx = (tempoIdx + 1) % TEMPO_PRESETS.length;
+    STEP_MS = TEMPO_PRESETS[tempoIdx];
+    document.getElementById('devTempo').textContent = STEP_MS;
+    blip();
+  });
+  document.getElementById('oscToggle').addEventListener('click', ()=>{
+    if(oscConnected || oscConnecting) oscDisconnect();
+    else oscConnect();
+    blip();
+  });
+  document.getElementById('volSeq').addEventListener('input', (e)=>{
+    AudioEngine.setSeqVolume(e.target.value / 100);
+  });
+  document.getElementById('volModular').addEventListener('input', (e)=>{
+    AudioEngine.setModularVolume(e.target.value / 100);
+  });
+
+  if(!sequencerStarted){ sequencerStarted = true; setTimeout(sequencerTick, STEP_MS); }
+
+  requestAnimationFrame(drawDevice);
+}
+
+
+function drawDevice(){
+  requestAnimationFrame(drawDevice);
+  const section = document.getElementById('dispositivo');
+  const shouldDraw = perfModeActive || (section && section.classList.contains('visible'));
+  if(!shouldDraw || !deviceCtx) return;
+
+  const box = deviceCanvasEl.getBoundingClientRect();
+  const ctx = deviceCtx;
+  const now = performance.now();
+  const t = (now - devStartTime) / 1000;
+  ctx.clearRect(0, 0, box.width, box.height);
+  ctx.fillStyle = 'rgba(5,2,8,1)';
+  ctx.fillRect(0,0,box.width, box.height);
+
+  // --- estática ambiental de fondo: la terminal nunca deja de fallar un poco ---
+  if(now - lastAmbientFlicker > 90){
+    lastAmbientFlicker = now;
+    const flips = 6 + Math.floor(Math.random()*10);
+    for(let i=0;i<flips;i++){
+      const r = Math.floor(Math.random()*tRows), c = Math.floor(Math.random()*tCols);
+      if(termGrid[r] && termGrid[r][c]) termGrid[r][c].char = T_CHARS[Math.floor(Math.random()*T_CHARS.length)];
+    }
+  }
+
+  glitchZones = glitchZones.filter(z => now < z.expireAt);
+
+  ctx.font = `${T_CELL_H-6}px monospace`;
+  ctx.textBaseline = 'middle';
+  for(let r=0;r<tRows;r++){
+    for(let c=0;c<tCols;c++){
+      const cell = termGrid[r][c];
+      let hot = null;
+      for(const z of glitchZones){
+        if(Math.abs(z.row-r) <= z.radius && Math.abs(z.col-c) <= z.radius){ hot = z; break; }
+      }
+      let ch = cell.char, alpha, color, jitterX = 0, jitterY = 0;
+      if(hot){
+        if(Math.random() < 0.55) ch = T_CHARS[Math.floor(Math.random()*T_CHARS.length)];
+        alpha = 0.55 + Math.random()*0.45;
+        color = hot.color || (Math.random() < .5 ? '255,45,90' : '51,224,194');
+        jitterX = (Math.random()-0.5)*3;
+        jitterY = (Math.random()-0.5)*1.5;
+      } else if(cell.sensitive){
+        alpha = 0.16 + 0.14*Math.sin(t*1.6 + r*0.4 + c*0.3);
+        color = '176,107,255';
+      } else {
+        alpha = 0.05 + Math.random()*0.05;
+        color = '93,255,168';
+      }
+      ctx.fillStyle = `rgba(${color},${alpha})`;
+      ctx.fillText(ch, c*T_CELL_W + jitterX, r*T_CELL_H + T_CELL_H/2 + jitterY);
+    }
+  }
+
+  // --- espectorama: forma de onda + espectro generativo, análisis de audio real ---
+  // vive en la misma zona que los glifos del L-system, como una capa de instrumento
+  // detrás de ellos. Usa el mismo código de colores que las 4 voces (sub=rojo,
+  // medio-grave=ámbar, medio-agudo=violeta, agudo=cian) -> unifica visual y sonido.
+  if(audioUnlocked){
+    try{
+      const analyser = AudioEngine.getAnalyser();
+      if(analyser){
+        if(!waveformData) waveformData = new Uint8Array(analyser.fftSize);
+        if(!spectrumData) spectrumData = new Uint8Array(analyser.frequencyBinCount);
+        analyser.getByteTimeDomainData(waveformData);
+        analyser.getByteFrequencyData(spectrumData);
+
+        const zoneH = box.height - STRIP_H;
+
+        // forma de onda: traza de osciloscopio con leve sangrado RGB, arriba de la zona
+        const waveY = zoneH * 0.14;
+        const waveH = zoneH * 0.16;
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        [['rgba(255,45,90,.3)', -1.2], ['rgba(93,255,168,.55)', 0], ['rgba(51,224,194,.3)', 1.2]].forEach(([col, off])=>{
+          ctx.beginPath();
+          ctx.strokeStyle = col; ctx.lineWidth = 1;
+          const step = box.width / waveformData.length;
+          for(let i=0;i<waveformData.length;i++){
+            const v = (waveformData[i] - 128) / 128;
+            const x = i*step + off;
+            const y = waveY + v*waveH*0.5;
+            if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+          }
+          ctx.stroke();
+        });
+        ctx.restore();
+
+        // espectro generativo: barras otra vez, pero suavizadas (sin escalones
+        // abruptos entre vecinas) y con degradado -> ya no bloques sólidos planos
+        const barCount = 48;
+        const barW = box.width / barCount;
+        const specBase = zoneH * 0.96;
+        const specMaxH = zoneH * 0.44;
+        const rawVals = [];
+        for(let b=0; b<barCount; b++){
+          const binIdx = Math.floor((b/barCount) * spectrumData.length * 0.75); // el 25% más agudo casi no trae energía útil, se salta
+          rawVals.push(spectrumData[binIdx] / 255);
+        }
+        // suavizado con los vecinos: sin esto, dos barras seguidas podían saltar de golpe -> se veía "en pasos"
+        const smoothVals = rawVals.map((v,i)=>{
+          const prev = rawVals[i-1] !== undefined ? rawVals[i-1] : v;
+          const next = rawVals[i+1] !== undefined ? rawVals[i+1] : v;
+          return (prev + v*2 + next) / 4;
+        });
+        for(let b=0; b<barCount; b++){
+          const val = smoothVals[b];
+          const h = val * specMaxH;
+          const bt = b / barCount;
+          let bandColor;
+          if(bt < 0.25) bandColor = '255,45,90';        // graves -> rojo, como la voz sub del L-system
+          else if(bt < 0.5) bandColor = '255,176,32';    // medio-graves -> ámbar
+          else if(bt < 0.75) bandColor = '176,107,255';  // medio-agudos -> violeta
+          else bandColor = '51,224,194';                  // agudos -> cian
+          const grad = ctx.createLinearGradient(0, specBase-h, 0, specBase);
+          grad.addColorStop(0, `rgba(${bandColor},${0.18 + val*0.55})`);
+          grad.addColorStop(1, `rgba(${bandColor},0.02)`); // se desvanece hacia la base -> nunca queda un bloque sólido plano
+          ctx.fillStyle = grad;
+          ctx.fillRect(b*barW+1, specBase-h, barW-2, h);
+          if(val > 0.75){ ctx.fillStyle = `rgba(234,255,241,${(val-0.75)*2.2})`; ctx.fillRect(b*barW+1, specBase-h, barW-2, 1.2); } // pico
+        }
+      }
+    }catch(e){}
+  }
+
+  // --- L-system cuadriculado: aparece progresivamente, se ilumina (glifo alien) cuando el metrónomo lo canta ---
+  veins.forEach(v=>{
+    if(!v.revealed){
+      if(now < v.revealAt) return;
+      v.revealed = true;
+    }
+    const glowAge = now - v.triggeredAt;
+    const glowing = v.triggeredAt > 0 && glowAge < 260;
+    const lineColor = v.triggerColor || '176,107,255';
+    ctx.beginPath();
+    ctx.moveTo(v.x1, v.y1); ctx.lineTo(v.x2, v.y2);
+    ctx.strokeStyle = glowing ? `rgba(${lineColor},.95)` : 'rgba(176,107,255,.4)';
+    ctx.lineWidth = glowing ? 2 : 1.1;
+    if(glowing){ ctx.shadowColor = `rgba(${lineColor},.9)`; ctx.shadowBlur = 9; }
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    if(glowing){
+      const gt = 1 - glowAge/260;
+      ctx.save();
+      ctx.translate(v.x2, v.y2);
+      ctx.rotate(v.spinAngle || 0);
+      ctx.scale(0.85 + gt*0.5, 0.85 + gt*0.5);
+      ctx.font = `${9 + gt*5}px monospace`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = `rgba(234,255,241,${gt})`;
+      ctx.fillText(v.triggerGlyph || ALIEN_GLYPHS[0], 0, 0);
+      ctx.restore();
+    }
+  });
+
+  // --- franjas de corte horizontal: sin física, solo un tirón de señal en esa fila ---
+  scanTears = scanTears.filter(s => now - s.born < 260);
+  scanTears.forEach(s=>{
+    const age = (now - s.born)/260;
+    const y = s.row*T_CELL_H + T_CELL_H/2;
+    const off = (1-age) * (Math.random()<.5 ? -1:1) * 14;
+    ctx.fillStyle = `rgba(255,176,32,${(1-age)*0.55})`;
+    ctx.fillRect(0, y-1, box.width, 2);
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.fillStyle = `rgba(255,45,90,${(1-age)*0.22})`;
+    ctx.fillRect(off, y-8, box.width, 16);
+    ctx.fillStyle = `rgba(51,224,194,${(1-age)*0.18})`;
+    ctx.fillRect(-off, y-8, box.width, 16);
+    ctx.restore();
+  });
+
+  // --- franja del secuenciador: 7 canales, cada uno con SU PROPIO ciclo (polirritmia visible) ---
+  const stripY = box.height - STRIP_H;
+  ctx.fillStyle = 'rgba(0,0,0,.55)';
+  ctx.fillRect(0, stripY, box.width, STRIP_H);
+  ctx.strokeStyle = 'rgba(93,255,168,.25)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0, stripY); ctx.lineTo(box.width, stripY); ctx.stroke();
+
+  const LABEL_W = 14;
+  const rowGlitch = Math.random() < 0.02; // parpadeo ocasional de toda la franja, muy raro
+
+  SEQ_CHANNELS.forEach((ch, chIdx)=>{
+    const y0 = stripY + chIdx*ROW_H;
+    const rowJitter = rowGlitch ? (Math.random()-0.5)*2 : 0;
+    const stepW = (box.width - LABEL_W) / ch.steps; // cada fila tiene su propio ancho de celda -> el ciclo distinto se VE, no solo se oye
+
+    ctx.font = '9px monospace';
+    ctx.fillStyle = `rgba(${ch.color},.75)`;
+    ctx.fillText(ch.label, 2, y0 + ROW_H/2);
+
+    for(let i=0;i<ch.steps;i++){
+      const x = LABEL_W + i*stepW + rowJitter;
+      const active = stepStates[chIdx][i];
+      const isPlayhead = i === channelPlayheads[chIdx];
+      const justFired = active && isPlayhead && (now - lastStepAt < 90);
+
+      // bloque completo del step
+      if(active){
+        ctx.fillStyle = justFired ? `rgba(${ch.color},1)` : `rgba(${ch.color},.7)`;
+        if(justFired){ ctx.shadowColor = `rgba(${ch.color},.9)`; ctx.shadowBlur = 9; }
+      } else {
+        ctx.fillStyle = `rgba(${ch.color},.14)`;
+        ctx.shadowBlur = 0;
+      }
+      ctx.fillRect(x+1, y0+2, stepW-2, ROW_H-4);
+      ctx.shadowBlur = 0;
+
+      // glifo: alterna entre las 2 formas del canal según la celda -> diversifica dentro de la misma fila,
+      // y gira/escala cuando dispara -> animación real, no solo cambio de brillo.
+      const glyph = ch.glyphs[Math.floor(now/420 + i) % ch.glyphs.length]; // cicla solo en el tiempo, no se queda fijo
+      const spin = (channelHitAngle[chIdx] || 0) + i * 0.35;
+      ctx.save();
+      ctx.translate(x + stepW/2, y0 + ROW_H/2);
+      ctx.rotate(spin);
+      const pop = justFired ? 1.35 : 1;
+      ctx.scale(pop, pop);
+      ctx.font = `${ROW_H-8}px monospace`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = active ? 'rgba(5,2,8,.85)' : `rgba(${ch.color},.5)`;
+      ctx.fillText(glyph, 0, 0);
+      ctx.restore();
+
+      if(isPlayhead){
+        ctx.strokeStyle = 'rgba(234,255,241,.85)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x, y0+1, stepW-1, ROW_H-2);
+      }
+    }
+  });
+
+  if(hasMouse){
+    ctx.strokeStyle = 'rgba(234,255,241,.45)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(mousePX-5, mousePY); ctx.lineTo(mousePX+5, mousePY);
+    ctx.moveTo(mousePX, mousePY-5); ctx.lineTo(mousePX, mousePY+5);
+    ctx.stroke();
+  }
+}
+
+
+/* ============================================================
+   M4TR1Z_N0D4L — instrumento audiovisual generativo en vivo.
+   Cada nodo tiene DOS caras: una función visual (Hydra-synth,
+   https://hydra.ojack.xyz) y una función de audio (Web Audio API
+   nativo — no se sumó una librería de audio aparte porque el resto
+   de la pieza ya corre sobre un motor propio de Web Audio, y meter
+   Tone.js encima solo para esto hubiera duplicado infraestructura).
+   Las MISMAS conexiones arman los dos grafos a la vez: cablear un
+   nodo cambia lo que se ve Y lo que suena. 15 nodos: 6 fuentes,
+   7 transformaciones, 1 modulador (2 entradas), 1 salida.
+   Se inicializa una sola vez, la primera vez que se visita.
+   ============================================================ */
+let matrixInitialized = false;
+let hydraInstance = null;
+let hydraOK = false;
+let mxActiveAudioNodes = []; // nodos de audio vivos del último build -> se paran/desconectan antes de reconstruir
+
+const NODE_DEFS = {
+  // ---------- FUENTES (sin entrada, generan la señal) ----------
+  OSC: {
+    type:'source', label:'0SC',
+    presets:[{freq:4,sync:0.1,offset:1.2},{freq:14,sync:0.04,offset:2.4},{freq:40,sync:0.5,offset:0.2},{freq:2,sync:0.9,offset:3.1}],
+    make:(p)=> window.osc(p.freq, p.sync, p.offset),
+    audioMake:(p, actx)=>{
+      const o = actx.createOscillator(); o.type = 'square'; o.frequency.value = 50 + p.freq*14;
+      const g = actx.createGain(); g.gain.value = 0.05;
+      o.connect(g);
+      return { output:g, starters:[o] };
+    }
+  },
+  NOISE: {
+    type:'source', label:'N01S3',
+    presets:[{scale:4,offset:0.1},{scale:12,offset:0.6},{scale:1.4,offset:0.02}],
+    make:(p)=> window.noise(p.scale, p.offset),
+    audioMake:(p, actx)=>{
+      const buf = AudioEngine.makeNoiseBuffer(2);
+      const src = actx.createBufferSource(); src.buffer = buf; src.loop = true;
+      const bp = actx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value = 300 + p.scale*120; bp.Q.value = 1.2;
+      const g = actx.createGain(); g.gain.value = 0.045;
+      src.connect(bp); bp.connect(g);
+      return { output:g, starters:[src] };
+    }
+  },
+  SHAPE: {
+    type:'source', label:'SH4P3',
+    presets:[{sides:3,radius:0.3,smooth:0.01},{sides:6,radius:0.5,smooth:0.4},{sides:100,radius:0.8,smooth:0.9}],
+    make:(p)=> window.shape(p.sides, p.radius, p.smooth),
+    audioMake:(p, actx)=>{
+      const freq = 90 + p.sides*22;
+      const carrier = actx.createOscillator(); carrier.type='triangle'; carrier.frequency.value = freq;
+      const mod = actx.createOscillator(); mod.type='sawtooth'; mod.frequency.value = freq*1.5;
+      const modGain = actx.createGain(); modGain.gain.value = freq*p.radius*0.6;
+      mod.connect(modGain); modGain.connect(carrier.frequency);
+      const g = actx.createGain(); g.gain.value = 0.04;
+      carrier.connect(g);
+      return { output:g, starters:[carrier, mod] };
+    }
+  },
+  VORONOI: {
+    type:'source', label:'V0R0N01',
+    presets:[{scale:5,speed:0.3,blending:0.3},{scale:20,speed:1,blending:0.8},{scale:2,speed:0.05,blending:0.1}],
+    make:(p)=> window.voronoi(p.scale, p.speed, p.blending),
+    audioMake:(p, actx)=>{
+      const buf = AudioEngine.makeNoiseBuffer(1.5);
+      const src = actx.createBufferSource(); src.buffer = buf; src.loop = true;
+      const bp = actx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value = 600 + p.scale*80; bp.Q.value = 4 + p.speed*3;
+      const g = actx.createGain(); g.gain.value = 0.06;
+      src.connect(bp); bp.connect(g);
+      return { output:g, starters:[src] };
+    }
+  },
+  GRADIENT: {
+    type:'source', label:'GR4D13NT3',
+    presets:[{speed:1},{speed:4},{speed:0.2}],
+    make:(p)=> window.gradient(p.speed),
+    audioMake:(p, actx)=>{
+      const o = actx.createOscillator(); o.type='sawtooth'; o.frequency.value = 46;
+      const lfo = actx.createOscillator(); lfo.type='triangle'; lfo.frequency.value = 0.05 + p.speed*0.1;
+      const lfoGain = actx.createGain(); lfoGain.gain.value = 8;
+      lfo.connect(lfoGain); lfoGain.connect(o.frequency);
+      const g = actx.createGain(); g.gain.value = 0.06;
+      o.connect(g);
+      return { output:g, starters:[o, lfo] };
+    }
+  },
+  SOLID: {
+    type:'source', label:'S0L1D0',
+    presets:[{r:0.1,g:0.9,b:0.6,a:1},{r:0.7,g:0.1,b:0.9,a:1},{r:0.9,g:0.2,b:0.3,a:1}],
+    make:(p)=> window.solid(p.r, p.g, p.b, p.a),
+    audioMake:(p, actx)=>{
+      const o = actx.createOscillator(); o.type='square'; o.frequency.value = 40;
+      const g = actx.createGain(); g.gain.value = 0.03; // sigue siendo el más discreto, pero ya audible
+      o.connect(g);
+      return { output:g, starters:[o] };
+    }
+  },
+
+  // ---------- TRANSFORMACIONES (1 entrada, 1 salida) ----------
+  ROTATE: {
+    type:'transform', label:'R0T4T3',
+    presets:[{angle:0.5,speed:0},{angle:1.57,speed:0.2},{angle:3.14,speed:-0.15}],
+    apply:(src,p)=> src.rotate(p.angle, ()=> p.speed + audioLevel*1.8), // audio-reactivo: el nivel real de la mezcla empuja la velocidad de giro
+    audioApply:(inNode, p, actx)=>{
+      const bp = actx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value = 500; bp.Q.value = 5;
+      const lfo = actx.createOscillator(); lfo.type='square'; lfo.frequency.value = 0.3 + Math.abs(p.speed)*3 + 0.15;
+      const lfoGain = actx.createGain(); lfoGain.gain.value = 1400;
+      lfo.connect(lfoGain); lfoGain.connect(bp.frequency);
+      inNode.connect(bp);
+      return { output:bp, starters:[lfo] };
+    }
+  },
+  KALEID: {
+    type:'transform', label:'K4L31D',
+    presets:[{n:4},{n:8},{n:3},{n:20}],
+    apply:(src,p)=> src.kaleid(p.n),
+    audioApply:(inNode, p, actx)=>{
+      // eco corto con feedback: repeticiones, como las repeticiones de un kaleidoscopio
+      const delay = actx.createDelay(1); delay.delayTime.value = 0.02 + (1/Math.max(2,p.n))*0.08;
+      const fb = actx.createGain(); fb.gain.value = 0.55;
+      const grit = actx.createWaveShaper();
+      const curve = new Float32Array(7);
+      for(let i=0;i<7;i++){ const xv=i/6*2-1; curve[i] = Math.round(xv*3)/3; } // cuantiza el eco -> metálico, no limpio
+      grit.curve = curve;
+      const out = actx.createGain(); out.gain.value = 1;
+      inNode.connect(delay); delay.connect(grit); grit.connect(fb); fb.connect(delay);
+      inNode.connect(out); grit.connect(out);
+      return { output:out, starters:[] };
+    }
+  },
+  INVERT: {
+    type:'transform', label:'1NV3RT',
+    presets:[{amt:1},{amt:0.5},{amt:0.15}],
+    apply:(src,p)=> src.invert(p.amt),
+    audioApply:(inNode, p, actx)=>{
+      const shaper = actx.createWaveShaper();
+      const curve = new Float32Array(2); curve[0] = 1; curve[1] = -1; // invierte la fase
+      shaper.curve = curve;
+      const wet = actx.createGain(); wet.gain.value = p.amt;
+      const dry = actx.createGain(); dry.gain.value = 1 - p.amt;
+      const out = actx.createGain();
+      inNode.connect(shaper); shaper.connect(wet); wet.connect(out);
+      inNode.connect(dry); dry.connect(out);
+      return { output:out, starters:[] };
+    }
+  },
+  PIXELATE: {
+    type:'transform', label:'P1X3L4T3',
+    presets:[{x:20,y:20},{x:6,y:40},{x:80,y:80}],
+    apply:(src,p)=> src.pixelate(()=> Math.max(2, p.x - audioLevel*70), p.y), // audio-reactivo: más señal -> menos resolución
+    audioApply:(inNode, p, actx)=>{
+      // "resolución" reducida: lowpass agresivo + distorsión + un LFO cuadrado que hace saltar la resolución entre niveles
+      const lp = actx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value = 200 + (100-p.x)*30;
+      const lfo = actx.createOscillator(); lfo.type='square'; lfo.frequency.value = 3 + (p.x/100)*9;
+      const lfoGain = actx.createGain(); lfoGain.gain.value = 260;
+      lfo.connect(lfoGain); lfoGain.connect(lp.frequency);
+      const shaper = actx.createWaveShaper();
+      const curve = new Float32Array(9);
+      for(let i=0;i<9;i++){ const xv = i/8*2-1; curve[i] = Math.round(xv*3)/3; }
+      shaper.curve = curve;
+      inNode.connect(lp); lp.connect(shaper);
+      return { output:shaper, starters:[lfo] };
+    }
+  },
+  SCALE: {
+    type:'transform', label:'SC4L3',
+    presets:[{amount:1.5},{amount:0.4},{amount:3}],
+    apply:(src,p)=> src.scale(()=> p.amount + beatPulse*0.35), // sincronizado al tempo real del secuenciador
+    audioApply:(inNode, p, actx)=>{
+      const g = actx.createGain(); g.gain.value = Math.min(2.2, p.amount);
+      inNode.connect(g);
+      return { output:g, starters:[] };
+    }
+  },
+  COLOR: {
+    type:'transform', label:'C0L0R',
+    presets:[{r:0.9,g:0.2,b:0.3,a:1},{r:0.1,g:0.9,b:0.6,a:1},{r:0.6,g:0.2,b:0.9,a:1}],
+    apply:(src,p)=> src.color(p.r, p.g, p.b, p.a),
+    audioApply:(inNode, p, actx)=>{
+      const pan = actx.createStereoPanner ? actx.createStereoPanner() : null;
+      const peak = actx.createBiquadFilter(); peak.type='peaking'; peak.frequency.value = 400 + p.r*2000; peak.gain.value = (p.g-0.5)*12; peak.Q.value = 1.2;
+      if(pan){ pan.pan.value = (p.b-0.5)*1.6 > 1 ? 1 : (p.b-0.5)*1.6 < -1 ? -1 : (p.b-0.5)*1.6; inNode.connect(peak); peak.connect(pan); return { output:pan, starters:[] }; }
+      inNode.connect(peak);
+      return { output:peak, starters:[] };
+    }
+  },
+  SCROLLX: {
+    type:'transform', label:'SCR0LLX',
+    presets:[{scrollX:0.5,speed:0},{scrollX:0.1,speed:0.2},{scrollX:0.9,speed:-0.1}],
+    apply:(src,p)=> src.scrollX(p.scrollX, p.speed),
+    audioApply:(inNode, p, actx)=>{
+      const delay = actx.createDelay(1); delay.delayTime.value = 0.03 + p.scrollX*0.25;
+      const wet = actx.createGain(); wet.gain.value = 0.5;
+      const dry = actx.createGain(); dry.gain.value = 0.6;
+      const out = actx.createGain();
+      inNode.connect(delay); delay.connect(wet); wet.connect(out);
+      inNode.connect(dry); dry.connect(out);
+      return { output:out, starters:[] };
+    }
+  },
+  REPEAT: {
+    type:'transform', label:'R3P34T',
+    presets:[{x:3,y:3},{x:8,y:1},{x:1,y:6}],
+    apply:(src,p)=> src.repeat(p.x, p.y),
+    audioApply:(inNode, p, actx)=>{
+      // delay multi-tap: tantas repeticiones como "repeticiones" pide el patrón visual, cada una con su propio tiempo
+      const taps = Math.max(2, Math.min(5, Math.round((p.x + p.y) / 2)));
+      const out = actx.createGain();
+      const dry = actx.createGain(); dry.gain.value = 0.55;
+      inNode.connect(dry); dry.connect(out);
+      for(let i=1;i<=taps;i++){
+        const d = actx.createDelay(1); d.delayTime.value = 0.03 * i;
+        const g = actx.createGain(); g.gain.value = 0.4 / i;
+        inNode.connect(d); d.connect(g); g.connect(out);
+      }
+      return { output:out, starters:[] };
+    }
+  },
+  LUMA: {
+    type:'transform', label:'LUM4',
+    presets:[{rate:8},{rate:16},{rate:3}],
+    apply:(src,p)=> src.luma(0.5, 0.1),
+    audioApply:(inNode, p, actx)=>{
+      // gate rítmico: corta la señal en pulsos duros y regulares (no un tremolo suave) -> línea Ikeda/Robin Fox
+      const gateGain = actx.createGain(); gateGain.gain.value = 0;
+      const lfo = actx.createOscillator(); lfo.type = 'square'; lfo.frequency.value = p.rate;
+      const lfoScale = actx.createGain(); lfoScale.gain.value = 0.5;
+      const lfoOffset = actx.createConstantSource ? actx.createConstantSource() : null;
+      lfo.connect(lfoScale); lfoScale.connect(gateGain.gain);
+      if(lfoOffset){ lfoOffset.offset.value = 0.5; lfoOffset.connect(gateGain.gain); }
+      inNode.connect(gateGain);
+      const starters = [lfo];
+      if(lfoOffset) starters.push(lfoOffset);
+      return { output:gateGain, starters };
+    }
+  },
+  THRESH: {
+    type:'transform', label:'THR3SH',
+    presets:[{threshold:0.5,tolerance:0.04},{threshold:0.2,tolerance:0.15},{threshold:0.8,tolerance:0.02}],
+    apply:(src,p)=> src.thresh(p.threshold, p.tolerance),
+    audioApply:(inNode, p, actx)=>{
+      // umbral duro real: todo lo que esté por debajo del umbral queda en silencio, sin transición suave
+      const shaper = actx.createWaveShaper();
+      const n = 256;
+      const curve = new Float32Array(n);
+      const th = p.threshold;
+      for(let i=0;i<n;i++){
+        const x = i/(n-1)*2-1;
+        curve[i] = Math.abs(x) < th ? 0 : x;
+      }
+      shaper.curve = curve;
+      inNode.connect(shaper);
+      return { output:shaper, starters:[] };
+    }
+  },
+
+  // ---------- MODULADOR (2 entradas: señal principal + moduladora) ----------
+  MODULATE: {
+    type:'modulate', label:'M0DUL4',
+    presets:[{amt:0.1},{amt:0.4},{amt:0.9}],
+    apply:(src,modSrc,p)=> src.modulate(modSrc, p.amt),
+    audioApply:(inNode, modNode, p, actx)=>{
+      // modulación de amplitud real: la salida del nodo B controla el volumen del nodo A
+      const depth = actx.createGain(); depth.gain.value = 0.5; // punto de partida, el mod lo empuja desde ahí
+      const modScale = actx.createGain(); modScale.gain.value = p.amt * 1.6;
+      if(modNode){ modNode.connect(modScale); modScale.connect(depth.gain); }
+      inNode.connect(depth);
+      return { output:depth, starters:[] };
+    }
+  },
+  RINGMOD: {
+    type:'modulate', label:'R1NGM0D',
+    presets:[{mix:1},{mix:0.6},{mix:0.3}],
+    apply:(src,modSrc,p)=> src.diff(modSrc), // XOR visual: donde las dos texturas difieren más, más brillo
+    audioApply:(inNode, modNode, p, actx)=>{
+      // ring modulation real: multiplicación directa de las dos señales (sin offset de base) -> metálico, no AM
+      const ring = actx.createGain(); ring.gain.value = 0;
+      if(modNode){ modNode.connect(ring.gain); }
+      inNode.connect(ring);
+      const wet = actx.createGain(); wet.gain.value = p.mix;
+      const dry = actx.createGain(); dry.gain.value = 1 - p.mix;
+      const out = actx.createGain();
+      ring.connect(wet); wet.connect(out);
+      inNode.connect(dry); dry.connect(out);
+      return { output:out, starters:[] };
+    }
+  },
+
+  // ---------- SALIDA ----------
+  OUT: { type:'out', label:'0UT', presets:[{}] },
+};
+
+let mxNodes = [
+  { id:'osc',      def:'OSC',      x:20,  y:12,  preset:0 },
+  { id:'noise',    def:'NOISE',    x:20,  y:92,  preset:0 },
+  { id:'shape',    def:'SHAPE',    x:20,  y:172, preset:0 },
+  { id:'voronoi',  def:'VORONOI',  x:190, y:12,  preset:0 },
+  { id:'gradient', def:'GRADIENT', x:190, y:92,  preset:0 },
+  { id:'solid',    def:'SOLID',    x:190, y:172, preset:0 },
+  { id:'rotate',   def:'ROTATE',   x:400, y:12,  preset:0 },
+  { id:'kaleid',   def:'KALEID',   x:400, y:92,  preset:0 },
+  { id:'invert',   def:'INVERT',   x:400, y:172, preset:0 },
+  { id:'pixelate', def:'PIXELATE', x:400, y:252, preset:0 },
+  { id:'repeat',   def:'REPEAT',   x:400, y:332, preset:0 },
+  { id:'thresh',   def:'THRESH',   x:400, y:412, preset:0 },
+  { id:'scale',    def:'SCALE',    x:570, y:12,  preset:0 },
+  { id:'color',    def:'COLOR',    x:570, y:92,  preset:0 },
+  { id:'scrollx',  def:'SCROLLX',  x:570, y:172, preset:0 },
+  { id:'luma',     def:'LUMA',     x:570, y:252, preset:0 },
+  { id:'modulate', def:'MODULATE', x:750, y:92,  preset:0 },
+  { id:'ringmod',  def:'RINGMOD',  x:750, y:252, preset:0 },
+  { id:'out',      def:'OUT',      x:920, y:92,  preset:0 },
+];
+let mxConnections = [
+  { fromNode:'osc', toNode:'rotate', toPort:'in' },
+  { fromNode:'rotate', toNode:'kaleid', toPort:'in' },
+  { fromNode:'kaleid', toNode:'out', toPort:'in' },
+];
+let mxById = {};
+mxNodes.forEach(n => mxById[n.id] = n);
+
+let mxDrag = null; // {fromNode} mientras se arrastra un cable nuevo
+let mxMouse = {x:0,y:0};
+
+function inPortsFor(defKey){
+  if(NODE_DEFS[defKey].type === 'modulate') return ['in','mod'];
+  if(NODE_DEFS[defKey].type === 'source') return [];
+  return ['in'];
+}
+function outPortsFor(defKey){
+  return NODE_DEFS[defKey].type === 'out' ? [] : ['out'];
+}
+
+function renderPatchBay(){
+  const bay = document.getElementById('patchBay');
+  bay.querySelectorAll('.node-box').forEach(n=>n.remove());
+  let maxRight = 0, maxBottom = 0;
+  mxNodes.forEach(n=>{
+    const def = NODE_DEFS[n.def];
+    const box = document.createElement('div');
+    box.className = `node-box type-${def.type}`;
+    box.style.left = n.x+'px'; box.style.top = n.y+'px';
+    box.dataset.id = n.id;
+    box.innerHTML = `<div class="nb-label"><span class="nb-dot"></span>${def.label}</div><div class="nb-preset">P${n.preset+1}/${def.presets.length}</div>`;
+
+    inPortsFor(n.def).forEach((port, i)=>{
+      const p = document.createElement('div');
+      p.className = 'port port-in';
+      p.style.top = (n.def==='MODULATE' ? (i===0?'22%':'78%') : '50%');
+      p.style.transform = 'translateY(-50%)';
+      p.dataset.node = n.id; p.dataset.port = port;
+      box.appendChild(p);
+    });
+    outPortsFor(n.def).forEach(port=>{
+      const p = document.createElement('div');
+      p.className = 'port port-out';
+      p.dataset.node = n.id; p.dataset.port = port;
+      box.appendChild(p);
+    });
+
+    // arrastrar mueve el nodo (estética libre, en vivo); soltar sin mover = ciclar preset
+    box.addEventListener('mousedown', (e)=>{
+      if(e.target.classList.contains('port')) return;
+      e.preventDefault();
+      const startX = e.clientX, startY = e.clientY;
+      const origX = n.x, origY = n.y;
+      let moved = false;
+      function onMove(ev){
+        const dx = ev.clientX - startX, dy = ev.clientY - startY;
+        if(Math.abs(dx) > 3 || Math.abs(dy) > 3) moved = true;
+        n.x = Math.max(0, origX + dx); n.y = Math.max(0, origY + dy);
+        box.style.left = n.x+'px'; box.style.top = n.y+'px';
+        renderCables();
+      }
+      function onUp(){
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        if(moved){
+          const bayEl = document.getElementById('patchBay');
+          bayEl.style.minWidth = Math.max(bayEl.scrollWidth, n.x+170) + 'px';
+          bayEl.style.minHeight = Math.max(bayEl.scrollHeight, n.y+90) + 'px';
+          renderCables();
+        } else {
+          const def2 = NODE_DEFS[n.def];
+          n.preset = (n.preset + 1) % def2.presets.length;
+          renderPatchBay();
+          rebuildAll();
+          blip();
+        }
+      }
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+
+    bay.appendChild(box);
+    maxRight = Math.max(maxRight, n.x + 150);
+    maxBottom = Math.max(maxBottom, n.y + 60);
+  });
+  bay.style.minWidth = (maxRight + 20) + 'px';
+  bay.style.minHeight = (maxBottom + 20) + 'px';
+
+  bay.querySelectorAll('.port-out').forEach(p=>{
+    p.addEventListener('mousedown', (e)=>{
+      e.stopPropagation();
+      mxDrag = { fromNode: p.dataset.node };
+    });
+  });
+  bay.querySelectorAll('.port-in').forEach(p=>{
+    p.addEventListener('mousedown', (e)=>{
+      e.stopPropagation();
+      const already = mxConnections.find(c=> c.toNode===p.dataset.node && c.toPort===p.dataset.port);
+      if(already && !mxDrag){
+        mxConnections = mxConnections.filter(c=>c!==already);
+        rebuildAll(); renderCables(); blip();
+      }
+    });
+    p.addEventListener('mouseup', (e)=>{
+      e.stopPropagation();
+      if(!mxDrag) return;
+      mxConnections = mxConnections.filter(c=> !(c.toNode===p.dataset.node && c.toPort===p.dataset.port));
+      mxConnections.push({ fromNode: mxDrag.fromNode, toNode: p.dataset.node, toPort: p.dataset.port });
+      mxDrag = null;
+      rebuildAll(); renderCables(); blip();
+    });
+  });
+  markConnectedPorts();
+}
+
+function markConnectedPorts(){
+  document.querySelectorAll('#patchBay .port').forEach(p=>p.classList.remove('connected'));
+  mxConnections.forEach(c=>{
+    const outEl = document.querySelector(`#patchBay .port-out[data-node="${c.fromNode}"]`);
+    const inEl = document.querySelector(`#patchBay .port-in[data-node="${c.toNode}"][data-port="${c.toPort}"]`);
+    if(outEl) outEl.classList.add('connected');
+    if(inEl) inEl.classList.add('connected');
+  });
+}
+
+function portCenter(nodeId, port, isOut){
+  const bay = document.getElementById('patchBay');
+  const sel = isOut ? `.port-out[data-node="${nodeId}"]` : `.port-in[data-node="${nodeId}"][data-port="${port}"]`;
+  const el = bay.querySelector(sel);
+  if(!el) return null;
+  const br = bay.getBoundingClientRect(), er = el.getBoundingClientRect();
+  return { x: er.left - br.left + er.width/2 + bay.scrollLeft, y: er.top - br.top + er.height/2 };
+}
+
+function renderCables(){
+  const svg = document.getElementById('cableSvg');
+  const bay = document.getElementById('patchBay');
+  svg.setAttribute('width', bay.scrollWidth);
+  svg.setAttribute('height', bay.scrollHeight);
+  let s = '';
+  mxConnections.forEach(c=>{
+    const a = portCenter(c.fromNode, 'out', true);
+    const b = portCenter(c.toNode, c.toPort, false);
+    if(!a || !b) return;
+    const midX = (a.x+b.x)/2;
+    const col = c.toPort === 'mod' ? 'rgba(176,107,255,.55)' : 'rgba(93,255,168,.55)';
+    s += `<path d="M${a.x},${a.y} C${midX},${a.y} ${midX},${b.y} ${b.x},${b.y}" stroke="${col}" stroke-width="1.5" fill="none"/>`;
+  });
+  if(mxDrag){
+    const a = portCenter(mxDrag.fromNode, 'out', true);
+    if(a){
+      const midX = (a.x+mxMouse.x)/2;
+      s += `<path d="M${a.x},${a.y} C${midX},${a.y} ${midX},${mxMouse.y} ${mxMouse.x},${mxMouse.y}" stroke="rgba(255,176,32,.7)" stroke-width="1.5" stroke-dasharray="3 3" fill="none"/>`;
+    }
+  }
+  svg.innerHTML = s;
+}
+
+/* ---------- resolución del grafo VISUAL (Hydra) ---------- */
+function resolveMxNode(nodeId, visited){
+  if(visited.has(nodeId)) return null;
+  visited.add(nodeId);
+  const n = mxById[nodeId];
+  if(!n) return null;
+  const def = NODE_DEFS[n.def];
+  const params = def.presets[n.preset] || {};
+  if(def.type === 'source') return def.make(params);
+  if(def.type === 'transform'){
+    const inC = mxConnections.find(c=> c.toNode===nodeId && c.toPort==='in');
+    if(!inC) return null;
+    const base = resolveMxNode(inC.fromNode, visited);
+    return base ? def.apply(base, params) : null;
+  }
+  if(def.type === 'modulate'){
+    const inC = mxConnections.find(c=> c.toNode===nodeId && c.toPort==='in');
+    if(!inC) return null;
+    const base = resolveMxNode(inC.fromNode, visited);
+    if(!base) return null;
+    const modC = mxConnections.find(c=> c.toNode===nodeId && c.toPort==='mod');
+    const modSrc = modC ? resolveMxNode(modC.fromNode, visited) : null;
+    return def.apply(base, modSrc || window.noise(4,0.1), params);
+  }
+  return null;
+}
+
+function rebuildHydraGraph(){
+  if(!hydraOK) return;
+  try{
+    const outC = mxConnections.find(c=> c.toNode==='out' && c.toPort==='in');
+    if(!outC){ if(window.solid) window.solid(0,0,0,1).out(); return; }
+    const chain = resolveMxNode(outC.fromNode, new Set());
+    if(chain) chain.out();
+    else if(window.solid) window.solid(0,0,0,1).out();
+  }catch(err){ console.warn('matriz: error armando el patch visual', err); }
+}
+
+/* ---------- resolución del grafo de AUDIO (Web Audio nativo) ---------- */
+function resolveMxAudioNode(nodeId, actx, visited, starters){
+  if(visited.has(nodeId)) return null;
+  visited.add(nodeId);
+  const n = mxById[nodeId];
+  if(!n) return null;
+  const def = NODE_DEFS[n.def];
+  const params = def.presets[n.preset] || {};
+  if(def.type === 'source'){
+    const r = def.audioMake(params, actx);
+    starters.push(...r.starters);
+    return r.output;
+  }
+  if(def.type === 'transform'){
+    const inC = mxConnections.find(c=> c.toNode===nodeId && c.toPort==='in');
+    if(!inC) return null;
+    const base = resolveMxAudioNode(inC.fromNode, actx, visited, starters);
+    if(!base) return null;
+    const r = def.audioApply(base, params, actx);
+    starters.push(...r.starters);
+    return r.output;
+  }
+  if(def.type === 'modulate'){
+    const inC = mxConnections.find(c=> c.toNode===nodeId && c.toPort==='in');
+    if(!inC) return null;
+    const base = resolveMxAudioNode(inC.fromNode, actx, visited, starters);
+    if(!base) return null;
+    const modC = mxConnections.find(c=> c.toNode===nodeId && c.toPort==='mod');
+    const modSrc = modC ? resolveMxAudioNode(modC.fromNode, actx, visited, starters) : null;
+    const r = def.audioApply(base, modSrc, params, actx);
+    starters.push(...r.starters);
+    return r.output;
+  }
+  return null;
+}
+
+function rebuildAudioGraph(){
+  try{
+    // apaga y desconecta todo lo del build anterior antes de armar el nuevo
+    mxActiveAudioNodes.forEach(node=>{
+      try{ if(node.stop) node.stop(); }catch(e){}
+      try{ node.disconnect(); }catch(e){}
+    });
+    mxActiveAudioNodes = [];
+
+    const outC = mxConnections.find(c=> c.toNode==='out' && c.toPort==='in');
+    if(!outC) return;
+    const actx = AudioEngine.getContext();
+    const starters = [];
+    const finalNode = resolveMxAudioNode(outC.fromNode, actx, new Set(), starters);
+    if(!finalNode) return;
+
+    const submix = actx.createGain(); submix.gain.value = 2.6; // la matriz sonaba muy baja: refuerzo general
+
+    // capa de complejidad: chorus corto (delay modulado por un LFO) sobre el patch completo,
+    // sin tener que tocar cada uno de los 15 nodos por separado.
+    const dry = actx.createGain(); dry.gain.value = 0.85;
+    const chorusDelay = actx.createDelay(0.05); chorusDelay.delayTime.value = 0.012;
+    const chorusLFO = actx.createOscillator(); chorusLFO.type = 'triangle'; chorusLFO.frequency.value = 0.35;
+    const chorusLFOGain = actx.createGain(); chorusLFOGain.gain.value = 0.006;
+    chorusLFO.connect(chorusLFOGain); chorusLFOGain.connect(chorusDelay.delayTime);
+    const chorusWet = actx.createGain(); chorusWet.gain.value = 0.4;
+
+    finalNode.connect(dry); dry.connect(submix);
+    finalNode.connect(chorusDelay); chorusDelay.connect(chorusWet); chorusWet.connect(submix);
+
+    AudioEngine.connectToModularBus(submix);
+    starters.push(chorusLFO);
+    starters.forEach(s=>{ try{ s.start(); }catch(e){} });
+    mxActiveAudioNodes = starters; // solo hace falta trackear las fuentes para poder pararlas después
+  }catch(err){ console.warn('matriz: error armando el patch de audio', err); }
+}
+
+function updateActiveChainVisual(){
+  const active = new Set();
+  const outC = mxConnections.find(c=> c.toNode==='out' && c.toPort==='in');
+  function walk(id){
+    if(active.has(id)) return; active.add(id);
+    mxConnections.filter(c=>c.toNode===id).forEach(c=> walk(c.fromNode));
+  }
+  if(outC){ active.add('out'); walk(outC.fromNode); }
+  document.querySelectorAll('#patchBay .node-box').forEach(box=>{
+    box.classList.toggle('active-chain', active.has(box.dataset.id));
+  });
+}
+
+function rebuildAll(){
+  rebuildHydraGraph();
+  rebuildAudioGraph();
+  updateActiveChainVisual();
+}
+
+/* ============================================================
+   C4P4 D3 SH4D3R (GLSL crudo, WebGL directo — no Hydra en esta capa).
+   Bandas estroboscópicas de alto contraste, estilo ShaderToy clásico
+   (umbral duro sobre una onda + parpadeo temporal), mezcladas encima
+   del canvas de Hydra con mix-blend-mode:screen. Solo 2 argumentos
+   expuestos, y solo por botón: patrón y velocidad — nada de sliders
+   ni código a la vista.
+   ============================================================ */
+let strobeGL = null, strobeProg = null, strobeUniforms = {};
+let audioLevel = 0; // 0..1, nivel real del bus maestro -> alimenta argumentos de nodos "audio-reactivos"
+let audioAnalyserData = null;
+
+function updateAudioLevel(){
+  try{
+    const an = AudioEngine.getAnalyser();
+    if(!an) return;
+    if(!audioAnalyserData) audioAnalyserData = new Uint8Array(an.frequencyBinCount);
+    an.getByteFrequencyData(audioAnalyserData);
+    let sum = 0;
+    for(let i=0;i<audioAnalyserData.length;i++) sum += audioAnalyserData[i];
+    const avg = sum / audioAnalyserData.length / 255; // 0..1
+    audioLevel += (avg - audioLevel) * 0.25; // suavizado
+  }catch(e){}
+  beatPulse *= 0.86; // decae rápido -> pulso corto en cada tick, no un brillo constante
+}
+let strobeOK = false, strobeOn = false;
+let strobeSpeedIdx = 0, strobePatternIdx = 0;
+const STROBE_SPEEDS = [1.5, 4, 8, 0.6];
+const STROBE_PATTERNS = [1.0, 3.0, 7.0, 0.5];
+
+const STROBE_VS = `
+attribute vec2 aPos;
+void main(){ gl_Position = vec4(aPos, 0.0, 1.0); }
+`;
+const STROBE_FS = `
+precision mediump float;
+uniform float uTime;
+uniform vec2 uRes;
+uniform float uSpeed;
+uniform float uPattern;
+uniform float uIntensity;
+void main(){
+  vec2 uv = gl_FragCoord.xy / uRes.xy;
+  float t = uTime * uSpeed;
+  float bands = sin((uv.x + uv.y * uPattern) * 40.0 + t * 6.0);
+  float edge = 1.0 - smoothstep(0.0, 0.025, abs(bands));
+  float strobe = step(0.5, fract(t * 2.0));
+  float v = edge * (strobe * (0.25 + uIntensity*0.75) + 0.06);
+  vec3 tint = mix(vec3(0.36,1.0,0.66), vec3(0.69,0.42,1.0), uv.x);
+  gl_FragColor = vec4(tint * v, v);
+}
+`;
+
+function compileShader(gl, type, src){
+  const sh = gl.createShader(type);
+  gl.shaderSource(sh, src);
+  gl.compileShader(sh);
+  if(!gl.getShaderParameter(sh, gl.COMPILE_STATUS)){
+    throw new Error('shader compile error: ' + gl.getShaderInfoLog(sh));
+  }
+  return sh;
+}
+
+function initShaderStrobe(){
+  try{
+    const canvas = document.getElementById('shaderCanvas');
+    strobeGL = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    if(!strobeGL) throw new Error('WebGL no disponible');
+    const gl = strobeGL;
+
+    const vs = compileShader(gl, gl.VERTEX_SHADER, STROBE_VS);
+    const fs = compileShader(gl, gl.FRAGMENT_SHADER, STROBE_FS);
+    strobeProg = gl.createProgram();
+    gl.attachShader(strobeProg, vs);
+    gl.attachShader(strobeProg, fs);
+    gl.linkProgram(strobeProg);
+    if(!gl.getProgramParameter(strobeProg, gl.LINK_STATUS)){
+      throw new Error('shader link error: ' + gl.getProgramInfoLog(strobeProg));
+    }
+    gl.useProgram(strobeProg);
+
+    const quad = new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]);
+    const buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, quad, gl.STATIC_DRAW);
+    const aPos = gl.getAttribLocation(strobeProg, 'aPos');
+    gl.enableVertexAttribArray(aPos);
+    gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+
+    strobeUniforms = {
+      time: gl.getUniformLocation(strobeProg, 'uTime'),
+      res: gl.getUniformLocation(strobeProg, 'uRes'),
+      speed: gl.getUniformLocation(strobeProg, 'uSpeed'),
+      pattern: gl.getUniformLocation(strobeProg, 'uPattern'),
+      intensity: gl.getUniformLocation(strobeProg, 'uIntensity'),
+    };
+
+    resizeShaderCanvas();
+    window.addEventListener('resize', ()=>{
+      if(document.getElementById('matriz').classList.contains('visible')) resizeShaderCanvas();
+    });
+    document.addEventListener('fullscreenchange', resizeMatrixCanvasesForFullscreen);
+    document.addEventListener('webkitfullscreenchange', resizeMatrixCanvasesForFullscreen);
+
+    strobeOK = true;
+  }catch(err){
+    console.warn('capa de shader: no se pudo iniciar WebGL.', err);
+    strobeOK = false;
+  }
+  requestAnimationFrame(drawStrobe); // el nivel de audio-reactividad debe correr aunque el shader haya fallado
+}
+
+function resizeMatrixCanvasesForFullscreen(){
+  const box = document.querySelector('.matrix-canvas-box');
+  const hydraCanvasEl = document.getElementById('hydraCanvas');
+  const isFS = !!(document.fullscreenElement || document.webkitFullscreenElement);
+
+  if(isFS){
+    // el elemento en fullscreen ya cubre la pantalla por sí solo, pero forzamos
+    // estilos inline igual: algunos navegadores no aplican bien :fullscreen a
+    // los hijos con dimensiones fijas en px, y el canvas quedaba como un
+    // rectángulo chico en vez de ocupar todo.
+    const w = window.innerWidth, h = window.innerHeight;
+    box.style.width = w + 'px'; box.style.height = h + 'px';
+    hydraCanvasEl.style.width = w + 'px'; hydraCanvasEl.style.height = h + 'px';
+    hydraCanvasEl.width = w; hydraCanvasEl.height = h;
+    if(hydraInstance && typeof hydraInstance.setResolution === 'function'){
+      try{ hydraInstance.setResolution(w, h); }catch(e){}
+    }
+  } else {
+    box.style.width = ''; box.style.height = '';
+    hydraCanvasEl.style.width = ''; hydraCanvasEl.style.height = '';
+    const rect = box.getBoundingClientRect();
+    const w = Math.max(2, Math.floor(rect.width)), h = 280;
+    hydraCanvasEl.width = w; hydraCanvasEl.height = h;
+    if(hydraInstance && typeof hydraInstance.setResolution === 'function'){
+      try{ hydraInstance.setResolution(w, h); }catch(e){}
+    }
+  }
+  resizeShaderCanvas();
+}
+
+function resizeShaderCanvas(){
+  const canvas = document.getElementById('shaderCanvas');
+  const box = canvas.getBoundingClientRect();
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  canvas.width = Math.max(2, Math.floor(box.width * dpr));
+  canvas.height = Math.max(2, Math.floor(box.height * dpr));
+  if(strobeGL) strobeGL.viewport(0, 0, canvas.width, canvas.height);
+}
+
+function drawStrobe(ts){
+  requestAnimationFrame(drawStrobe);
+  const section = document.getElementById('matriz');
+  if(!section || !section.classList.contains('visible')) return;
+  updateAudioLevel(); // alimenta los argumentos audio-reactivos de la matriz, con o sin estrobo prendido
+  if(!strobeOK || !strobeOn) return;
+  const gl = strobeGL;
+  gl.useProgram(strobeProg);
+  gl.uniform1f(strobeUniforms.time, ts / 1000);
+  gl.uniform2f(strobeUniforms.res, gl.drawingBufferWidth, gl.drawingBufferHeight);
+  gl.uniform1f(strobeUniforms.speed, STROBE_SPEEDS[strobeSpeedIdx]);
+  gl.uniform1f(strobeUniforms.pattern, STROBE_PATTERNS[strobePatternIdx]);
+  const baseIntensity = typeof seqDensity === 'number' ? seqDensity : 0.3;
+  gl.uniform1f(strobeUniforms.intensity, Math.min(1, baseIntensity + beatPulse*0.5));
+  gl.drawArrays(gl.TRIANGLES, 0, 6);
+}
+
+function initMatrix(){
+  if(matrixInitialized) return;
+  matrixInitialized = true;
+
+  const bay = document.getElementById('patchBay');
+  bay.addEventListener('mousemove', (e)=>{
+    if(!mxDrag) return;
+    const br = bay.getBoundingClientRect();
+    mxMouse = { x: e.clientX - br.left + bay.scrollLeft, y: e.clientY - br.top };
+    renderCables();
+  });
+  window.addEventListener('mouseup', ()=>{ if(mxDrag){ mxDrag = null; renderCables(); } });
+
+  document.getElementById('matrixRandom').addEventListener('click', ()=>{
+    mxNodes.forEach(n=>{
+      n.preset = Math.floor(Math.random()*NODE_DEFS[n.def].presets.length);
+      n.x = 20 + Math.random()*880;  // scramble de posición: la matriz también se reordena visualmente, no solo el cableado
+      n.y = 12 + Math.random()*400;
+    });
+    const sources = mxNodes.filter(n=>NODE_DEFS[n.def].type==='source').map(n=>n.id);
+    const transforms = mxNodes.filter(n=>NODE_DEFS[n.def].type==='transform').map(n=>n.id);
+    const pick = arr => arr[Math.floor(Math.random()*arr.length)];
+    const t1 = pick(transforms);
+    let t2 = pick(transforms); if(t2===t1) t2 = pick(transforms);
+    mxConnections = [
+      { fromNode: pick(sources), toNode: t1, toPort:'in' },
+      { fromNode: t1, toNode: t2, toPort:'in' },
+    ];
+    if(Math.random() < .65){
+      mxConnections.push({ fromNode: t2, toNode:'modulate', toPort:'in' });
+      mxConnections.push({ fromNode: pick(sources), toNode:'modulate', toPort:'mod' });
+      mxConnections.push({ fromNode:'modulate', toNode:'out', toPort:'in' });
+    } else {
+      mxConnections.push({ fromNode: t2, toNode:'out', toPort:'in' });
+    }
+    renderPatchBay(); renderCables(); rebuildAll(); staticBurst();
+  });
+  document.getElementById('matrixOff').addEventListener('click', ()=>{
+    mxConnections = [];
+    renderPatchBay(); renderCables(); rebuildAll(); blip();
+  });
+
+  document.getElementById('strobeToggle').addEventListener('click', (e)=>{
+    strobeOn = !strobeOn;
+    e.target.textContent = strobeOn ? '3STR0B0: 0N' : '3STR0B0: 0FF';
+    document.getElementById('shaderCanvas').classList.toggle('on', strobeOn);
+    blip();
+  });
+  document.getElementById('strobePattern').addEventListener('click', ()=>{
+    strobePatternIdx = (strobePatternIdx + 1) % STROBE_PATTERNS.length;
+    blip();
+  });
+  document.getElementById('strobeSpeed').addEventListener('click', ()=>{
+    strobeSpeedIdx = (strobeSpeedIdx + 1) % STROBE_SPEEDS.length;
+    blip();
+  });
+  document.getElementById('matrixFullscreen').addEventListener('click', ()=>{
+    const box = document.querySelector('.matrix-canvas-box');
+    try{
+      if(!document.fullscreenElement){
+        (box.requestFullscreen || box.webkitRequestFullscreen || box.msRequestFullscreen).call(box);
+      } else {
+        (document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen).call(document);
+      }
+    }catch(e){}
+    blip();
+  });
+
+  AudioEngine.startAmbient();
+  initShaderStrobe();
+
+  try{
+    if(typeof Hydra === 'undefined') throw new Error('Hydra no disponible (¿sin conexión?)');
+    const canvas = document.getElementById('hydraCanvas');
+    const box = canvas.getBoundingClientRect();
+    canvas.width = box.width; canvas.height = box.height || 280;
+    hydraInstance = new Hydra({ canvas, detectAudio:false, width:canvas.width, height:canvas.height });
+    hydraOK = true;
+    renderPatchBay();
+    renderCables();
+    rebuildAll();
+  }catch(err){
+    console.warn('M4TR1Z_N0D4L: hydra-synth no se pudo iniciar.', err);
+    renderPatchBay();
+    renderCables();
+    rebuildAudioGraph(); // el audio puede seguir funcionando aunque hydra falle
+    const help = document.querySelector('#matriz .device-help');
+    if(help) help.textContent = 'S3ÑAL V1SU4L N0 D1SP0N1BL3: hydra-synth no cargó (revisa tu conexión) — el audio sigue activo.';
+  }
+}
+
+
+/* ============================================================
+   SPL4SH SCR33N — carga simulada con sonido de módem de los 90s,
+   sintetizado desde cero (osciladores + ruido, sin sample de audio).
+   También sirve como el primer gesto del usuario que desbloquea el
+   AudioContext para toda la pieza.
+   ============================================================ */
+function playModemSound(){
+  try{
+    const actx = AudioEngine.getContext();
+    const t0 = actx.currentTime;
+
+    // --- bus compartido de bitcrush: TODO el sonido del módem pasa por acá,
+    // no es un filtro que "suena a" bitcrush, es cuantización real de amplitud
+    // + un color de banda angosta, como una línea telefónica reventada. ---
+    const crushBus = actx.createWaveShaper();
+    const steps = 14;
+    const crushCurve = new Float32Array(steps);
+    for(let i=0;i<steps;i++){ const x = i/(steps-1)*2-1; crushCurve[i] = Math.round(x*5)/5; }
+    crushBus.curve = crushCurve;
+    const colorFilter = actx.createBiquadFilter();
+    colorFilter.type = 'bandpass'; colorFilter.frequency.value = 1800; colorFilter.Q.value = 0.6;
+    const busOut = actx.createGain(); busOut.gain.value = 1;
+    crushBus.connect(colorFilter); colorFilter.connect(busOut);
+    AudioEngine.connectToMaster(busOut);
+
+    function tone(freq, start, dur, type, peakGain){
+      const o = actx.createOscillator(); o.type = type || 'triangle';
+      o.frequency.value = freq;
+      const g = actx.createGain();
+      g.gain.setValueAtTime(0.0001, start);
+      g.gain.linearRampToValueAtTime(peakGain, start + 0.008);
+      g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+      o.connect(g); g.connect(crushBus);
+      o.start(start); o.stop(start + dur + 0.02);
+    }
+
+    // fase 1: tono de marcado (dial tone) -> acorde estable, como al levantar el auricular
+    tone(350, t0, 0.35, 'triangle', 0.09);
+    tone(440, t0, 0.35, 'triangle', 0.075);
+
+    // fase 2: marcado -> pares DTMF reales (teclado telefónico), un número de 7 dígitos
+    const DTMF = [[697,1209],[770,1336],[852,1477],[941,1336],[697,1477],[770,1209],[852,1336]];
+    let dt = t0 + 0.5;
+    DTMF.forEach(([f1,f2])=>{
+      tone(f1, dt, 0.09, 'square', 0.08);
+      tone(f2, dt, 0.09, 'square', 0.07);
+      dt += 0.12;
+    });
+
+    // fase 3: ring lejano
+    const ringStart = dt + 0.25;
+    tone(440, ringStart, 0.4, 'triangle', 0.045);
+    tone(480, ringStart, 0.4, 'triangle', 0.04);
+
+    // fase 4: tono de respuesta del módem remoto (answer tone) -> agudo y estable
+    const answerStart = ringStart + 0.6;
+    tone(2100, answerStart, 0.55, 'triangle', 0.08);
+
+    // fase 5: handshake -> barridos de frecuencia superpuestos, el "chillido" característico
+    const hsStart = answerStart + 0.55;
+    for(let i=0;i<4;i++){
+      const o = actx.createOscillator(); o.type = i % 2 === 0 ? 'sawtooth' : 'square';
+      const g = actx.createGain(); g.gain.value = 0.0001;
+      o.connect(g); g.connect(crushBus);
+      const start = hsStart + i*0.28;
+      const dur = 0.4 + Math.random()*0.5;
+      o.frequency.setValueAtTime(700 + Math.random()*500, start);
+      o.frequency.linearRampToValueAtTime(2400 + Math.random()*1600, start + dur*0.55);
+      o.frequency.linearRampToValueAtTime(400 + Math.random()*400, start + dur);
+      g.gain.setValueAtTime(0.0001, start);
+      g.gain.linearRampToValueAtTime(0.09, start + 0.04); // antes 0.04 -> quedaba mucho más bajo que el tono de marcado/DTMF
+      g.gain.linearRampToValueAtTime(0.075, start + dur*0.75);
+      g.gain.exponentialRampToValueAtTime(0.0001, start + dur + 0.08);
+      o.start(start); o.stop(start + dur + 0.12);
+    }
+
+    // fase 6: portadora/estática de fondo durante el handshake -> dos capas de ruido
+    // (banda ancha + banda angosta) para que se sienta clásicamente "ruidoso", no un hiss tenue
+    const noiseBuf = AudioEngine.makeNoiseBuffer(1.6);
+    const src = actx.createBufferSource(); src.buffer = noiseBuf; src.loop = true;
+    const nbp = actx.createBiquadFilter(); nbp.type = 'bandpass'; nbp.frequency.value = 2800; nbp.Q.value = 0.5;
+    const ng = actx.createGain();
+    ng.gain.setValueAtTime(0.0001, hsStart);
+    ng.gain.linearRampToValueAtTime(0.09, hsStart + 0.25); // antes 0.03
+    ng.gain.linearRampToValueAtTime(0.065, hsStart + 1.1);
+    ng.gain.exponentialRampToValueAtTime(0.0001, hsStart + 1.6);
+    src.connect(nbp); nbp.connect(ng); ng.connect(crushBus);
+    src.start(hsStart); src.stop(hsStart + 1.65);
+
+    const noiseBuf2 = AudioEngine.makeNoiseBuffer(1.6);
+    const src2 = actx.createBufferSource(); src2.buffer = noiseBuf2;
+    const nbp2 = actx.createBiquadFilter(); nbp2.type = 'highpass'; nbp2.frequency.value = 4500;
+    const ng2 = actx.createGain();
+    ng2.gain.setValueAtTime(0.0001, hsStart);
+    ng2.gain.linearRampToValueAtTime(0.05, hsStart + 0.2);
+    ng2.gain.linearRampToValueAtTime(0.03, hsStart + 1.0);
+    ng2.gain.exponentialRampToValueAtTime(0.0001, hsStart + 1.5);
+    src2.connect(nbp2); nbp2.connect(ng2); ng2.connect(crushBus);
+    src2.start(hsStart);
+
+    // crackle superpuesto durante todo el handshake -> refuerza la sensación de "línea rota"
+    for(let k=0;k<6;k++){
+      setTimeout(()=> AudioEngine.crackle(), (hsStart - t0)*1000 + k*180 + Math.random()*100);
+    }
+  }catch(e){ console.error('[modem] playModemSound falló:', e); }
+}
+
+const SPLASH_LINES = [
+  'BUSC4ND0 PU3RT0 D3 3NL4C3...',
+  'M4RC4ND0...',
+  'N3G0C14ND0 PR0T0C0L0...',
+  '3ST4BL3C13ND0 P0RT4D0R4...',
+  'S1NCR0N1Z4ND0 R3L0J...',
+  '3NL4C3 3ST4BL3C1D0 — 33.6 KBPS',
+];
+
+/* ============================================================
+   M0D0 FUNC10N — pantalla completa real de la pieza, siguiendo un
+   poco la lógica del live coding: la interfaz (caja de ritmos +
+   patch bay) queda flotando ENCIMA del visual, controlable en vivo,
+   y se puede ocultar/mostrar con una tecla — igual que un live coder
+   decide cuándo exponer su pantalla y cuándo dejar que hable solo
+   el resultado. No se reconstruye nada: se reubican los mismos
+   elementos (con todos sus event listeners intactos) dentro del
+   overlay, y se devuelven a su lugar original al salir.
+   ============================================================ */
+let perfModeActive = false;
+const perfHomes = {};
+
+function moveIntoPerf(id, targetSelector){
+  const el = document.getElementById(id);
+  if(!el) return;
+  perfHomes[id] = { parent: el.parentElement, next: el.nextSibling };
+  document.querySelector(targetSelector).appendChild(el);
+}
+function restoreFromPerf(id){
+  const home = perfHomes[id];
+  const el = document.getElementById(id);
+  if(!el || !home) return;
+  if(home.next && home.next.parentElement === home.parent) home.parent.insertBefore(el, home.next);
+  else home.parent.appendChild(el);
+}
+
+function perfKeyHandler(e){
+  if(!perfModeActive) return;
+  const k = e.key.toLowerCase();
+  if(e.key === 'Escape'){ exitPerformanceMode(); return; }
+  if(k === 'h'){ document.getElementById('perfMode').classList.toggle('hide-ui'); return; }
+  if(k === 'r' || e.key === ' '){ e.preventDefault(); performRandomizeAll(); }
+}
+
+function performRandomizeAll(){
+  // sonido: llena pasos al azar en los 7 canales de la caja de ritmos
+  if(typeof SEQ_CHANNELS !== 'undefined'){
+    stepStates = SEQ_CHANNELS.map(ch=> Array.from({length:ch.steps}, ()=> Math.random() < 0.3));
+  }
+  // imagen: reutiliza el randomizador que ya tiene la matriz de nodos (mismo botón, mismo resultado)
+  const btn = document.getElementById('matrixRandom');
+  if(btn) btn.click();
+  blip();
+}
+
+function perfSettleLayout(){
+  resizeDeviceCanvas();
+  resizeMatrixCanvasesForFullscreen();
+  renderCables();
+}
+
+function enterPerformanceMode(){
+  if(perfModeActive) return;
+  if(!deviceCanvasEl || !hydraInstance){
+    alert('Entra primero a X3N0L1T0 y a M4TR1Z_N0D4L al menos una vez — el modo función necesita que ambos ya estén inicializados.');
+    return;
+  }
+  perfModeActive = true;
+  document.getElementById('perfMode').classList.add('active');
+
+  moveIntoPerf('hydraCanvas', '.perf-visual-slot');
+  moveIntoPerf('shaderCanvas', '.perf-visual-slot');
+  moveIntoPerf('deviceCanvas', '.perf-seq');
+  moveIntoPerf('patchBay', '.perf-patch');
+
+  try{
+    (document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen).call(document.documentElement);
+  }catch(e){}
+
+  function settleLayout(){ perfSettleLayout(); }
+  requestAnimationFrame(settleLayout);
+  setTimeout(settleLayout, 200);
+  setTimeout(settleLayout, 700); // respaldo extra por si el navegador tarda en asentar el fullscreen
+  document.addEventListener('fullscreenchange', perfSettleLayout);
+  document.addEventListener('webkitfullscreenchange', perfSettleLayout);
+
+  document.addEventListener('keydown', perfKeyHandler);
+  blip();
+}
+
+function exitPerformanceMode(){
+  if(!perfModeActive) return;
+  perfModeActive = false;
+  document.getElementById('perfMode').classList.remove('active', 'hide-ui');
+
+  restoreFromPerf('hydraCanvas');
+  restoreFromPerf('shaderCanvas');
+  restoreFromPerf('deviceCanvas');
+  restoreFromPerf('patchBay');
+
+  if(document.fullscreenElement || document.webkitFullscreenElement){
+    try{ (document.exitFullscreen || document.webkitExitFullscreen).call(document); }catch(e){}
+  }
+
+  requestAnimationFrame(perfSettleLayout);
+
+  document.removeEventListener('keydown', perfKeyHandler);
+  document.removeEventListener('fullscreenchange', perfSettleLayout);
+  document.removeEventListener('webkitfullscreenchange', perfSettleLayout);
+}
+
+document.getElementById('perfModeBtn').addEventListener('click', enterPerformanceMode);
+
+(function initSplash(){
+  const enterBtn = document.getElementById('splashEnter');
+  const logEl = document.getElementById('splashLog');
+  const splash = document.getElementById('splashScreen');
+  if(!enterBtn || !logEl || !splash) return;
+
+  requestAnimationFrame(()=> enterBtn.classList.add('ready'));
+
+  enterBtn.addEventListener('click', ()=>{
+    if(enterBtn.disabled) return;
+    enterBtn.disabled = true;
+    enterBtn.classList.remove('ready');
+
+    audioUnlocked = true;
+    const actx = AudioEngine.ensure();
+
+    // beep de confirmación inmediato, síncrono, sin esperar ninguna promesa:
+    // si el resto de la secuencia falla en silencio, esto por lo menos confirma
+    // que el audio arrancó de verdad con el gesto del click.
+    try{
+      const o = actx.createOscillator(); o.type = 'square';
+      o.frequency.setValueAtTime(720, actx.currentTime);
+      o.frequency.exponentialRampToValueAtTime(340, actx.currentTime + 0.09);
+      const g = actx.createGain();
+      g.gain.setValueAtTime(0.09, actx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.0008, actx.currentTime + 0.11);
+      o.connect(g); g.connect(actx.destination); // directo a destino, sin pasar por ningún bus -> cero dependencias
+      o.start(); o.stop(actx.currentTime + 0.12);
+    }catch(err){ console.error('[splash] no se pudo generar ni el beep de confirmación:', err); }
+
+    function reallyStart(){
+      playModemSound();
+      let i = 0;
+      function nextLine(){
+        if(i < SPLASH_LINES.length){
+          const line = document.createElement('div');
+          line.textContent = SPLASH_LINES[i];
+          if(i === SPLASH_LINES.length - 1) line.classList.add('ok');
+          logEl.appendChild(line);
+          i++;
+          setTimeout(nextLine, 380 + Math.random()*260);
+        } else {
+          setTimeout(()=>{
+            splash.classList.add('hidden');
+            AudioEngine.startAmbient();
+          }, 550);
+        }
+      }
+      nextLine();
+    }
+
+    // Sin condicional sobre actx.state (podía haber una carrera si el navegador
+    // ya lo reportaba 'running' antes de que el audio realmente arrancara) ->
+    // siempre esperamos a que resume() se asiente de verdad antes de agendar nada.
+    try{
+      Promise.resolve(actx && actx.resume ? actx.resume() : null)
+        .then(reallyStart)
+        .catch(reallyStart);
+    }catch(e){
+      reallyStart();
+    }
+  });
+})();
+
+/* ============================================================
+   INIT
+   ============================================================ */
+renderLogSubnav();
+renderLogs();
+renderInterviews();
+renderMap();
+renderTicker();
+</script>
+</body>
+</html>
