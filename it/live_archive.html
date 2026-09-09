@@ -1,0 +1,638 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ARCHIVO VIVO · LA GALAXIA — maqueta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#030509;
+    --grid:rgba(111,203,255,.09);
+    --line-mid:rgba(140,190,230,.4);
+    --panel:rgba(6,14,26,.74);
+    --panel-line:rgba(111,203,255,.28);
+    --text:#dce8f2;
+    --text-dim:#5e7891;
+    --warm:#ff8a3d;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;background:var(--bg);overflow:hidden;
+    font-family:'IBM Plex Mono',ui-monospace,monospace;color:var(--text);}
+  #stage{position:fixed;inset:0;}
+  canvas{display:block;width:100%;height:100%;}
+
+  #gridlayer{position:fixed;inset:0;pointer-events:none;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size:56px 56px;
+    -webkit-mask-image:radial-gradient(ellipse at 50% 46%, #000 55%, transparent 92%);
+            mask-image:radial-gradient(ellipse at 50% 46%, #000 55%, transparent 92%);
+  }
+  #vignette{position:fixed;inset:0;pointer-events:none;
+    background:radial-gradient(ellipse at 50% 46%, transparent 40%, rgba(0,0,0,.55) 100%);
+  }
+  #scanlines{position:fixed;inset:0;pointer-events:none;opacity:.05;
+    background:repeating-linear-gradient(0deg, #cfe9ff 0px, #cfe9ff 1px, transparent 1px, transparent 3px);
+    mix-blend-mode:overlay;
+  }
+
+  .bracket{position:fixed;width:34px;height:34px;pointer-events:none;opacity:.55;}
+  .bracket::before,.bracket::after{content:"";position:absolute;background:var(--line-mid);}
+  .bracket::before{width:100%;height:1px;}
+  .bracket::after{width:1px;height:100%;}
+  .b-tl{top:22px;left:22px;} .b-tl::before{top:0;left:0;} .b-tl::after{top:0;left:0;}
+  .b-tr{top:22px;right:22px;} .b-tr::before{top:0;right:0;} .b-tr::after{top:0;right:0;}
+  .b-bl{bottom:22px;left:22px;} .b-bl::before{bottom:0;left:0;} .b-bl::after{bottom:0;left:0;}
+  .b-br{bottom:22px;right:22px;} .b-br::before{bottom:0;right:0;} .b-br::after{bottom:0;right:0;}
+
+  #ruler-top{position:fixed;top:0;left:64px;right:64px;height:22px;pointer-events:none;
+    display:flex;align-items:flex-end;opacity:.5;}
+  #ruler-left{position:fixed;left:0;top:64px;bottom:64px;width:22px;pointer-events:none;
+    display:flex;flex-direction:column;opacity:.5;}
+  .tick{position:relative;font-size:9px;color:var(--text-dim);letter-spacing:.02em;}
+
+  #titleblock{position:fixed;left:22px;bottom:22px;width:350px;
+    border:1px solid var(--panel-line);background:var(--panel);backdrop-filter:blur(6px);
+    padding:14px 16px 12px;}
+  #titleblock .eyebrow{font-size:10px;letter-spacing:.14em;color:var(--text-dim);}
+  #titleblock h1{font-family:'Space Grotesk',sans-serif;font-weight:600;
+    font-size:19px;margin:4px 0 6px;color:var(--text);letter-spacing:.01em;}
+  #titleblock p{font-size:10.5px;line-height:1.5;color:var(--text-dim);margin:0;}
+  #titleblock .rule{height:1px;background:var(--panel-line);margin:10px 0;}
+  #titleblock .meta{display:flex;justify-content:space-between;font-size:9.5px;color:var(--text-dim);}
+  #titleblock .meta b{color:var(--text);font-weight:500;}
+
+  #legend{position:fixed;right:22px;bottom:22px;width:230px;
+    border:1px solid var(--panel-line);background:var(--panel);backdrop-filter:blur(6px);
+    padding:12px 14px 14px;}
+  #legend .eyebrow{font-size:10px;letter-spacing:.14em;color:var(--text-dim);margin-bottom:8px;}
+  .fam-row{display:flex;align-items:center;gap:8px;padding:5px 2px;cursor:pointer;
+    font-size:11px;color:var(--text);opacity:.55;transition:opacity .15s;user-select:none;}
+  .fam-row:hover{opacity:1;}
+  .fam-row.active{opacity:1;}
+  .fam-dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto;
+    box-shadow:0 0 6px currentColor;}
+  .fam-count{margin-left:auto;color:var(--text-dim);font-size:10px;}
+  #legend .reset{margin-top:8px;padding-top:8px;border-top:1px solid var(--panel-line);
+    font-size:10px;color:var(--text-dim);cursor:pointer;letter-spacing:.06em;}
+  #legend .reset:hover{color:var(--text);}
+
+  #readout{position:fixed;top:22px;right:22px;width:230px;
+    border:1px solid var(--panel-line);background:var(--panel);backdrop-filter:blur(6px);
+    padding:12px 14px;font-size:10.5px;}
+  #readout .eyebrow{font-size:10px;letter-spacing:.14em;color:var(--text-dim);margin-bottom:8px;}
+  #readout .row{display:flex;justify-content:space-between;padding:3px 0;color:var(--text-dim);gap:10px;}
+  #readout .row b{color:var(--text);font-weight:500;text-align:right;}
+  #readout .row .live{color:var(--warm);}
+  #cursor-dot{display:inline-block;width:6px;height:6px;background:var(--warm);
+    box-shadow:0 0 6px var(--warm);margin-right:6px;animation:blink 1.6s infinite;}
+  @keyframes blink{0%,100%{opacity:1;}50%{opacity:.25;}}
+
+  #callout{position:fixed;pointer-events:none;opacity:0;transition:opacity .12s;
+    transform:translate(-50%,-100%);z-index:5;}
+  #callout .box{border:1px solid var(--warm);background:rgba(10,7,4,.88);
+    padding:8px 10px;font-size:10px;min-width:190px;max-width:240px;}
+  #callout .box .id{color:var(--warm);letter-spacing:.06em;font-size:9.5px;margin-bottom:3px;}
+  #callout .box .name{color:var(--text);font-weight:500;margin-bottom:2px;}
+  #callout .box .meta{color:var(--text-dim);font-size:9.5px;line-height:1.5;}
+  #callout .stem{position:absolute;left:50%;bottom:-14px;width:1px;height:14px;
+    background:var(--warm);}
+
+  @media (max-width:760px){
+    #titleblock{width:calc(100% - 44px);}
+    #legend{display:none;}
+    #readout{width:170px;}
+  }
+
+  #album-overlay{position:fixed;inset:0;z-index:20;display:none;
+    align-items:center;justify-content:center;padding:5vh 4vw;
+    background:rgba(2,4,8,.78);backdrop-filter:blur(6px);}
+  #album-overlay.open{display:flex;}
+  #album{width:min(880px,100%);max-height:88vh;display:flex;flex-direction:column;
+    border:1px solid var(--panel-line);background:rgba(5,10,18,.94);
+    box-shadow:0 0 0 1px rgba(0,0,0,.4), 0 30px 80px rgba(0,0,0,.6);
+    animation:album-in .18s ease-out;}
+  @keyframes album-in{from{opacity:0;transform:translateY(8px) scale(.985);}to{opacity:1;transform:none;}}
+  #album-head{display:flex;align-items:flex-start;gap:18px;
+    padding:16px 18px;border-bottom:1px solid var(--panel-line);}
+  #album-eyebrow{font-size:10px;letter-spacing:.14em;color:var(--text-dim);margin-bottom:5px;}
+  #album-title{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:600;
+    display:flex;align-items:center;gap:9px;}
+  #album-title .fam-dot{width:9px;height:9px;}
+  #album-meta{margin-left:auto;display:flex;gap:22px;font-size:10.5px;color:var(--text-dim);
+    white-space:nowrap;}
+  #album-meta div{display:flex;flex-direction:column;gap:3px;}
+  #album-meta b{color:var(--text);font-weight:500;font-size:11px;}
+  #album-close{flex:0 0 auto;background:transparent;border:1px solid var(--panel-line);
+    color:var(--text-dim);width:28px;height:28px;cursor:pointer;font-size:12px;
+    font-family:'IBM Plex Mono',monospace;}
+  #album-close:hover{color:var(--text);border-color:var(--text-dim);}
+  #album-grid{overflow-y:auto;padding:18px;display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;}
+  .tile{position:relative;aspect-ratio:1;overflow:hidden;cursor:default;
+    border:1px solid rgba(111,203,255,.16);}
+  .tile .g{position:absolute;inset:0;}
+  .tile .grain{position:absolute;inset:0;opacity:.12;mix-blend-mode:overlay;
+    background:repeating-linear-gradient(0deg,#fff 0px,#fff 1px,transparent 1px,transparent 3px);}
+  .tile .tag{position:absolute;top:5px;left:6px;font-size:8.5px;letter-spacing:.03em;
+    color:rgba(230,240,250,.8);text-shadow:0 1px 2px rgba(0,0,0,.6);}
+  .tile .idx{position:absolute;bottom:5px;right:6px;font-size:8.5px;
+    color:rgba(230,240,250,.65);text-shadow:0 1px 2px rgba(0,0,0,.6);}
+  .tile:hover .g{filter:brightness(1.18);}
+  #album-foot{padding:10px 18px;border-top:1px solid var(--panel-line);
+    font-size:9.5px;color:var(--text-dim);letter-spacing:.02em;}
+</style>
+</head>
+<body>
+
+<div id="stage"><canvas id="gal"></canvas></div>
+<div id="gridlayer"></div>
+<div id="vignette"></div>
+<div id="scanlines"></div>
+
+<div class="bracket b-tl"></div>
+<div class="bracket b-tr"></div>
+<div class="bracket b-bl"></div>
+<div class="bracket b-br"></div>
+
+<div id="ruler-top"></div>
+<div id="ruler-left"></div>
+
+<div id="titleblock">
+  <div class="eyebrow">ARCHIVO VIVO · ITESO 70</div>
+  <h1>La Galaxia — generaciones en órbita</h1>
+  <p>El núcleo es 1957, la fundación. Cada órbita hacia afuera es una generación más reciente, hasta hoy. Cada punto es un registro; el color, su departamento. Clic abre su álbum — scroll para acercarte.</p>
+  <div class="rule"></div>
+  <div class="meta"><span>MAQUETA CONCEPTUAL</span><b>NO ES DISEÑO FINAL</b></div>
+</div>
+
+<div id="legend">
+  <div class="eyebrow">DEPARTAMENTOS</div>
+  <div id="fam-list"></div>
+  <div class="reset" id="fam-reset">— MOSTRAR TODOS —</div>
+</div>
+
+<div id="readout">
+  <div class="eyebrow">LECTURA DEL SISTEMA</div>
+  <div class="row"><span>registros</span><b id="r-total">—</b></div>
+  <div class="row"><span>generaciones</span><b id="r-orbits">—</b></div>
+  <div class="row"><span>generación foco</span><b id="r-gen">—</b></div>
+  <div class="row"><span>coordenada</span><b id="r-coord">0000.0 / 0000.0</b></div>
+  <div class="row"><span><span id="cursor-dot"></span>zoom (scroll)</span><b class="live" id="r-zoom">1.00×</b></div>
+</div>
+
+<div id="callout"><div class="box">
+  <div class="id" id="c-id">REG-0000</div>
+  <div class="name" id="c-name">—</div>
+  <div class="meta" id="c-meta">—</div>
+  <div class="stem"></div>
+</div></div>
+
+<div id="album-overlay">
+  <div id="album">
+    <div id="album-head">
+      <div>
+        <div id="album-eyebrow">CONTENEDOR DE REGISTRO</div>
+        <div id="album-title"><span id="a-dot" class="fam-dot"></span><span id="a-name">—</span></div>
+      </div>
+      <div id="album-meta">
+        <div><span>folio</span><b id="a-id">—</b></div>
+        <div><span>generación</span><b id="a-gen">—</b></div>
+      </div>
+      <button id="album-close" aria-label="Cerrar">✕</button>
+    </div>
+    <div id="album-grid"></div>
+    <div id="album-foot">muestra generativa de maqueta — no son fotografías reales del archivo</div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  function mulberry32(a){
+    return function(){
+      a|=0; a=a+0x6D2B79F5|0;
+      let t=Math.imul(a^a>>>15,1|a);
+      t=t+Math.imul(t^t>>>7,61|t)^t;
+      return ((t^t>>>14)>>>0)/4294967296;
+    };
+  }
+  const rng = mulberry32(70707);
+  function hashSeed(str){
+    let h=0;
+    for(let i=0;i<str.length;i++){h=(h<<5)-h+str.charCodeAt(i);h|=0;}
+    return h>>>0;
+  }
+
+  /* tres departamentos reales (índice "Carreras ITESO"), usados como color */
+  const FAMILIES = [
+    {key:"ing", name:"Ingenierías",  hue:132},
+    {key:"neg", name:"Negocios",     hue:188},
+    {key:"hum", name:"Humanidades",  hue:208},
+  ];
+
+  /* generaciones: el núcleo es la fundación (1957); cada anillo, más reciente */
+  const RINGS = [
+    {label:"1957 · fundación", r:0.045, dense:2.6},
+    {label:"1958–1979",        r:0.16,  dense:1.0},
+    {label:"1980–1999",        r:0.33,  dense:1.0},
+    {label:"2000–2014",        r:0.52,  dense:1.05},
+    {label:"2015–2024",        r:0.70,  dense:1.15},
+    {label:"2025–2027",        r:0.86,  dense:0.9},
+  ];
+
+  const activeFamilies = new Set(FAMILIES.map(f=>f.key));
+
+  const canvas = document.getElementById('gal');
+  const ctx = canvas.getContext('2d');
+  let W=0,H=0,DPR=Math.min(window.devicePixelRatio||1,2), CX=0, CY=0, baseScale=1, zoom=1, SCALE=1;
+
+  function resize(){
+    W = window.innerWidth; H = window.innerHeight;
+    canvas.width = W*DPR; canvas.height = H*DPR;
+    canvas.style.width=W+'px'; canvas.style.height=H+'px';
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    CX = W*0.5; CY = H*0.46;
+    baseScale = Math.min(W,H)*0.92;
+    SCALE = baseScale*zoom;
+    buildRulers();
+  }
+
+  function buildRulers(){
+    const top=document.getElementById('ruler-top');
+    const left=document.getElementById('ruler-left');
+    top.innerHTML=''; left.innerHTML='';
+    const n=Math.floor((W-128)/64);
+    for(let i=0;i<=n;i++){
+      const el=document.createElement('div');
+      el.className='tick';
+      el.style.flex='1 0 auto';
+      el.textContent=(i%2===0)? String(i*64).padStart(4,'0') : '';
+      el.style.borderLeft='1px solid rgba(111,203,255,.3)';
+      el.style.paddingLeft='3px';
+      el.style.height=(i%2===0)?'10px':'5px';
+      top.appendChild(el);
+    }
+    const m=Math.floor((H-128)/48);
+    for(let i=0;i<=m;i++){
+      const el=document.createElement('div');
+      el.className='tick';
+      el.style.flex='1 0 auto';
+      el.style.writingMode='vertical-rl';
+      el.textContent=(i%2===0)? String(i*48).padStart(4,'0') : '';
+      el.style.borderTop='1px solid rgba(111,203,255,.3)';
+      el.style.height='1px';
+      left.appendChild(el);
+    }
+  }
+
+  /* ---------------- densely populated particle field ---------------- */
+  let particles = [];
+  let clouds = [];
+  let bgDust = [];
+  const BASE_COUNT = 260;   // partículas base por anillo — multiplicado por dense y por índice
+  const GROWTH = 210;       // crecimiento por anillo hacia el presente
+
+  function buildParticles(){
+    particles = [];
+    let id=1;
+    RINGS.forEach((ring, ri)=>{
+      const count = Math.round((BASE_COUNT + ri*GROWTH) * ring.dense);
+      for(let i=0;i<count;i++){
+        const fam = FAMILIES[Math.floor(rng()*FAMILIES.length)];
+        const angle = rng()*Math.PI*2;
+        const spread = ri===0 ? 0.02 : 0.05+rng()*0.02;
+        const jitter = (rng()-0.5)*spread;
+        const speed = (0.015 + rng()*0.03) * (ri%2===0?1:-1) * (ri===0?0.6:0.32);
+        const size = 0.5 + rng()*1.7;
+        particles.push({
+          id:'REG-'+String(id++).padStart(5,'0'),
+          fam, ringIndex:ri, ringLabel:ring.label,
+          baseR: Math.max(0.012, ring.r + jitter),
+          angle, speed, size,
+          tw: rng()*Math.PI*2,
+        });
+      }
+    });
+  }
+
+  function buildClouds(){
+    clouds = [];
+    FAMILIES.forEach(fam=>{
+      const blobs = 5 + Math.floor(rng()*3);
+      for(let i=0;i<blobs;i++){
+        clouds.push({
+          fam,
+          angle: rng()*Math.PI*2,
+          r: 0.10 + rng()*0.80,
+          radius: 0.10 + rng()*0.17,
+          drift: (rng()-0.5)*0.006,
+          tw: rng()*Math.PI*2,
+        });
+      }
+    });
+  }
+
+  function buildDust(){
+    bgDust = [];
+    for(let i=0;i<380;i++){
+      const angle = rng()*Math.PI*2;
+      const r = 0.9+rng()*0.35;
+      bgDust.push({angle, r, size:0.4+rng()*1.0, tw:rng()*Math.PI*2, sp:0.0004+rng()*0.0008});
+    }
+  }
+
+  function buildLegend(){
+    const list=document.getElementById('fam-list');
+    list.innerHTML='';
+    FAMILIES.forEach(f=>{
+      const row=document.createElement('div');
+      row.className='fam-row active';
+      row.dataset.key=f.key;
+      const count = particles.filter(p=>p.fam.key===f.key).length;
+      row.innerHTML = '<span class="fam-dot" style="background:hsl('+f.hue+',75%,58%);color:hsl('+f.hue+',75%,58%);"></span>'+
+                       '<span>'+f.name+'</span><span class="fam-count">'+count.toLocaleString('es-MX')+'</span>';
+      row.addEventListener('click', ()=>{
+        if(activeFamilies.has(f.key) && activeFamilies.size>1){
+          activeFamilies.delete(f.key); row.classList.remove('active');
+        } else if(!activeFamilies.has(f.key)) {
+          activeFamilies.add(f.key); row.classList.add('active');
+        }
+      });
+      list.appendChild(row);
+    });
+    document.getElementById('fam-reset').addEventListener('click', ()=>{
+      FAMILIES.forEach(f=>activeFamilies.add(f.key));
+      document.querySelectorAll('.fam-row').forEach(r=>r.classList.add('active'));
+    });
+  }
+
+  let mouseX=-9999, mouseY=-9999, hovered=null, focusRing=null;
+  const callout = document.getElementById('callout');
+
+  canvas.addEventListener('mousemove', e=>{
+    mouseX=e.clientX; mouseY=e.clientY;
+    document.getElementById('r-coord').textContent =
+      ((mouseX-CX)/SCALE*1000).toFixed(1).padStart(7,' ')+' / '+((mouseY-CY)/SCALE*1000).toFixed(1).padStart(7,' ');
+  });
+  canvas.addEventListener('mouseleave', ()=>{mouseX=-9999;mouseY=-9999;});
+
+  canvas.addEventListener('wheel', e=>{
+    e.preventDefault();
+    zoom = Math.min(3.4, Math.max(0.5, zoom - e.deltaY*0.0011));
+    SCALE = baseScale*zoom;
+    document.getElementById('r-zoom').textContent = zoom.toFixed(2)+'×';
+  }, {passive:false});
+
+  let sweepAngle=0;
+  function drawRadar(){
+    sweepAngle += 0.006;
+    if(!ctx.createConicGradient) return;
+    const grad = ctx.createConicGradient(sweepAngle, CX, CY);
+    grad.addColorStop(0,'rgba(111,203,255,0)');
+    grad.addColorStop(0.02,'rgba(111,203,255,.10)');
+    grad.addColorStop(0.09,'rgba(111,203,255,0)');
+    grad.addColorStop(1,'rgba(111,203,255,0)');
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(CX,CY,SCALE*0.95,0,Math.PI*2);
+    ctx.fillStyle=grad;
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawClouds(t){
+    ctx.save();
+    ctx.globalCompositeOperation='lighter';
+    clouds.forEach(c=>{
+      c.angle += c.drift*0.02;
+      const tw = 0.7+0.3*Math.sin(t*0.0006+c.tw);
+      const x = CX + Math.cos(c.angle)*c.r*SCALE;
+      const y = CY + Math.sin(c.angle)*c.r*SCALE*0.62;
+      const rad = c.radius*SCALE*(0.9+0.15*tw);
+      const grad = ctx.createRadialGradient(x,y,0,x,y,rad);
+      grad.addColorStop(0,'hsla('+c.fam.hue+',70%,56%,'+(0.09*tw)+')');
+      grad.addColorStop(0.55,'hsla('+c.fam.hue+',70%,50%,'+(0.04*tw)+')');
+      grad.addColorStop(1,'hsla('+c.fam.hue+',70%,50%,0)');
+      ctx.beginPath();
+      ctx.fillStyle=grad;
+      ctx.arc(x,y,rad,0,Math.PI*2);
+      ctx.fill();
+    });
+    ctx.restore();
+  }
+
+  function drawDust(t){
+    ctx.save();
+    ctx.globalCompositeOperation='lighter';
+    bgDust.forEach(d=>{
+      const x = CX + Math.cos(d.angle)*d.r*SCALE;
+      const y = CY + Math.sin(d.angle)*d.r*SCALE*0.62;
+      const tw = 0.3+0.7*Math.max(0,Math.sin(t*d.sp+d.tw));
+      ctx.beginPath();
+      ctx.arc(x,y,d.size,0,Math.PI*2);
+      ctx.fillStyle='rgba(200,225,255,'+(tw*0.4)+')';
+      ctx.fill();
+    });
+    ctx.restore();
+  }
+
+  function drawOrbits(){
+    RINGS.forEach((ring,i)=>{
+      const r=ring.r*SCALE;
+      ctx.beginPath();
+      ctx.ellipse(CX,CY,r,r*0.62,0,0,Math.PI*2);
+      ctx.strokeStyle = (focusRing===i) ? 'rgba(255,138,61,.5)' : 'rgba(140,190,230,.14)';
+      ctx.lineWidth=1;
+      ctx.setLineDash([1,6]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.font='9.5px IBM Plex Mono, monospace';
+      ctx.fillStyle='rgba(140,190,230,.4)';
+      ctx.textAlign='left';
+      ctx.fillText(ring.label, CX+3, CY - r*0.62 - 4);
+    });
+  }
+
+  function drawNucleus(t){
+    const baseR = 14+Math.min(W,H)*0.005;
+    const pulse = baseR + Math.sin(t*0.0015)*1.5;
+    const rot = t*0.00022;
+
+    const halo = ctx.createRadialGradient(CX,CY,0,CX,CY,baseR*5);
+    halo.addColorStop(0,'rgba(180,220,255,.30)');
+    halo.addColorStop(1,'rgba(180,220,255,0)');
+    ctx.beginPath();ctx.arc(CX,CY,baseR*5,0,Math.PI*2);ctx.fillStyle=halo;ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(CX,CY,pulse*1.7,0,Math.PI*2);
+    ctx.strokeStyle='rgba(220,238,255,.5)';
+    ctx.lineWidth=1.2;
+    ctx.stroke();
+
+    [rot, rot+Math.PI/2.05].forEach(ang=>{
+      ctx.save();
+      ctx.translate(CX,CY);
+      ctx.rotate(ang);
+      ctx.beginPath();
+      ctx.ellipse(0,0, pulse*1.7, pulse*0.66, 0, 0, Math.PI*2);
+      ctx.strokeStyle='rgba(220,238,255,.85)';
+      ctx.lineWidth=2;
+      ctx.shadowColor='rgba(140,200,255,.9)';
+      ctx.shadowBlur=10;
+      ctx.stroke();
+      ctx.restore();
+    });
+
+    ctx.beginPath();
+    ctx.arc(CX,CY,pulse*0.55,0,Math.PI*2);
+    ctx.fillStyle='#eaf5ff';
+    ctx.shadowColor='rgba(140,200,255,.95)';
+    ctx.shadowBlur=18;
+    ctx.fill();
+    ctx.shadowBlur=0;
+
+    ctx.strokeStyle='rgba(6,32,56,.9)';
+    ctx.lineWidth=1.6;
+    const cs=pulse*0.24;
+    ctx.beginPath();
+    ctx.moveTo(CX-cs,CY);ctx.lineTo(CX+cs,CY);
+    ctx.moveTo(CX,CY-cs);ctx.lineTo(CX,CY+cs);
+    ctx.stroke();
+  }
+
+  function drawCrosshair(){
+    if(mouseX<0) return;
+    ctx.strokeStyle='rgba(140,190,230,.28)';
+    ctx.lineWidth=1;
+    ctx.beginPath();
+    ctx.moveTo(mouseX-10,mouseY);ctx.lineTo(mouseX+10,mouseY);
+    ctx.moveTo(mouseX,mouseY-10);ctx.lineTo(mouseX,mouseY+10);
+    ctx.stroke();
+  }
+
+  let t0=performance.now();
+  function frame(t){
+    const dt=Math.min((t-t0)/1000,0.05); t0=t;
+    ctx.clearRect(0,0,W,H);
+
+    drawRadar();
+    drawClouds(t);
+    drawDust(t);
+    drawOrbits();
+
+    hovered=null;
+    let closestD=12;
+
+    ctx.save();
+    ctx.globalCompositeOperation='lighter';
+    particles.forEach(p=>{
+      p.angle += p.speed*dt;
+      const r = p.baseR*SCALE;
+      const x = CX + Math.cos(p.angle)*r;
+      const y = CY + Math.sin(p.angle)*r*0.62;
+      p._x=x; p._y=y;
+      const active = activeFamilies.has(p.fam.key);
+      const tw = 0.55+0.45*Math.sin(t*0.002+p.tw);
+      const alpha = active ? (0.30+0.45*tw) : 0.03;
+      ctx.beginPath();
+      ctx.arc(x,y,p.size*0.85,0,Math.PI*2);
+      ctx.fillStyle = 'hsla('+p.fam.hue+',82%,'+(58+tw*12)+'%,'+alpha+')';
+      ctx.fill();
+      if(active){
+        const d=Math.hypot(mouseX-x,mouseY-y);
+        if(d<closestD){closestD=d;hovered=p;}
+      }
+    });
+    ctx.restore();
+
+    drawNucleus(t);
+
+    if(hovered){
+      canvas.style.cursor='pointer';
+      showCallout(hovered);
+      ctx.beginPath();
+      ctx.arc(hovered._x,hovered._y,5,0,Math.PI*2);
+      ctx.strokeStyle='rgba(255,138,61,.7)';
+      ctx.lineWidth=1;
+      ctx.stroke();
+    } else {
+      canvas.style.cursor='crosshair';
+      callout.style.opacity=0;
+    }
+
+    drawCrosshair();
+    requestAnimationFrame(frame);
+  }
+
+  function showCallout(p){
+    callout.style.left=p._x+'px';
+    callout.style.top=(p._y-14)+'px';
+    callout.style.opacity=1;
+    document.getElementById('c-id').textContent=p.id;
+    document.getElementById('c-name').textContent=p.fam.name;
+    document.getElementById('c-meta').textContent='generación '+p.ringLabel+' · registro fotográfico';
+  }
+
+  canvas.addEventListener('click', ()=>{
+    if(hovered){ openAlbum(hovered); return; }
+  });
+
+  const albumOverlay = document.getElementById('album-overlay');
+  const albumGrid = document.getElementById('album-grid');
+  const EXIF_MM = ['24mm','35mm','50mm','85mm'];
+  const EXIF_ISO = ['100','200','400','800'];
+
+  function openAlbum(p){
+    const rand = mulberry32(hashSeed(p.id));
+    document.getElementById('a-dot').style.background='hsl('+p.fam.hue+',75%,60%)';
+    document.getElementById('a-dot').style.color='hsl('+p.fam.hue+',75%,60%)';
+    document.getElementById('a-name').textContent=p.fam.name;
+    document.getElementById('a-id').textContent=p.id;
+    document.getElementById('a-gen').textContent=p.ringLabel;
+
+    const n = 8 + Math.floor(rand()*9);
+    albumGrid.innerHTML='';
+    for(let i=0;i<n;i++){
+      const hue = p.fam.hue + (rand()-0.5)*24;
+      const l1 = 22 + rand()*14, l2 = 6 + rand()*8;
+      const ang = Math.floor(rand()*360);
+      const tile=document.createElement('div');
+      tile.className='tile';
+      tile.innerHTML =
+        '<div class="g" style="background:linear-gradient('+ang+'deg, hsl('+hue+',34%,'+l1+'%), hsl('+(hue+16)+',28%,'+l2+'%));"></div>'+
+        '<div class="grain"></div>'+
+        '<div class="tag">'+EXIF_MM[Math.floor(rand()*4)]+' · ƒ'+(1.4+rand()*4).toFixed(1)+' · ISO'+EXIF_ISO[Math.floor(rand()*4)]+'</div>'+
+        '<div class="idx">'+p.id.replace('REG-','')+'·'+String(i+1).padStart(2,'0')+'</div>';
+      albumGrid.appendChild(tile);
+    }
+    albumOverlay.classList.add('open');
+  }
+  function closeAlbum(){ albumOverlay.classList.remove('open'); }
+  document.getElementById('album-close').addEventListener('click', closeAlbum);
+  albumOverlay.addEventListener('click', e=>{ if(e.target===albumOverlay) closeAlbum(); });
+  window.addEventListener('keydown', e=>{ if(e.key==='Escape') closeAlbum(); });
+
+  function updateReadout(){
+    document.getElementById('r-total').textContent = particles.length.toLocaleString('es-MX');
+    document.getElementById('r-orbits').textContent = RINGS.length;
+    document.getElementById('r-gen').textContent = '—';
+  }
+
+  window.addEventListener('resize', resize);
+  resize();
+  buildParticles();
+  buildClouds();
+  buildDust();
+  buildLegend();
+  updateReadout();
+  requestAnimationFrame(frame);
+
+})();
+</script>
+</body>
+</html>
