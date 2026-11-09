@@ -1,178 +1,1042 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-<meta charset="UTF-8">
-<title>root@panopticon:~$</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AGRYPNIA Vigilia 24/7</title>
+<meta name="description" content="AGRYPNIA: vigilia y castigo sobre un cultivo de Physarum polycephalum. Mirar enciende la luz sobre un organismo que la rehúye.">
+<meta name="theme-color" content="#000000">
+<meta property="og:title" content="AGRYPNIA · Vigilia 24/7">
+<meta property="og:description" content="Aquí no hay noche: cada visita es un párpado que se abre sobre otro cuerpo.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23000'/%3E%3Ccircle cx='16' cy='16' r='11' fill='none' stroke='%232f9e57' stroke-width='2'/%3E%3Ccircle cx='16' cy='16' r='4' fill='%23e23b2e'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=B612+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+/* Puesto de vigilancia: rejillas fosforo sobre negro. Verde = sistema activo, rojo = luz/castigo/alerta,
+   ambar solo para el organismo. Tres columnas: tablas | pantalla y senales | padron siempre en marcha. */
+:root {
+  --bg: #000;
+  --line: #4f6b55;
+  --text: #dfe8d8;
+  --muted: #7f9483;
+  --green: #2f9e57;
+  --green-d: #0f3a21;
+  --red: #e23b2e;
+  --red-d: #4a110c;
+  --amber: #f1b81f;
+  --mono: "B612 Mono", "Cascadia Mono", Consolas, ui-monospace, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); }
+body { font: 700 12.5px/1.35 var(--mono); letter-spacing: .06em; text-transform: uppercase; font-variant-numeric: tabular-nums; }
+body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 40;
+  background: repeating-linear-gradient(0deg, rgba(0,0,0,.22) 0 1px, transparent 1px 3px); }
+button { font: inherit; letter-spacing: inherit; text-transform: inherit; }
+:focus-visible { outline: 2px solid var(--red); outline-offset: -2px; }
 
-  * { margin:0; padding:0; box-sizing:border-box; }
+.consola { max-width: 1440px; margin: 0 auto; padding: 10px 16px 16px; display: grid; gap: 10px; }
+.panel { position: relative; border: 1px solid var(--line); min-width: 0; }
+/* esquinas de mira en cada panel */
+.panel::before, .panel::after { content: ""; position: absolute; width: 10px; height: 10px; pointer-events: none; }
+.panel::before { top: -1px; left: -1px; border-top: 2px solid var(--text); border-left: 2px solid var(--text); }
+.panel::after { bottom: -1px; right: -1px; border-bottom: 2px solid var(--text); border-right: 2px solid var(--text); }
+.tit { display: flex; gap: 10px; align-items: baseline; padding: 6px 10px; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 11px; }
+.tit b { color: var(--text); font-weight: 700; }
+.tit .der { margin-left: auto; }
+table { border-collapse: collapse; width: 100%; }
+td, th { border-bottom: 1px solid var(--line); padding: 4px 10px; text-align: left; white-space: nowrap; font-weight: 700; }
+th { color: var(--muted); font-size: 11px; }
+tr:last-child td { border-bottom: 0; }
+.num { text-align: right; }
+.v { background: var(--green); color: #000; }
+.vd { background: var(--green-d); }
+.r { background: var(--red); color: #000; }
+.rd { background: var(--red-d); color: #ffb2aa; }
+.desplaza { overflow-x: auto; }
 
-  html, body {
-    height:100%;
-    background:#000;
-    font-family:'JetBrains Mono', monospace;
-    overflow:hidden;
-  }
+/* cabecera */
+.cabecera { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 22px; padding: 8px 12px; }
+.marca { font-size: 18px; letter-spacing: .3em; }
+.marca i { font-style: normal; color: var(--red); }
+.pips { display: flex; gap: 4px; }
+.pips span { width: 8px; height: 8px; background: var(--green-d); border: 1px solid var(--line); }
+.pips span.on { background: var(--green); }
+.pips span.alerta { background: var(--red); }
+.cabecera .dato { color: var(--muted); }
+.cabecera .dato b { color: var(--text); }
+.rec { color: var(--red); }
+.rec::before { content: "●"; margin-right: 6px; animation: parp 1.2s steps(2) infinite; }
+@keyframes parp { 50% { opacity: .15; } }
+.empuje { margin-left: auto; }
 
-  #crt {
-    position:relative;
-    height:100vh;
-    width:100vw;
-    background:#020402;
-    padding:2.5rem;
-    color:#00ff41;
-    font-size:15px;
-    line-height:1.5;
-    overflow-y:auto;
-  }
+.cuerpo { display: grid; gap: 10px; grid-template-columns: minmax(0, .95fr) minmax(0, 1.25fr) minmax(0, .78fr); align-items: start; }
+.col { display: grid; gap: 10px; min-width: 0; }
 
-  #crt::before{
-    content:"";
-    position:fixed;
-    inset:0;
-    pointer-events:none;
-    background:repeating-linear-gradient(
-      0deg,
-      rgba(0,255,65,0.035) 0px,
-      rgba(0,255,65,0.035) 1px,
-      transparent 1px,
-      transparent 3px
-    );
-    z-index:5;
-    animation:flicker 2s infinite;
-  }
+/* pantalla circular */
+.alcance canvas { display: block; width: 100%; height: auto; aspect-ratio: 1 / .86; }
+.alcance .rot { position: absolute; top: 34px; left: 12px; line-height: 1.55; pointer-events: none; color: var(--muted); }
+.alcance .rot b { color: var(--text); font-weight: 700; }
+.alcance .lect { position: absolute; bottom: 10px; pointer-events: none; line-height: 1.5; color: var(--muted); }
+.alcance .li { left: 12px; } .alcance .ld { right: 12px; text-align: right; }
+.alcance .aviso { position: absolute; top: 34px; right: 12px; padding: 2px 8px; pointer-events: none; }
 
-  #crt::after{
-    content:"";
-    position:fixed;
-    inset:0;
-    pointer-events:none;
-    background:radial-gradient(ellipse at center, rgba(0,0,0,0) 60%, rgba(0,0,0,0.55) 100%);
-    z-index:6;
-  }
+/* webcam sobre la placa: despierta cuando alguien mira */
+.camara { position: absolute; left: 0; right: 0; top: 29px; bottom: 0; background: #000; display: none; overflow: hidden; }
+.camara.on { display: block; }
+.camara canvas { width: 100%; height: 100%; aspect-ratio: auto; display: block; }
+.camara .cs { position: absolute; pointer-events: none; text-shadow: 0 0 6px #000, 0 0 2px #000; line-height: 1.5; }
+.camara .sup { top: 10px; left: 12px; } .camara .sup b { color: var(--red); font-weight: 700; }
+.camara .der { top: 10px; right: 12px; text-align: right; color: var(--muted); }
+.camara .inf { bottom: 10px; left: 12px; color: var(--muted); }
+.camara .poema { left: 0; right: 0; top: 50%; transform: translateY(-50%); text-align: center; font-size: 15px; letter-spacing: .28em; color: var(--text); padding: 0 16px; }
 
-  @keyframes flicker{
-    0%,100%{opacity:1;}
-    92%{opacity:1;}
-    93%{opacity:0.85;}
-    94%{opacity:1;}
-  }
+/* senales */
+.senales { display: grid; grid-template-columns: 1fr 1fr; }
+.senales > div + div { border-left: 1px solid var(--line); }
+.senales canvas { display: block; width: 100%; height: 92px; }
 
-  #output { white-space:pre-wrap; text-shadow:0 0 4px rgba(0,255,65,0.6); }
+/* cultivos */
+.cultivos { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 5px; }
+.cultivos div { border: 1px solid var(--line); text-align: center; padding: 6px 0; }
+.cultivos .vd { color: var(--muted); }
+.cultivos .v { border-color: var(--green); }
 
-  .dim { color:#0a7d2c; }
-  .warn { color:#ff2b2b; text-shadow:0 0 6px rgba(255,43,43,0.7); }
-  .accent { color:#e8ff00; text-shadow:0 0 5px rgba(232,255,0,0.6); }
-  .white { color:#d9ffe4; }
+/* padron y vitrina */
+.padron canvas { display: block; width: 100%; height: 470px; }
+.vitrina canvas { display: block; width: 100%; height: 190px; }
+.flujo { height: 112px; overflow: hidden; padding: 6px 10px; color: var(--muted); font-size: 11px; line-height: 1.45; }
+.flujo .n { color: var(--text); }
+.flujo .rr { color: var(--red); }
 
-  #cursor{
-    display:inline-block;
-    width:9px; height:16px;
-    background:#00ff41;
-    box-shadow:0 0 6px #00ff41;
-    animation:blink 1s step-start infinite;
-    vertical-align:middle;
-    margin-left:2px;
-  }
-  @keyframes blink{ 90%{opacity:0;} }
+/* suministro de luz */
+.suministro { display: grid; grid-template-columns: 1fr 96px; }
+.suministro > div { padding: 7px 10px; }
+.suministro > div + div { border-left: 1px solid var(--line); text-align: center; }
+.barra { height: 5px; background: var(--green-d); margin-top: 5px; }
+.barra i { display: block; height: 100%; width: 0; background: var(--green); }
+.barra.espera i { background: var(--red); }
 
-  #glitch-overlay{
-    position:fixed; inset:0;
-    pointer-events:none;
-    z-index:7;
-    opacity:0;
-  }
+/* teclas */
+.teclas { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 5px; }
+.tecla { background: #000; color: var(--text); border: 1px solid var(--line); padding: 9px 4px; cursor: pointer; white-space: nowrap; }
+.tecla:hover:not(:disabled) { background: #0b140d; border-color: var(--green); }
+.tecla[aria-pressed="true"] { background: var(--green); color: #000; border-color: var(--green); }
+.tecla.luz { background: var(--red); color: #000; border-color: var(--red); }
+.tecla.luz:disabled { background: #000; color: var(--muted); border-color: var(--line); cursor: not-allowed; }
 
-  ::-webkit-scrollbar{ width:0; }
+/* vistas */
+.vista { min-height: 220px; }
+.vista[hidden] { display: none; }
+.bitacora { max-height: 260px; overflow-y: auto; font-size: 11.5px; }
+.bitacora td { padding: 3px 10px; border-bottom-color: #18241b; }
+.bitacora tr.web td { color: var(--red); }
+.bitacora tr.err td { color: #ff8a7d; }
+.bitacora tr.sis td { color: var(--muted); }
+.bitacora tr.ult td { background: var(--green-d); }
+.fotos { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; padding: 10px; max-height: 280px; overflow-y: auto; }
+.foto { margin: 0; }
+.foto img { width: 100%; aspect-ratio: 1; display: block; border: 1px solid var(--line); background: #000; }
+.foto.mia img { border-color: var(--red); }
+.foto figcaption { font-size: 10.5px; margin-top: 3px; color: var(--muted); }
+.vacio { grid-column: 1 / -1; margin: 0; padding: 4px 0; text-transform: none; font-weight: 400; max-width: 46ch; }
+.curva svg { display: block; width: 100%; height: auto; }
+.curva text { fill: var(--muted); font: 700 10px var(--mono); }
+.nota a { color: var(--green); text-decoration: underline; text-underline-offset: 3px; }
+.nota a:hover { color: var(--text); }
+.nota { font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--muted); font-size: 12px; display: flex; flex-wrap: wrap; gap: 4px 22px; padding: 2px; }
+
+/* contrato */
+.velo { position: fixed; inset: 0; background: rgba(0,0,0,.86); display: none; place-items: center; z-index: 60; padding: 16px; }
+.velo.on { display: grid; }
+.contrato { max-width: 600px; width: 100%; background: #000; }
+.contrato h2 { margin: 0; padding: 8px 12px; font-size: 14px; }
+.contrato .txt { padding: 12px 14px; text-transform: none; font-weight: 400; letter-spacing: 0; line-height: 1.55; }
+.contrato ol { margin: 8px 0 0; padding-left: 22px; }
+.contrato li { margin-bottom: 5px; }
+.contrato .acc { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 0 12px 12px; }
+
+@media (max-width: 1180px) {
+  .cuerpo { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .col.der { grid-column: 1 / -1; grid-template-columns: 1fr 1fr; }
+  .col.der .padron { grid-row: span 2; }
+  .teclas { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}
+@media (max-width: 760px) {
+  .cuerpo { grid-template-columns: 1fr; }
+  .col.der { grid-template-columns: 1fr; }
+  .padron canvas { height: 300px; }
+  .teclas { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .cultivos { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .senales { grid-template-columns: 1fr; }
+  .senales > div + div { border-left: 0; border-top: 1px solid var(--line); }
+  .alcance .rot, .alcance .lect { font-size: 10px; }
+}
+@media (prefers-reduced-motion: reduce) { .rec::before { animation: none; } body::after { display: none; } }
 </style>
 </head>
 <body>
+<div class="consola">
 
-<div id="crt">
-  <div id="output"></div>
+  <header class="panel cabecera">
+    <span class="marca">AGRYPNIA<i>/</i>VIGILIA</span>
+    <span class="rec">REC</span>
+    <span class="pips" aria-hidden="true"><span class="on"></span><span class="on"></span><span id="pip-luz"></span><span id="pip-red"></span><span class="on"></span></span>
+    <span class="dato">HORAS SIN NOCHE <b id="h-noche">0000:00:00</b></span>
+    <span class="dato">SALA <b id="h-sala">—</b></span>
+    <span class="dato">FASE <b id="h-fase">—</b></span>
+    <span class="dato empuje">OBSERVADORES <b id="h-obs">1</b></span>
+    <span class="dato">RED <b id="h-red">CONECT</b></span>
+    <span class="dato"><b id="h-reloj">--:--:--</b></span>
+  </header>
+
+  <div class="cuerpo">
+    <!-- ============ izquierda: tablas ============ -->
+    <div class="col">
+      <section class="panel" aria-labelledby="t-par">
+        <div class="tit"><b id="t-par">PARÁMETROS</b><span class="der">CULTIVO 08</span></div>
+        <div class="desplaza"><table>
+          <thead><tr><th>VAR</th><th class="num">VALOR</th><th class="num">MÍN</th><th class="num">MÁX</th></tr></thead>
+          <tbody>
+            <tr><td>PERCLOS</td><td class="num" id="t-perclos">0.31</td><td class="num">0.08</td><td class="num">0.52</td></tr>
+            <tr><td>ÁREA VIVA %</td><td class="num" id="t-area">—</td><td class="num" id="t-area-min">—</td><td class="num" id="t-area-max">—</td></tr>
+            <tr><td>MUERTE %</td><td class="num rd" id="t-muerte">—</td><td class="num">0.0</td><td class="num">100</td></tr>
+            <tr><td>DOSIS LX·S</td><td class="num" id="t-dosis">0</td><td class="num">—</td><td class="num">—</td></tr>
+          </tbody>
+        </table></div>
+      </section>
+
+      <section class="panel" aria-labelledby="t-sub">
+        <div class="tit"><b id="t-sub">SUBSISTEMAS</b><span class="der">SALA · RED</span></div>
+        <div class="desplaza"><table>
+          <tbody>
+            <tr><td>ANILLO LED</td><td class="num" id="s-led-sala">APAG</td><td class="num" id="s-led-red">APAG</td></tr>
+            <tr><td>COMPUERTA Ø</td><td class="num" id="s-comp">CERR</td><td class="num">—</td></tr>
+            <tr><td>GRILLETE · IMÁN</td><td class="num" id="s-grill">LIBRE</td><td class="num">—</td></tr>
+            <tr><td>MICROSCOPIO</td><td class="num" id="s-micro" colspan="2">ESPERA DE LUZ</td></tr>
+            <tr><td>BOMBA GOTEO</td><td class="num vd">0.4 ML/H</td><td class="num">—</td></tr>
+            <tr><td>CONSULTAS</td><td class="num" id="s-cons-sala">0</td><td class="num" id="s-cons-red">0</td></tr>
+            <tr><td>PARPADEOS</td><td class="num" id="s-parp" colspan="2">0</td></tr>
+            <tr><td>VISITANTE EN TURNO</td><td class="num" id="s-turno" colspan="2">#0000</td></tr>
+            <tr><td>CULTIVOS MUERTOS</td><td class="num vd" id="s-muertos" colspan="2">07</td></tr>
+          </tbody>
+        </table></div>
+      </section>
+
+      <section class="panel" aria-labelledby="t-dest">
+        <div class="tit"><b id="t-dest">DESTELLOS</b><span class="der">200 MS · RETRASO 40 MS</span></div>
+        <div class="desplaza"><table id="destellos"><tbody></tbody></table></div>
+        <div class="suministro" style="border-top:1px solid var(--line)">
+          <div><span id="sum-txt">LA LUZ ESPERA UNA MIRADA</span><div class="barra" id="sum-barra-c"><i id="sum-barra"></i></div></div>
+          <div id="sum-resta" class="v">LISTA</div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ============ centro: pantalla y senales ============ -->
+    <div class="col">
+      <section class="panel alcance" aria-labelledby="t-cam">
+        <div class="tit"><b id="t-cam">CAM-01 · PERISCOPIO</b><span>PLACA 90 MM</span><span class="der" id="r-captura">CAPTURA —</span></div>
+        <canvas id="pantalla" width="900" height="774" aria-label="Pantalla del cultivo de Physarum vista por el periscopio"></canvas>
+        <div class="rot"><span id="r-modo">AUTOM · SALA + RED</span><br>BARRIDO <b id="r-barrido">000°</b></div>
+        <div class="aviso" id="r-aviso"></div>
+        <div class="lect li" id="r-izq">L=0.00<br>D=0<br>LUZ: NO</div>
+        <div class="lect ld" id="r-der">ÁREA=0.000<br>AGENTES=7000<br>V=0.000</div>
+        <div class="camara" id="camara" aria-live="polite">
+          <canvas id="cam" width="1280" height="1100" aria-label="Imagen de la webcam que mira la placa de Petri"></canvas>
+          <div class="cs sup"><b>●</b> CAM-02 · WEBCAM SOBRE LA PLACA</div>
+          <div class="cs der" id="cam-der">1920×1080 · 30 CPS</div>
+          <div class="cs poema" id="cam-poema"></div>
+          <div class="cs inf" id="cam-inf"></div>
+        </div>
+      </section>
+      <section class="panel senales" aria-label="Señales en vivo">
+        <div><div class="tit"><b>PÁRPADO</b><span class="der" id="sg-perclos">PERCLOS 0.00</span></div><canvas id="parpado" width="600" height="184" aria-label="Traza de apertura del párpado del visitante en turno"></canvas></div>
+        <div><div class="tit"><b>LATIDO</b><span class="der">LA SALA RESPIRA</span></div><canvas id="osc" width="600" height="184" aria-label="Forma de onda del sonido de la sala"></canvas></div>
+      </section>
+      <section class="cultivos" aria-label="Cultivos: 01 a 07 archivados, 08 activo, 09 y 10 en reserva">
+        <div class="vd">01</div><div class="vd">02</div><div class="vd">03</div><div class="vd">04</div><div class="vd">05</div>
+        <div class="vd">06</div><div class="vd">07</div><div class="v">08</div><div>09</div><div>10</div>
+      </section>
+    </div>
+
+    <!-- ============ derecha: padron, vitrina, flujo ============ -->
+    <div class="col der">
+      <section class="panel padron" aria-labelledby="t-pad">
+        <div class="tit"><b id="t-pad">PADRÓN</b><span class="der" id="pad-n">0 REGISTROS</span></div>
+        <canvas id="padron" width="560" height="940" aria-label="Padrón: un código de parpadeos por visita, avanzando sin pausa; en rojo las visitas por la red"></canvas>
+      </section>
+      <section class="panel vitrina" aria-labelledby="t-vit">
+        <div class="tit"><b id="t-vit">VITRINA</b><span class="der">40 × 40 × 45 CM</span></div>
+        <canvas id="vitrina" width="560" height="380" aria-label="Modelo de alambre de la vitrina girando"></canvas>
+      </section>
+      <section class="panel" aria-labelledby="t-flu">
+        <div class="tit"><b id="t-flu">FLUJO</b><span class="der">DIVIDUOS</span></div>
+        <div class="flujo" id="flujo" aria-hidden="true"></div>
+      </section>
+    </div>
+  </div>
+
+  <nav class="teclas" aria-label="Comandos">
+    <button class="tecla" id="k-autom" type="button" aria-pressed="true" title="Escuchar a la sala y a la red">AUTOM</button>
+    <button class="tecla" id="k-manual" type="button" aria-pressed="false" title="Escuchar solo a la red">MANUAL</button>
+    <button class="tecla luz" id="k-luz" type="button" aria-describedby="sum-txt">MIRAR</button>
+    <button class="tecla" data-vista="bitacora" type="button" aria-pressed="true">BITÁCORA</button>
+    <button class="tecla" data-vista="fotos" type="button" aria-pressed="false">FOTOS</button>
+    <button class="tecla" data-vista="curva" type="button" aria-pressed="false">CURVA</button>
+    <button class="tecla" id="k-contrato" type="button">CONTRATO</button>
+    <button class="tecla" id="k-vigilar" type="button">VIGILAR</button>
+  </nav>
+
+  <section class="panel vista" id="v-bitacora" aria-label="Bitácora">
+    <div class="bitacora" id="bitacora" role="log" aria-live="polite"><table><tbody id="bit-cuerpo"></tbody></table></div>
+  </section>
+  <section class="panel vista" id="v-fotos" aria-label="Fotografías de visitas remotas" hidden><div class="fotos" id="fotos"></div></section>
+  <section class="panel vista curva" id="v-curva" aria-label="Curva de crecimiento" hidden>
+    <svg id="curva" viewBox="0 0 1000 250" role="img" aria-label="Porcentaje de área viva del cultivo por día de exhibición"></svg>
+  </section>
+
+  <footer class="nota">
+    <span>AGRYPNIA · vigilia y castigo sobre un cultivo de <i>Physarum polycephalum</i>.</span>
+    <span>Aquí no hay noche: cada visita es un párpado que se abre sobre otro cuerpo.</span>
+    <span>Tu número se borra al cierre de la exhibición; la luz que diste se queda en el organismo.</span>
+    <span>Prototipo: la sala está simulada y aquí cada mirada ocurre a solas.</span>
+    <a href="ra/">Ver el prototipo en realidad aumentada →</a>
+  </footer>
 </div>
-<div id="glitch-overlay"></div>
+
+<div class="velo" id="velo" role="dialog" aria-modal="true" aria-labelledby="t-contrato">
+  <div class="panel contrato">
+    <h2 id="t-contrato" class="r">CONTRATO DE ADHESIÓN</h2>
+    <div class="txt">
+      Para verlo tienes que tocarlo con luz. Firma sin leer, como se firma todo:
+      <ol>
+        <li>Cada mirada es una herida breve: doscientos milisegundos de luz sobre un cuerpo que la rehúye.</li>
+        <li>Tu nombre se cambia por un número. Ese número entra al padrón y ya no sale.</li>
+        <li>La cámara guarda lo que tu luz alumbró; los demás verán tu huella.</li>
+        <li>Al cerrar la exhibición se borra tu número. La luz que diste se queda en el organismo.</li>
+      </ol>
+    </div>
+    <div class="acc">
+      <button class="tecla luz" id="aceptar" type="button">ACEPTO Y MIRO</button>
+      <button class="tecla" id="cancelar" type="button">PREFIERO NO VERLO</button>
+    </div>
+  </div>
+</div>
 
 <script>
-const out = document.getElementById('output');
+// ============================================================ utilidades
+const $ = (id) => document.getElementById(id);
+const pad = (n, w = 2) => String(Math.floor(Math.max(0, n))).padStart(w, '0');
+const reducido = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const INICIO = new Date('2026-10-01T10:00:00');
+const COOLDOWN = 60000;
+const C = { line: '#4f6b55', text: '#dfe8d8', muted: '#7f9483', green: '#2f9e57', greenD: '#0f3a21', red: '#e23b2e', amber: '#f1b81f' };
+const fmtHora = (t) => { const d = new Date(t); return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()); };
+const miles = (n) => Math.round(n).toLocaleString('es-MX');
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function hash32(s) { let h = 2166136261; for (const c of s) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+function rnd(seed) { let s = seed >>> 0; return () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+function lienzoHD(c) { const r = c.getBoundingClientRect(); const s = Math.min(2, window.devicePixelRatio || 1); const w = Math.max(50, Math.round(r.width * s)), h = Math.max(30, Math.round(r.height * s)); if (c.width !== w || c.height !== h) { c.width = w; c.height = h; } return c.getContext('2d'); }
 
-// segments: text + class + delay-per-char(ms) + pause-after(ms)
-const script = [
-  { t: "BIOS v3.11 — SUBJECT INTERFACE\n", c: "dim", d: 4, p: 200 },
-  { t: "loading kernel: /disciplin/normalize.sys ... ", c: "dim", d: 3, p: 100 },
-  { t: "OK\n", c: "white", d: 2, p: 300 },
-  { t: "mounting archive [visibility=TRUE, opacity=inherited] ... ", c: "dim", d: 3, p: 100 },
-  { t: "OK\n\n", c: "white", d: 2, p: 400 },
+// estado
+let db = null, usuario = null, miId = null, miCodigo = 'OBS-LOCAL', puedeEscribir = true, ultimoGlobal = 0, enviando = false;
+let ultimoLocal = 0, autom = true, enLinea = 1, perclos = 0.24;
+let consultasSala = 4128, parpadeos = 4608, turno = 219, muertos = 7, consultasWeb = 0, dosis = 18432;
+let visitasWeb = [], destellos = [];
 
-  { t: "> init hello_world.exe\n", c: "white", d: 18, p: 500 },
-  { t: "[ERROR] handshake refused by subject.\n", c: "warn", d: 12, p: 500 },
-  { t: "[SYS]   redirecting stdout to central_tower/observer\n\n", c: "dim", d: 8, p: 600 },
+// ============================================================ Physarum (modelo de agentes de Jones, 2010)
+const W = 300, N = 7000, CX = W / 2, CY = W / 2, RAD = W / 2 - 10;
+const trail = new Float32Array(W * W), tmp = new Float32Array(W * W), dentro = new Uint8Array(W * W);
+let areaPlaca = 0;
+for (let y = 0; y < W; y++) for (let x = 0; x < W; x++) if (Math.hypot(x - CX, y - CY) < RAD) { dentro[y * W + x] = 1; areaPlaca++; }
+const ax = new Float32Array(N), ay = new Float32Array(N), ah = new Float32Array(N);
+const azar = rnd(8);
+for (let i = 0; i < N; i++) { const a = azar() * Math.PI * 2, r = Math.sqrt(azar()) * RAD * 0.92; ax[i] = CX + Math.cos(a) * r; ay[i] = CY + Math.sin(a) * r; ah[i] = azar() * Math.PI * 2; }
+const avena = [];
+for (let k = 0; k < 9; k++) { const a = k * 2.4 + azar(), r = 30 + azar() * (RAD - 50); avena.push([CX + Math.cos(a) * r, CY + Math.sin(a) * r]); }
+const SA = 0.5, RA = 0.42, SO = 9, SS = 1.15, DEP = 5;
+const muestra = (x, y) => { const xi = x | 0, yi = y | 0; return (xi < 0 || yi < 0 || xi >= W || yi >= W) ? -1 : trail[yi * W + xi]; };
+function paso(luz) {
+  const huye = luz > 0.25;
+  for (let i = 0; i < N; i++) {
+    let h = ah[i];
+    const x = ax[i], y = ay[i];
+    const f = muestra(x + Math.cos(h) * SO, y + Math.sin(h) * SO);
+    const l = muestra(x + Math.cos(h - SA) * SO, y + Math.sin(h - SA) * SO);
+    const r = muestra(x + Math.cos(h + SA) * SO, y + Math.sin(h + SA) * SO);
+    if (f > l && f > r) { /* sigue */ }
+    else if (f < l && f < r) h += (Math.random() < 0.5 ? -RA : RA);
+    else if (l > r) h -= RA;
+    else if (r > l) h += RA;
+    if (huye) h += (Math.random() - 0.5) * 2.2;            // la luz desorganiza la red: el plasmodio la evita
+    let nx = x + Math.cos(h) * SS, ny = y + Math.sin(h) * SS;
+    if (Math.hypot(nx - CX, ny - CY) >= RAD - 1) { h = Math.atan2(CY - y, CX - x) + (Math.random() - 0.5); nx = x; ny = y; }
+    ax[i] = nx; ay[i] = ny; ah[i] = h;
+    trail[(ny | 0) * W + (nx | 0)] += DEP;
+  }
+  for (const [fx, fy] of avena) for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) trail[((fy + dy) | 0) * W + ((fx + dx) | 0)] += 3.2;
+  const decae = huye ? 0.84 : 0.915;
+  for (let y = 1; y < W - 1; y++) {
+    const o = y * W;
+    for (let x = 1; x < W - 1; x++) {
+      const k = o + x;
+      if (!dentro[k]) { tmp[k] = 0; continue; }
+      tmp[k] = (trail[k - W - 1] + trail[k - W] + trail[k - W + 1] + trail[k - 1] + trail[k] + trail[k + 1] + trail[k + W - 1] + trail[k + W] + trail[k + W + 1]) / 9 * decae;
+    }
+  }
+  trail.set(tmp);
+}
+const lienzo = document.createElement('canvas'); lienzo.width = lienzo.height = W;
+const lctx = lienzo.getContext('2d');
+const imgD = lctx.createImageData(W, W);
+function pintar(luz) {
+  const d = imgD.data, L = Math.max(0, luz);
+  for (let k = 0, p = 0; k < W * W; k++, p += 4) {
+    if (!dentro[k]) { d[p] = d[p + 1] = d[p + 2] = d[p + 3] = 0; continue; }
+    const v = Math.min(1, trail[k] / 16);
+    const y = (k / W) | 0, x = k - y * W;
+    const borde = Math.hypot(x - CX, y - CY) / RAD, il = L * (0.75 + 0.35 * borde * borde);
+    d[p] = Math.min(255, (34 + 220 * v) * il + 2); d[p + 1] = Math.min(255, (24 + 175 * v * v) * il + 2); d[p + 2] = Math.min(255, (10 + 20 * v) * il + 2); d[p + 3] = 255;
+  }
+  lctx.putImageData(imgD, 0, 0);
+}
+function areaViva() { let c = 0; for (let k = 0; k < W * W; k++) if (dentro[k] && trail[k] > 3) c++; return c / areaPlaca; }
+for (let i = 0; i < 160; i++) paso(0);
 
-  { t: "there is no need for arms, physical violence, material constraints.\n", c: "white", d: 14, p: 300 },
-  { t: "only a gaze. an inspecting gaze, a gaze which each individual under\n", c: "white", d: 14, p: 300 },
-  { t: "its weight will end by interiorising.\n", c: "accent", d: 16, p: 900 },
-  { t: "  — the cell is lit. you are the lighting.\n\n", c: "dim", d: 12, p: 700 },
-
-  { t: "> query time_direction\n", c: "white", d: 18, p: 400 },
-  { t: "nothing human makes it out of the near-future.\n", c: "accent", d: 16, p: 900 },
-  { t: "capital is not an ideology. it is a process wearing your face\n", c: "white", d: 14, p: 300 },
-  { t: "as a temporary interface, melting downward through the market\n", c: "white", d: 14, p: 300 },
-  { t: "into the machinic phylum.\n\n", c: "white", d: 14, p: 900 },
-
-  { t: "[SYS] panopticon.core :: process forked\n", c: "dim", d: 8, p: 200 },
-  { t: "[SYS] surveillance is no longer imposed from outside — it is now\n", c: "dim", d: 8, p: 100 },
-  { t: "      compiled at runtime, by the subject, on itself.\n\n", c: "dim", d: 8, p: 800 },
-
-  { t: "> echo $STATUS\n", c: "white", d: 18, p: 400 },
-  { t: "WATCHED. WATCHING. INDISTINGUISHABLE.\n", c: "warn", d: 20, p: 1000 },
-  { t: "TIME IS COLLAPSING TOWARD AN OUTSIDE THAT HAS ALREADY ARRIVED.\n\n", c: "warn", d: 20, p: 1200 },
-
-  { t: "THERE IS NO WORLD TO SAY HELLO.\n", c: "accent", d: 16, p: 600 },
-  { t: "> _", c: "white", d: 0, p: 0 },
-];
-
-let i = 0, ci = 0;
-let currentSpan = null;
-
-function glitchPulse(){
-  const g = document.getElementById('glitch-overlay');
-  g.style.background = 'rgba(0,255,65,0.05)';
-  g.style.opacity = 1;
-  setTimeout(()=>{ g.style.opacity = 0; }, 60);
+// ============================================================ audio (Web Audio API): drone + golpe por parpadeo
+let ac = null, droneGain = null, analizador = null, maestro = null;
+function iniciarAudio() {
+  if (ac) return;
+  ac = new (window.AudioContext || window.webkitAudioContext)();
+  maestro = ac.createGain(); maestro.gain.value = 0.8;
+  const comp = ac.createDynamicsCompressor();
+  analizador = ac.createAnalyser(); analizador.fftSize = 2048;
+  maestro.connect(comp); comp.connect(analizador); analizador.connect(ac.destination);
+  droneGain = ac.createGain(); droneGain.gain.value = 0; droneGain.connect(maestro);
+  // drone: sol grave con su quinta y octavas (los mismos parametros que el audio de TouchDesigner)
+  [[49, 0.5], [73.6, 0.35], [98.3, 0.25], [147.2, 0.12]].forEach(([f, a], i) => {
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.frequency.value = f; o.detune.value = i % 2 ? 6 : -4; g.gain.value = a;
+    const lfo = ac.createOscillator(), lg = ac.createGain(); lfo.frequency.value = 0.07 + i * 0.03; lg.gain.value = a * 0.25;
+    lfo.connect(lg); lg.connect(g.gain); lfo.start();
+    o.connect(g); g.connect(droneGain); o.start();
+  });
+  const n = ac.sampleRate * 4, buf = ac.createBuffer(1, n, ac.sampleRate), ch = buf.getChannelData(0);
+  for (let i = 0; i < n; i++) ch[i] = Math.random() * 2 - 1;
+  const ruido = ac.createBufferSource(); ruido.buffer = buf; ruido.loop = true;
+  const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 220;
+  const rg = ac.createGain(); rg.gain.value = 0.22;
+  ruido.connect(lp); lp.connect(rg); rg.connect(droneGain); ruido.start();
+  droneGain.gain.linearRampToValueAtTime(0.16 + 0.32 * perclos, ac.currentTime + 1.5);
+}
+function golpe() {
+  if (!ac || ac.state !== 'running') return;
+  const t = ac.currentTime;
+  const o = ac.createOscillator(), g = ac.createGain();
+  o.type = 'sine'; o.frequency.setValueAtTime(175, t); o.frequency.exponentialRampToValueAtTime(45, t + 0.12);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.95, t + 0.003); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.55);
+  o.connect(g); g.connect(maestro); o.start(t); o.stop(t + 0.6);
+  [[2350, 0.12, 0.03], [3520, 0.06, 0.02]].forEach(([f, a, d]) => {             // el tic metalico del checador
+    const m = ac.createOscillator(), mg = ac.createGain();
+    m.frequency.value = f; mg.gain.setValueAtTime(a, t); mg.gain.exponentialRampToValueAtTime(0.0001, t + d * 4);
+    m.connect(mg); mg.connect(maestro); m.start(t); m.stop(t + d * 4 + 0.02);
+  });
+}
+// ============================================================ parpados del visitante en turno (traza)
+const traza = new Float32Array(600).fill(1);
+let parpadeo = null;                                        // {t0, d} en ms (performance.now)
+function apertura(ahora) {
+  if (!parpadeo) return 1;
+  const dt = ahora - parpadeo.t0;
+  if (dt < 60) return 1 - dt / 60;
+  if (dt < parpadeo.d) return 0;
+  if (dt < parpadeo.d + 140) return (dt - parpadeo.d) / 140;
+  parpadeo = null; return 1;
 }
 
-function typeNext(){
-  if(i >= script.length){
-    startCursor();
+// ============================================================ destellos
+let destello = null, tUltimaCaptura = Date.now() - 74000;
+const ultimaCaptura = document.createElement('canvas'); ultimaCaptura.width = ultimaCaptura.height = W;
+pintar(1); ultimaCaptura.getContext('2d').drawImage(lienzo, 0, 0);
+function iniciarDestello(fuente, etiqueta, mio) {
+  destello = { t0: performance.now(), fuente, etiqueta, mio, capturado: false };
+  dosis += 200;
+  destellos.unshift({ t: Date.now(), fuente, etiqueta, foto: mio && !!db });
+  destellos = destellos.slice(0, 5);
+  pintarDestellos();
+  golpe();
+  flujo('LED ' + fuente + ' · ' + etiqueta + ' · 200MS', true);
+}
+function luzActual(ahora) {
+  if (!destello) return 0;
+  const dt = ahora - destello.t0;
+  if (dt < 40) return 0;
+  if (dt < 240) return 1;
+  if (dt < 900) return Math.max(0, 1 - (dt - 240) / 660);
+  return -1;
+}
+
+// ============================================================ pantalla circular con barrido
+const pantalla = $('pantalla'), pc = pantalla.getContext('2d');
+const PW = pantalla.width, PH = pantalla.height, PCX = PW * 0.55, PCY = PH * 0.53, PR = PH * 0.42;
+const fondo = rnd(31);
+const estrellas = Array.from({ length: 200 }, () => { const a = fondo() * Math.PI * 2, r = PR * (0.66 + fondo() * 0.5); return [PCX + Math.cos(a) * r, PCY + Math.sin(a) * r, fondo()]; });
+const ecos = [];                                            // marcas que deja el barrido sobre las fuentes de alimento
+let barrido = 0;
+function dibujarPantalla(luz) {
+  pc.fillStyle = '#000'; pc.fillRect(0, 0, PW, PH);
+  const RC = PR * 0.62, s = RC * 2 / W;
+  pc.save(); pc.beginPath(); pc.arc(PCX, PCY, RC, 0, Math.PI * 2); pc.clip();
+  if (luz > 0.02) { pintar(luz); pc.drawImage(lienzo, PCX - RC, PCY - RC, RC * 2, RC * 2); }
+  else { pc.globalAlpha = 0.2; pc.filter = 'grayscale(1)'; pc.drawImage(ultimaCaptura, PCX - RC, PCY - RC, RC * 2, RC * 2); pc.filter = 'none'; pc.globalAlpha = 1; }
+  pc.restore();
+  pc.fillStyle = luz > 0.02 ? 'rgba(223,232,216,.22)' : 'rgba(110,200,140,.55)';
+  for (let i = 0; i < N; i += 7) pc.fillRect(PCX - RC + ax[i] * s, PCY - RC + ay[i] * s, 1.6, 1.6);
+  // barrido de radar con estela
+  if (!reducido) barrido = (barrido + 0.022) % (Math.PI * 2);
+  for (let k = 0; k < 26; k++) {
+    const a = barrido - k * 0.018;
+    pc.strokeStyle = 'rgba(47,158,87,' + (0.55 * (1 - k / 26)) + ')'; pc.lineWidth = 2;
+    pc.beginPath(); pc.moveTo(PCX, PCY); pc.lineTo(PCX + Math.cos(a) * PR, PCY + Math.sin(a) * PR); pc.stroke();
+  }
+  for (const [fx, fy] of avena) {
+    const a = Math.atan2(fy - CY, fx - CX), dif = Math.abs(((barrido - a) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2));
+    if (dif < 0.05) ecos.push({ x: PCX - RC + fx * s, y: PCY - RC + fy * s, v: 1 });
+  }
+  for (let i = ecos.length - 1; i >= 0; i--) {
+    const e = ecos[i]; pc.strokeStyle = 'rgba(47,158,87,' + e.v + ')'; pc.lineWidth = 1.5;
+    pc.strokeRect(e.x - 7, e.y - 7, 14, 14); e.v -= 0.008; if (e.v <= 0) ecos.splice(i, 1);
+  }
+  // anillos, reticula y marcas angulares
+  pc.strokeStyle = C.line; pc.lineWidth = 1.2;
+  for (const f of [1, 0.8, 0.62, 0.32, 0.12]) { pc.beginPath(); pc.arc(PCX, PCY, PR * f, 0, Math.PI * 2); pc.stroke(); }
+  pc.setLineDash([2, 7]); pc.beginPath(); pc.arc(PCX, PCY, PR * 0.9, 0, Math.PI * 2); pc.stroke(); pc.setLineDash([]);
+  pc.beginPath(); pc.moveTo(PCX - PR, PCY); pc.lineTo(PCX + PR, PCY); pc.moveTo(PCX, PCY - PR); pc.lineTo(PCX, PCY + PR); pc.stroke();
+  pc.strokeStyle = C.text;
+  for (let g = 0; g < 360; g += 10) { const a = g * Math.PI / 180, r0 = PR * (g % 30 === 0 ? 0.95 : 0.975); pc.beginPath(); pc.moveTo(PCX + Math.cos(a) * r0, PCY + Math.sin(a) * r0); pc.lineTo(PCX + Math.cos(a) * PR, PCY + Math.sin(a) * PR); pc.stroke(); }
+  for (const [x, y, b] of estrellas) { pc.fillStyle = 'rgba(127,148,131,' + (0.2 + b * 0.5) + ')'; pc.fillRect(x, y, 1.5, 1.5); }
+  // curva de dosis acumulada (roja) con los ultimos destellos
+  const frac = Math.min(1, (dosis % 20000) / 20000 + 0.25);
+  const p0 = [PCX + 4, PCY + 4], p1 = [PCX + PR * 0.95, PCY + PR * 0.12], p2 = [PCX + PR * 0.74, PCY - PR * 0.96];
+  const punto = (t) => { const u = 1 - t; return [u * u * p0[0] + 2 * u * t * p1[0] + t * t * p2[0], u * u * p0[1] + 2 * u * t * p1[1] + t * t * p2[1]]; };
+  pc.strokeStyle = C.red; pc.lineWidth = 2.5; pc.beginPath(); pc.moveTo(p0[0], p0[1]);
+  for (let t = 0; t <= frac; t += 0.02) { const p = punto(t); pc.lineTo(p[0], p[1]); }
+  pc.stroke();
+  pc.fillStyle = C.text;
+  destellos.forEach((d, i) => { const p = punto(Math.max(0.05, frac - i * 0.09)); pc.beginPath(); pc.arc(p[0], p[1], 4, 0, Math.PI * 2); pc.fill(); });
+  // retícula de objetivo sobre el centro de la placa
+  pc.strokeStyle = luz > 0.02 ? C.red : C.green; pc.lineWidth = 2;
+  const q = 22; for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) { pc.beginPath(); pc.moveTo(PCX + sx * q, PCY + sy * (q - 10)); pc.lineTo(PCX + sx * q, PCY + sy * q); pc.lineTo(PCX + sx * (q - 10), PCY + sy * q); pc.stroke(); }
+  // escala lateral de luz
+  const ex = PW * 0.08, ey0 = PH * 0.3, ey1 = PH * 0.8;
+  pc.strokeStyle = C.text; pc.lineWidth = 1.2; pc.beginPath(); pc.moveTo(ex, ey0); pc.lineTo(ex, ey1); pc.stroke();
+  pc.font = '700 18px "B612 Mono", monospace'; pc.fillStyle = C.muted;
+  for (let i = 0; i <= 12; i++) { const y = ey1 - (ey1 - ey0) * i / 12, l = i % 3 === 0 ? 20 : 10; pc.beginPath(); pc.moveTo(ex - l / 2, y); pc.lineTo(ex + l / 2, y); pc.stroke(); if (i % 3 === 0) pc.fillText(String(i / 3 * 25), ex + 18, y + 6); }
+  const ym = ey1 - (ey1 - ey0) * Math.max(0, luz);
+  pc.fillStyle = C.red; pc.beginPath(); pc.moveTo(ex - 14, ym); pc.lineTo(ex - 28, ym - 8); pc.lineTo(ex - 28, ym + 8); pc.closePath(); pc.fill();
+}
+
+// ============================================================ senales: parpado y osciloscopio
+const cParp = $('parpado'), cOsc = $('osc');
+const ondaBuf = new Float32Array(2048);
+function dibujarSenales(ahora) {
+  const ap = apertura(ahora);
+  traza.copyWithin(0, 1); traza[traza.length - 1] = ap;
+  let x = lienzoHD(cParp), w = cParp.width, h = cParp.height;
+  x.fillStyle = '#000'; x.fillRect(0, 0, w, h);
+  x.strokeStyle = '#18241b'; x.lineWidth = 1;
+  for (let i = 1; i < 4; i++) { x.beginPath(); x.moveTo(0, h * i / 4); x.lineTo(w, h * i / 4); x.stroke(); }
+  const umbral = h * 0.12 + (h * 0.76) * (1 - 0.2);           // PERCLOS cuenta el ojo cerrado mas de 80 %
+  x.strokeStyle = C.red; x.setLineDash([4, 5]); x.beginPath(); x.moveTo(0, umbral); x.lineTo(w, umbral); x.stroke(); x.setLineDash([]);
+  x.strokeStyle = C.green; x.lineWidth = 2; x.beginPath();
+  for (let i = 0; i < traza.length; i++) { const px = i / (traza.length - 1) * w, py = h * 0.12 + (h * 0.76) * (1 - traza[i]); i ? x.lineTo(px, py) : x.moveTo(px, py); }
+  x.stroke();
+  // osciloscopio
+  x = lienzoHD(cOsc); w = cOsc.width; h = cOsc.height;
+  x.fillStyle = '#000'; x.fillRect(0, 0, w, h);
+  x.strokeStyle = '#18241b'; x.lineWidth = 1;
+  for (let i = 1; i < 8; i++) { x.beginPath(); x.moveTo(w * i / 8, 0); x.lineTo(w * i / 8, h); x.stroke(); }
+  x.beginPath(); x.moveTo(0, h / 2); x.lineTo(w, h / 2); x.stroke();
+  const vivo = analizador && ac && ac.state === 'running';
+  if (vivo) analizador.getFloatTimeDomainData(ondaBuf);
+  x.strokeStyle = vivo ? C.green : C.line; x.lineWidth = 2; x.beginPath();
+  for (let i = 0; i < 512; i++) {
+    const v = vivo ? ondaBuf[i * 2] : 0.04 * Math.sin(i * 0.09 + ahora * 0.004) + (Math.random() - 0.5) * 0.02;
+    const px = i / 511 * w, py = h / 2 - v * h * 0.42; i ? x.lineTo(px, py) : x.moveTo(px, py);
+  }
+  x.stroke();
+}
+
+// ============================================================ vitrina de alambre
+const cVit = $('vitrina');
+const caja = []; { const a = 0.5, b = 0.55, c = 0.5; for (const sx of [-1, 1]) for (const sy of [-1, 1]) for (const sz of [-1, 1]) caja.push([sx * a / 2, sy * b / 2, sz * c / 2]); }
+const aristas = [[0, 1], [2, 3], [4, 5], [6, 7], [0, 2], [1, 3], [4, 6], [5, 7], [0, 4], [1, 5], [2, 6], [3, 7]];
+function dibujarVitrina(ahora, luz) {
+  const x = lienzoHD(cVit), w = cVit.width, h = cVit.height;
+  x.fillStyle = '#000'; x.fillRect(0, 0, w, h);
+  const ang = reducido ? 0.6 : ahora * 0.00025, ca = Math.cos(ang), sa = Math.sin(ang), inc = 0.42;
+  const k = Math.min(w, h) * 1.15;
+  const proy = ([px, py, pz]) => { const rx = px * ca - pz * sa, rz = px * sa + pz * ca; const ry = py * Math.cos(inc) - rz * Math.sin(inc), rz2 = py * Math.sin(inc) + rz * Math.cos(inc); const f = 2.2 / (2.2 + rz2); return [w / 2 + rx * k * f, h / 2 - ry * k * f]; };
+  x.strokeStyle = C.green; x.lineWidth = 1.4;
+  for (const [a, b] of aristas) { const p = proy(caja[a]), q = proy(caja[b]); x.beginPath(); x.moveTo(p[0], p[1]); x.lineTo(q[0], q[1]); x.stroke(); }
+  // recipiente, placa y anillo de LED
+  const anillo = (r, y, color, ancho) => { x.strokeStyle = color; x.lineWidth = ancho; x.beginPath(); for (let i = 0; i <= 40; i++) { const a = i / 40 * Math.PI * 2, p = proy([Math.cos(a) * r, y, Math.sin(a) * r]); i ? x.lineTo(p[0], p[1]) : x.moveTo(p[0], p[1]); } x.stroke(); };
+  anillo(0.1, -0.22, C.muted, 1); anillo(0.1, -0.02, C.muted, 1);
+  anillo(0.045, -0.2, luz > 0.02 ? C.amber : C.muted, luz > 0.02 ? 3 : 1);
+  anillo(0.085, -0.03, luz > 0.02 ? C.red : C.greenD, luz > 0.02 ? 3 : 2);
+  // visor
+  const v = [[-0.12, 0.05, 0.25], [0.12, 0.05, 0.25], [0.12, 0.05, 0.36], [-0.12, 0.05, 0.36]].map(proy);
+  x.strokeStyle = C.text; x.lineWidth = 1; x.beginPath(); v.forEach((p, i) => i ? x.lineTo(p[0], p[1]) : x.moveTo(p[0], p[1])); x.closePath(); x.stroke();
+  x.fillStyle = C.muted; x.font = '700 ' + Math.round(h * 0.07) + 'px "B612 Mono", monospace';
+  x.fillText('ROT ' + pad(((ang * 180 / Math.PI) % 360 + 360) % 360, 3) + '°', 10, h - 10);
+}
+
+// ============================================================ padron: siempre visible y avanzando
+const cPad = $('padron');
+const filasPadron = [];                                     // {id, etiqueta, barras:[], web, mia}
+function nuevaFila(id, etiqueta, web, mia, barras) {
+  const r = rnd(hash32(id)), b = [];
+  const n = barras != null ? barras : 6 + Math.floor(r() * 30);
+  for (let i = 0; i < n; i++) b.push(r() < 0.5 ? 1 : 2);
+  filasPadron.push({ id, etiqueta, barras: b, web, mia, r });
+  if (filasPadron.length > 400) filasPadron.shift();
+  $('pad-n').textContent = miles(turno + consultasWeb) + ' REGISTROS';
+}
+for (let i = turno - 70; i <= turno; i++) nuevaFila('S' + i, '#' + pad(i, 4), false, false, i === turno ? 3 : null);function barraTurno() { const f = [...filasPadron].reverse().find((x) => !x.web); if (f) f.barras.push(f.r() < 0.5 ? 1 : 2); }
+let desfase = -1;
+function dibujarPadron() {
+  const x = lienzoHD(cPad), w = cPad.width, h = cPad.height, esc_ = w / 280;
+  const fila = 15 * esc_;
+  if (desfase < 0) desfase = Math.max(0, filasPadron.length - Math.floor(h / fila) + 3) * fila;   // arranca en lo mas reciente
+  if (!reducido) desfase += 0.35 * esc_;                    // el padron avanza sin pausa
+  x.fillStyle = '#000'; x.fillRect(0, 0, w, h);
+  // el padron sube sin pausa en orden de registro; al terminar vuelve a empezar tras una marca
+  const visibles = Math.ceil(h / fila) + 2, ciclo = filasPadron.length + 1;
+  const base = Math.floor(desfase / fila), resto = desfase % fila;
+  for (let k = 0; k < visibles; k++) {
+    const idx = (base + k) % ciclo;
+    const y = k * fila - resto + 4 * esc_;
+    if (idx === filasPadron.length) {
+      x.fillStyle = C.red; x.font = '700 ' + Math.round(9 * esc_) + 'px "B612 Mono", monospace';
+      x.fillText('── FIN DEL PADRÓN · REINICIA ──', 6 * esc_, y + 10 * esc_);
+      continue;
+    }
+    const f = filasPadron[idx];
+    const esUlt = f === filasPadron[filasPadron.length - 1];
+    x.fillStyle = f.web ? (f.mia ? C.red : 'rgba(226,59,46,.8)') : (esUlt ? C.green : C.muted);
+    x.font = '700 ' + Math.round(9 * esc_) + 'px "B612 Mono", monospace';
+    x.fillText(f.etiqueta, 6 * esc_, y + 10 * esc_);
+    let bx = 70 * esc_;
+    x.fillStyle = f.web ? C.red : (esUlt ? C.green : C.text);
+    for (let i = 0; i < f.barras.length && bx < w - 6 * esc_; i++) { const b = f.barras[i] * esc_; if ((i * 7 + f.id.length) % 3) x.fillRect(bx, y + 2 * esc_, b, 9 * esc_); bx += b + esc_ * 1.2; }
+  }
+  // linea de lectura
+  x.strokeStyle = 'rgba(47,158,87,.5)'; x.beginPath(); x.moveTo(0, fila * 1.2); x.lineTo(w, fila * 1.2); x.stroke();
+}
+
+// ============================================================ flujo de datos
+const cajaFlujo = $('flujo'); const lineasFlujo = [];
+function flujo(texto, rojo) {
+  lineasFlujo.push('<div class="' + (rojo ? 'rr' : 'n') + '">' + esc(texto) + '</div>');
+  if (lineasFlujo.length > 8) lineasFlujo.shift();
+  cajaFlujo.innerHTML = lineasFlujo.join('');
+}
+setInterval(() => {
+  const r = Math.random();
+  const hex = (Math.random() * 0xffffffff >>> 0).toString(16).toUpperCase().padStart(8, '0');
+  lineasFlujo.push('<div>0X' + hex + ' · ' + (r < 0.5 ? 'PERCLOS ' + perclos.toFixed(2) : r < 0.8 ? 'IRIS #' + pad(turno, 4) + ' OK' : 'ÁREA ' + areaViva().toFixed(3)) + '</div>');
+  if (lineasFlujo.length > 8) lineasFlujo.shift();
+  cajaFlujo.innerHTML = lineasFlujo.join('');
+}, reducido ? 2400 : 700);
+
+// ============================================================ bucle
+let cuadros = 0, tFps = performance.now();
+function bucle(ahora) {
+  const luz = luzActual(ahora);
+  paso(Math.max(0, luz));
+  dibujarPantalla(Math.max(0, luz));
+  dibujarSenales(ahora);
+  dibujarVitrina(ahora, Math.max(0, luz));
+  dibujarPadron();
+  dibujarCamara(ahora);
+  const enc = luz > 0.02;
+  if (enc && destello && !destello.capturado && ahora - destello.t0 > 200) {
+    destello.capturado = true; ultimaCaptura.getContext('2d').drawImage(lienzo, 0, 0); tUltimaCaptura = Date.now();
+    if (destello.mio) guardarVisita();
+  }
+  if (luz < 0) destello = null;
+  $('r-aviso').textContent = enc ? 'DESTELLO · ' + destello.etiqueta : '';
+  $('r-aviso').className = 'aviso' + (enc ? ' r' : '');
+  const fuenteSala = enc && destello.fuente === 'SALA';
+  $('s-led-sala').textContent = fuenteSala ? 'ENC' : 'APAG'; $('s-led-sala').className = 'num' + (fuenteSala ? ' r' : '');
+  $('s-led-red').textContent = enc && !fuenteSala ? 'ENC' : 'APAG'; $('s-led-red').className = 'num' + (enc && !fuenteSala ? ' r' : '');
+  $('s-micro').textContent = enc ? 'CAPTURA' : 'ESPERA DE LUZ'; $('s-micro').className = 'num' + (enc ? ' v' : '');
+  $('pip-luz').className = enc ? 'alerta' : '';
+  cuadros++;
+  if (ahora - tFps > 1000) {
+    const a = areaViva();
+    $('r-izq').innerHTML = 'L=' + Math.max(0, luz).toFixed(2) + '<br>D=' + miles(dosis) + '<br>LUZ: ' + (enc ? 'SÍ' : 'NO');
+    $('r-der').innerHTML = 'ÁREA=' + a.toFixed(3) + '<br>AGENTES=' + N + '<br>V=' + (cuadros / 60).toFixed(3);
+    cuadros = 0; tFps = ahora;
+  }
+  $('r-barrido').textContent = pad(barrido * 180 / Math.PI, 3) + '°';
+  requestAnimationFrame(bucle);
+}
+requestAnimationFrame(bucle);
+
+// ============================================================ reloj, sala, tablas
+function salaAbierta(d = new Date()) { const h = d.getHours(); return h >= 10 && h < 19 && d.getDay() !== 1; }
+const FASES = [['CRECIMIENTO', 1, 14], ['DESGASTE', 15, 32], ['AUSTERIDAD', 33, 44], ['COLAPSO', 45, 50], ['EXHIBICIÓN', 51, 60]];
+const dia = Math.max(1, Math.floor((Date.now() - INICIO) / 86400000) + 1);
+$('h-fase').textContent = (FASES.find(([, a, b]) => dia >= a && dia <= b) || FASES[4])[0] + ' D' + pad(dia);
+function tic() {
+  const ahora = Date.now(), s = Math.floor((ahora - INICIO) / 1000);
+  $('h-noche').textContent = pad(s / 3600, 4) + ':' + pad((s % 3600) / 60) + ':' + pad(s % 60);
+  $('h-reloj').textContent = fmtHora(ahora);
+  $('h-sala').textContent = salaAbierta() ? 'ABIERTA' : 'CERRADA';
+  $('h-obs').textContent = enLinea;
+  const hace = Math.floor((ahora - tUltimaCaptura) / 1000);
+  $('r-captura').textContent = 'CAPTURA −' + pad(hace / 3600) + ':' + pad((hace % 3600) / 60) + ':' + pad(hace % 60);
+  // la fatiga del visitante en turno sube y baja lentamente; el drone la sigue
+  perclos = 0.18 + 0.2 * (0.5 + 0.5 * Math.sin(ahora / 47000));
+  $('sg-perclos').textContent = 'PERCLOS ' + perclos.toFixed(2);
+  if (droneGain && ac) droneGain.gain.setTargetAtTime(0.16 + 0.32 * perclos, ac.currentTime, 0.5);
+  actualizarLuz();
+}
+setInterval(tic, 250);
+function curvaHistorica(d) { const crec = 82 * (1 - Math.exp(-d / 5.5)), desg = d > 14 ? (d - 14) * 0.95 : 0, aust = d > 32 ? Math.pow(d - 32, 1.45) * 0.9 : 0; return Math.max(4, crec - desg - aust + Math.sin(d * 1.7) * 1.6); }
+let areaMin = Infinity, areaMax = 0;
+function tablas() {
+  const vivo = curvaHistorica(dia) * (0.93 + 0.1 * Math.min(1, areaViva() / 0.55));
+  areaMin = Math.min(areaMin, vivo); areaMax = Math.max(areaMax, vivo);
+  $('t-area').textContent = vivo.toFixed(1); $('t-area-min').textContent = areaMin.toFixed(1); $('t-area-max').textContent = areaMax.toFixed(1);
+  $('t-muerte').textContent = (100 - vivo / curvaHistorica(14) * 100).toFixed(1);
+  $('t-perclos').textContent = perclos.toFixed(2); $('t-perclos').className = 'num' + (perclos > 0.3 ? ' r' : '');
+  $('t-dosis').textContent = miles(dosis);
+  $('s-cons-sala').textContent = miles(consultasSala); $('s-cons-red').textContent = miles(consultasWeb);
+  $('s-parp').textContent = miles(parpadeos); $('s-turno').textContent = '#' + pad(turno, 4); $('s-muertos').textContent = pad(muertos);
+  dibujarCurva(vivo);
+}
+setInterval(tablas, 2000);
+function pintarDestellos() {
+  const tb = $('destellos').tBodies[0];
+  const filas = destellos.length ? destellos : [{ t: tUltimaCaptura, fuente: 'SALA', etiqueta: '#' + pad(turno, 4), foto: false }];
+  tb.innerHTML = filas.map((d, i) => {
+    const c = i === 0 ? ' class="rd"' : '';
+    return '<tr><td' + c + '>' + esc(d.etiqueta) + '</td><td' + c + '>' + esc(d.fuente) + '</td><td class="num' + (i === 0 ? ' rd' : '') + '">' + fmtHora(d.t) + '</td><td class="num' + (i === 0 ? ' rd' : '') + '">' + (d.foto ? 'FOTO' : '—') + '</td></tr>';
+  }).join('');
+}
+function dibujarCurva(vivoHoy) {
+  const svg = $('curva'), X0 = 60, X1 = 980, Y0 = 220, Y1 = 18, DMAX = 50;
+  const px = (d) => X0 + (d - 1) / (DMAX - 1) * (X1 - X0), py = (v) => Y0 - v / 100 * (Y0 - Y1);
+  const P = []; for (let d = 1; d <= Math.min(dia, DMAX); d++) P.push([px(d), py(d === dia ? vivoHoy : curvaHistorica(d))]);
+  const L = P.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
+  let g = '';
+  for (const v of [0, 25, 50, 75, 100]) g += '<line x1="' + X0 + '" x2="' + X1 + '" y1="' + py(v) + '" y2="' + py(v) + '" stroke="#18241b"/><text x="' + (X0 - 10) + '" y="' + (py(v) + 4) + '" text-anchor="end">' + v + ' %</text>';
+  for (const [n, a] of FASES) if (a <= DMAX) g += '<line x1="' + px(a) + '" x2="' + px(a) + '" y1="' + Y1 + '" y2="' + Y0 + '" stroke="#4f6b55" stroke-dasharray="2 4"/><text x="' + (px(a) + 5) + '" y="' + (Y1 + 12) + '">' + n + '</text>';
+  for (const d of [1, 10, 20, 30, 40, 50]) g += '<text x="' + px(d) + '" y="' + (Y0 + 20) + '" text-anchor="middle">D' + d + '</text>';
+  const f = P[P.length - 1];
+  svg.innerHTML = g + '<path d="' + L + ' L' + f[0] + ' ' + Y0 + ' L' + X0 + ' ' + Y0 + ' Z" fill="rgba(47,158,87,.25)"/><path d="' + L + '" fill="none" stroke="#2f9e57" stroke-width="2.5"/>' +
+    '<circle cx="' + f[0] + '" cy="' + f[1] + '" r="5" fill="#e23b2e"/><text x="' + (f[0] - 10) + '" y="' + (f[1] - 10) + '" text-anchor="end" style="fill:#e23b2e">HOY ' + vivoHoy.toFixed(1) + ' %</text>';
+}
+
+// ============================================================ bitacora y sala simulada
+const bitCuerpo = $('bit-cuerpo'), bitCaja = $('bitacora');
+function log(clase, origen, texto, t = Date.now()) {
+  if (clase === 'sala' && !autom) return;
+  const tr = document.createElement('tr'); tr.className = clase;
+  tr.innerHTML = '<td class="num">' + fmtHora(t) + '</td><td>' + esc(origen) + '</td><td style="white-space:normal">' + texto + '</td>';
+  const abajo = bitCaja.scrollHeight - bitCaja.scrollTop - bitCaja.clientHeight < 30;
+  bitCuerpo.querySelector('tr.ult')?.classList.remove('ult');
+  bitCuerpo.appendChild(tr); tr.classList.add('ult');
+  while (bitCuerpo.children.length > 140) bitCuerpo.removeChild(bitCuerpo.firstChild);
+  if (abajo) bitCaja.scrollTop = bitCaja.scrollHeight;
+}
+log('sis', 'SIS', 'ENLACE CON LA VITRINA ESTABLECIDO · CULTIVO 08 · 3 ESCLEROCIOS EN RESERVA');
+log('sis', 'SIS', 'MICROSCOPIO USB: CAPTURA SOLO CON LUZ · ANILLO WS2812B LISTO');
+function eventoSala() {
+  if (salaAbierta()) {
+    const r = Math.random();
+    if (r < 0.08) {
+      turno++; consultasSala++;
+      nuevaFila('S' + turno, '#' + pad(turno, 4), false, false, 0);
+      log('sala', 'SALA', 'GRILLETE CERRADO · ELECTROIMÁN ACTIVO · VISITANTE #' + pad(turno, 4));
+      log('sala', 'SALA', 'ROSTRO RECONOCIDO · COMPUERTA ABIERTA');
+      $('s-grill').textContent = 'CERR'; $('s-grill').className = 'num r'; $('s-comp').textContent = 'ABIER'; $('s-comp').className = 'num v';
+    } else if (r < 0.12) {
+      log('sala', 'SALA', 'LÁSER · FRANJA #' + pad(turno - 1, 4) + ' GRABADA EN LA PIEL DE REGISTRO');
+    } else if (autom) {
+      parpadeos++; barraTurno();
+      const d = 120 + Math.random() * 120 * (1 + 2.5 * perclos);
+      parpadeo = { t0: performance.now(), d };
+      log('sala', 'SALA', 'PARPADEO · VISITANTE #' + pad(turno, 4) + ' · ' + Math.round(d) + ' MS · DESTELLO');
+      setTimeout(() => iniciarDestello('SALA', '#' + pad(turno, 4), false), 40);
+    }
+    setTimeout(eventoSala, 3500 + Math.random() * 6000);
+  } else {
+    $('s-grill').textContent = 'LIBRE'; $('s-grill').className = 'num'; $('s-comp').textContent = 'CERR'; $('s-comp').className = 'num';
+    if (Math.random() < 0.15) log('sis', 'SIS', 'SALA CERRADA · LA ÚNICA LUZ PROVIENE DE LA RED');
+    setTimeout(eventoSala, 20000 + Math.random() * 20000);
+  }
+}
+setTimeout(eventoSala, 2500);
+
+function pintarFotos() {
+  const cont = $('fotos');
+  consultasWeb = visitasWeb.length;
+  if (!visitasWeb.length) { cont.innerHTML = '<p class="vacio">Nadie lo ha mirado todavía desde lejos. Tu luz será la primera huella.</p>'; return; }
+  cont.innerHTML = '';
+  for (const v of visitasWeb.slice(0, 48)) {
+    const fig = document.createElement('figure'); fig.className = 'foto' + (v.obs === miCodigo ? ' mia' : '');
+    const im = document.createElement('img');
+    if (typeof v.foto === 'string' && v.foto.startsWith('data:image/')) im.src = v.foto;
+    im.alt = 'Cultivo iluminado por la visita ' + v.obs;
+    const cap = document.createElement('figcaption'); cap.textContent = String(v.obs).slice(0, 12) + ' · ' + fmtHora(v.t);
+    fig.append(im, cap); cont.appendChild(fig);
+  }
+}
+
+// ============================================================ registro compartido (db, user, room)
+const tabId = Math.random().toString(36).slice(2, 10);
+const vistos = new Set();
+let cargado = false;
+async function conectar() {
+  const usar = window.claude && typeof window.claude.use === 'function' ? window.claude.use.bind(window.claude) : null;
+  const local = (m) => { $('h-red').textContent = 'A SOLAS'; log('sis', 'SIS', m); pintarFotos(); };
+  if (!usar) return local('MIRAS A SOLAS: TU LUZ NO VIAJA HASTA OTROS OJOS');
+  try { db = await usar('db'); } catch (e) { db = null; }
+  try { usuario = await usar('user'); } catch (e) { usuario = null; }
+  if (!db) return local('MIRAS A SOLAS: EL REGISTRO COMÚN NO RESPONDE DESDE AQUÍ');
+  try { miId = usuario ? await usuario.id() : null; } catch (e) { miId = null; }
+  miCodigo = 'OBS-' + (hash32(miId || tabId) & 0xffff).toString(16).toUpperCase().padStart(4, '0');
+  try { const p = usuario ? await usuario.can('data.write') : null; if (p === false) puedeEscribir = false; } catch (e) {}
+  $('h-red').textContent = 'EN LÍNEA'; $('pip-red').className = 'on';
+  log('sis', 'RED', 'OBSERVADOR CONECTADO COMO ' + miCodigo + (puedeEscribir ? '' : ' · SOLO OBSERVACIÓN'));
+  const aviso = setTimeout(() => { if (!cargado) log('err', 'RED', 'EL REGISTRO AÚN NO RESPONDE; LOS DATOS PUEDEN ESTAR DESACTUALIZADOS'); }, 10000);
+  db.collection('visitas').orderBy('t', 'desc').limit(200).onSnapshot((snap) => {
+    const primera = !cargado && !snap.metadata.fromCache;
+    if (!snap.metadata.fromCache) { cargado = true; clearTimeout(aviso); }
+    visitasWeb = snap.docs.map((d) => { const x = d.data() || {}; return { id: d.id, t: Number(x.t) || 0, obs: String(x.obs || 'OBS-????'), foto: x.foto }; });
+    for (const ch of snap.docChanges()) {
+      if (ch.type !== 'added' || vistos.has(ch.doc.id)) continue;
+      vistos.add(ch.doc.id);
+      const x = ch.doc.data() || {}, obs = String(x.obs || 'OBS-????').slice(0, 12);
+      if (primera || !cargado) { nuevaFila(ch.doc.id, obs, true, x.obs === miCodigo); continue; }
+      nuevaFila(ch.doc.id, obs, true, x.obs === miCodigo);
+      if (Date.now() - (Number(x.t) || 0) < 15000 && x.obs !== miCodigo) {
+        log('web', 'RED', 'VISITA REMOTA ' + esc(obs) + ' · DESTELLO 200 MS · FOTOGRAFÍA GUARDADA');
+        iniciarDestello('RED', obs, false);
+      }
+    }
+    pintarFotos(); tablas();
+  }, (e) => { clearTimeout(aviso); $('h-red').textContent = 'CAÍDA'; $('pip-red').className = 'alerta'; log('err', 'RED', 'REGISTRO COMPARTIDO: ' + e.code); });
+  db.doc('estado/destello').onSnapshot((d) => { const x = d.exists ? d.data() : null; if (x && Number(x.ultimo)) ultimoGlobal = Number(x.ultimo); }, () => {});
+  try { const room = await usar('room'); if (room) { room.presence({ codigo: miCodigo }); room.onPeers((p) => { enLinea = Math.max(1, (p && p.length) || 1); }); } } catch (e) {}
+}
+conectar();
+
+// ============================================================ encender la luz
+let aceptado = false;
+try { aceptado = sessionStorage.getItem('agrypnia-contrato') === '1'; } catch (e) {}
+function restante() { return Math.max(0, Math.max(ultimoGlobal, ultimoLocal) + COOLDOWN - Date.now()); }
+function actualizarLuz() {
+  const b = $('k-luz'), r = restante();
+  $('sum-barra').style.width = (100 * (1 - r / COOLDOWN)).toFixed(1) + '%';
+  $('sum-barra-c').className = 'barra' + (r > 0 ? ' espera' : '');
+  if (!puedeEscribir) { b.disabled = true; $('sum-txt').textContent = 'SOLO PUEDES MIRAR DESDE LEJOS · TU LUZ NO ALCANZA'; $('sum-resta').textContent = 'LEJOS'; $('sum-resta').className = 'rd'; }
+  else if (enviando) { b.disabled = true; $('sum-txt').textContent = 'LA CÁMARA SE ESTÁ DESPERTANDO'; }
+  else if (r > 0) {
+    b.disabled = true;
+    $('sum-txt').textContent = (ultimoLocal >= ultimoGlobal ? 'TU LUZ YA LO TOCÓ · DÉJALO UN MOMENTO EN LA OSCURIDAD' : 'OTRA MIRADA ACABA DE TOCARLO · ESPERA SU SOMBRA');
+    $('sum-resta').textContent = pad(r / 60000) + ':' + pad((r % 60000) / 1000); $('sum-resta').className = 'r';
+  } else { b.disabled = false; $('sum-txt').textContent = 'LA LUZ ESPERA UNA MIRADA · UNA CADA MINUTO'; $('sum-resta').textContent = 'LISTA'; $('sum-resta').className = 'v'; }
+}
+async function mirar() {
+  if (restante() > 0 || enviando) return;
+  despertarAudio();
+  parpadeo = { t0: performance.now(), d: 150 };
+  if (!db) {
+    ultimoLocal = Date.now();
+    nuevaFila('L' + Date.now(), miCodigo, true, true);
+    log('web', 'RED', 'TU VISITA ' + miCodigo + ' · LA CÁMARA DESPIERTA · LUZ 200 MS');
+    encenderCamara('TU MIRADA', true);
     return;
   }
-  const seg = script[i];
-  if(ci === 0){
-    currentSpan = document.createElement('span');
-    currentSpan.className = seg.c;
-    out.appendChild(currentSpan);
-    if(seg.c === 'warn' && Math.random() < 0.7) glitchPulse();
+  enviando = true; actualizarLuz();
+  try {
+    const res = await db.doc('estado/destello').acquire({ holder: miId || tabId, ttlMs: COOLDOWN, data: { ultimo: Date.now(), obs: miCodigo } });
+    if (!res.acquired) { if (res.expiresAt) ultimoGlobal = Date.parse(res.expiresAt) - COOLDOWN; log('sis', 'RED', 'LA LUZ ESTÁ OCUPADA POR OTRA MIRADA'); }
+    else { ultimoLocal = Date.now(); log('web', 'RED', 'TU VISITA ' + miCodigo + ' · LA CÁMARA DESPIERTA · LUZ 200 MS'); encenderCamara('TU MIRADA', true); }
+  } catch (e) {
+    if (e && e.code === 'invalid_argument') { puedeEscribir = false; log('err', 'RED', 'ESTA VISTA NO PUEDE ESCRIBIR EN EL REGISTRO: SOLO OBSERVACIÓN'); }
+    else log('err', 'RED', 'NO SE PUDO ENCENDER LA LUZ (' + esc((e && e.code) || 'ERROR') + '). INTENTA DE NUEVO EN UN MOMENTO.');
+  } finally { enviando = false; actualizarLuz(); }
+}
+async function guardarVisita() {
+  if (!db) return;
+  const mini = document.createElement('canvas'); mini.width = mini.height = 112;
+  const mc = mini.getContext('2d'); mc.fillStyle = '#000'; mc.fillRect(0, 0, 112, 112); mc.drawImage(lienzo, 0, 0, 112, 112);
+  try {
+    const ref = await db.collection('visitas').add({ t: Date.now(), obs: miCodigo, foto: mini.toDataURL('image/jpeg', 0.72), origen: 'web' });
+    vistos.add(ref.id); nuevaFila(ref.id, miCodigo, true, true);
+    log('web', 'RED', 'FOTOGRAFÍA DE TU DESTELLO GUARDADA EN EL REGISTRO');
+  } catch (e) {
+    if (e && e.code === 'quota_exceeded') log('err', 'RED', 'EL REGISTRO ESTÁ LLENO: EL DESTELLO OCURRIÓ PERO LA FOTOGRAFÍA NO SE GUARDÓ');
+    else log('err', 'RED', 'LA FOTOGRAFÍA NO SE GUARDÓ (' + esc((e && e.code) || 'ERROR') + ')');
   }
-  if(ci < seg.t.length){
-    currentSpan.textContent += seg.t[ci];
-    ci++;
-    document.getElementById('crt').scrollTop = document.getElementById('crt').scrollHeight;
-    setTimeout(typeNext, seg.d + Math.random()*10);
+}
+
+// ============================================================ teclas
+const velo = $('velo');
+const abrirContrato = () => { velo.classList.add('on'); $('aceptar').focus(); };
+$('k-luz').addEventListener('click', () => { if (!aceptado) abrirContrato(); else mirar(); });
+$('k-contrato').addEventListener('click', abrirContrato);
+$('aceptar').addEventListener('click', () => {
+  const primera = !aceptado; aceptado = true;
+  try { sessionStorage.setItem('agrypnia-contrato', '1'); } catch (e) {}
+  velo.classList.remove('on');
+  if (primera) { log('sis', 'RED', 'CONTRATO DE ADHESIÓN ACEPTADO POR ' + miCodigo); mirar(); }
+  $('k-luz').focus();
+});
+$('cancelar').addEventListener('click', () => { velo.classList.remove('on'); $('k-luz').focus(); });
+velo.addEventListener('keydown', (e) => { if (e.key === 'Escape') { velo.classList.remove('on'); $('k-luz').focus(); } });
+function fijarModo(a) {
+  autom = a;
+  $('k-autom').setAttribute('aria-pressed', String(a)); $('k-manual').setAttribute('aria-pressed', String(!a));
+  $('r-modo').textContent = a ? 'AUTOM · SALA + RED' : 'MANUAL · SOLO RED';
+}
+$('k-autom').addEventListener('click', () => fijarModo(true));
+$('k-manual').addEventListener('click', () => fijarModo(false));
+document.querySelectorAll('[data-vista]').forEach((b) => b.addEventListener('click', () => {
+  document.querySelectorAll('[data-vista]').forEach((o) => { o.setAttribute('aria-pressed', String(o === b)); $('v-' + o.dataset.vista).hidden = o !== b; });
+}));
+$('k-vigilar').addEventListener('click', () => document.querySelector('.alcance').scrollIntoView({ behavior: reducido ? 'auto' : 'smooth', block: 'center' }));
+
+// el sonido de la sala despierta con el primer gesto del visitante (los navegadores no dejan sonar antes)
+function despertarAudio() { try { iniciarAudio(); if (ac.state !== 'running') ac.resume(); } catch (e) {} }
+document.addEventListener('pointerdown', despertarAudio, { once: true });
+document.addEventListener('keydown', despertarAudio, { once: true });
+
+// ============================================================ webcam sobre la placa de Petri
+// Al mirar, la camara despierta, busca el cuerpo en la oscuridad, se enciende el anillo de LED
+// y queda el fotograma que la luz alumbro. Luego vuelve a dormir.
+const camaraBox = $('camara'), cCam = $('cam');
+let cam = null, demoT = null;
+const FASES_CAM = [['despierta', 0, 900], ['busca', 900, 2000], ['luz', 2000, 2900], ['huella', 2900, 6400], ['duerme', 6400, 7200]];
+const POEMA = {
+  despierta: 'LA CÁMARA DESPIERTA',
+  busca: 'BUSCANDO EL CUERPO EN LA OSCURIDAD',
+  luz: '',
+  huella: 'ESTO ES LO QUE TU LUZ TOCÓ',
+  duerme: 'LA CÁMARA VUELVE A DORMIR · EL CULTIVO TAMBIÉN, SI PUEDE',
+};
+function encenderCamara(etiqueta, mio) {
+  cam = { t0: performance.now(), etiqueta, mio, disparado: false };
+  camaraBox.classList.add('on');
+}
+const ruidoCam = rnd(77);
+function dibujarCamara(ahora) {
+  if (!cam) return;
+  const dt = demoT != null ? demoT : ahora - cam.t0;
+  if (dt >= 7200) { cam = null; camaraBox.classList.remove('on'); return; }
+  const fase = (FASES_CAM.find(([, a, b]) => dt >= a && dt < b) || FASES_CAM[0])[0];
+  if (dt >= 2040 && dt < 2900 && !cam.disparado) { cam.disparado = true; iniciarDestello('RED', cam.etiqueta, cam.mio); }
+  const x = lienzoHD(cCam), w = cCam.width, h = cCam.height;
+  // mesa oscura con un rastro de luz ambiente
+  const fondoG = x.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, Math.max(w, h) * 0.7);
+  fondoG.addColorStop(0, '#0d0f0d'); fondoG.addColorStop(1, '#000');
+  x.fillStyle = fondoG; x.fillRect(0, 0, w, h);
+  const R = Math.min(w, h) * 0.36, cx = w / 2, cy = h * 0.5;
+  let inf = '';
+  if (fase === 'despierta') {
+    // estatica, barras de sincronia y la barra de enlace
+    for (let i = 0; i < 1400; i++) { x.fillStyle = ruidoCam() < 0.5 ? 'rgba(223,232,216,.18)' : 'rgba(0,0,0,.6)'; x.fillRect(ruidoCam() * w, ruidoCam() * h, 3, 2); }
+    for (let k = 0; k < 5; k++) { x.fillStyle = 'rgba(47,158,87,.10)'; x.fillRect(0, ((ahora * 0.3 + k * h / 5) % h), w, 6); }
+    x.strokeStyle = C.line; x.strokeRect(w * 0.3, h * 0.62, w * 0.4, 10);
+    x.fillStyle = C.green; x.fillRect(w * 0.3 + 2, h * 0.62 + 2, (w * 0.4 - 4) * Math.min(1, dt / 850), 6);
+    inf = 'ENLACE USB · 1920×1080 · EXPOSICIÓN AUTOMÁTICA';
   } else {
-    i++; ci = 0;
-    setTimeout(typeNext, seg.p);
+    // en la oscuridad, apenas el infrarrojo; con la luz, el plasmodio en color; despues, el fotograma
+    let fuente = lienzo, filtro = 'none', brillo = 1;
+    const s = R / RAD;
+    if (fase === 'busca') {
+      pintar(0.28);
+      const enfoque = Math.max(0, 1 - (dt - 900) / 1000);
+      filtro = 'grayscale(1) brightness(1.25) contrast(1.3) blur(' + (enfoque * 9).toFixed(1) + 'px)';
+    } else if (fase === 'luz') {
+      pintar(demoT != null ? 1 : Math.max(0.12, luzActual(ahora)));
+    } else {
+      fuente = ultimaCaptura;
+      brillo = fase === 'duerme' ? Math.max(0, 1 - (dt - 6400) / 800) : 1;
+      filtro = 'saturate(1.15) brightness(' + (0.95 * brillo).toFixed(2) + ')';
+    }
+    x.save();
+    x.beginPath(); x.arc(cx, cy, R, 0, Math.PI * 2); x.clip();
+    x.fillStyle = fase === 'busca' ? '#111' : 'rgb(' + Math.round(40 * brillo) + ',' + Math.round(26 * brillo) + ',' + Math.round(10 * brillo) + ')';
+    x.fillRect(cx - R, cy - R, R * 2, R * 2);
+    x.filter = filtro;
+    x.drawImage(fuente, cx - CX * s, cy - CY * s, W * s, W * s);
+    x.filter = 'none';
+    x.restore();
+    // vidrio de la placa y de la tapa: reflejos
+    x.lineWidth = 2;
+    x.strokeStyle = 'rgba(223,232,216,' + (fase === 'busca' ? 0.22 : 0.18 + 0.3 * brillo) + ')';
+    x.beginPath(); x.arc(cx, cy, R * 1.03, 0, Math.PI * 2); x.stroke();
+    x.strokeStyle = 'rgba(223,232,216,.12)'; x.beginPath(); x.arc(cx, cy, R * 1.09, 0, Math.PI * 2); x.stroke();
+    x.strokeStyle = 'rgba(255,255,255,' + (fase === 'luz' ? 0.65 : 0.22) + ')'; x.lineWidth = 4;
+    x.beginPath(); x.arc(cx, cy, R * 1.06, -2.5, -1.7); x.stroke();
+    // anillo de LED: dieciseis puntos que arden con la luz
+    const encendido = fase === 'luz' ? (demoT != null ? 1 : Math.max(0, luzActual(ahora))) : 0;
+    for (let i = 0; i < 16; i++) {
+      const a = i / 16 * Math.PI * 2, px = cx + Math.cos(a) * R * 1.2, py = cy + Math.sin(a) * R * 1.2;
+      x.shadowBlur = encendido > 0.05 ? 28 * encendido : 0; x.shadowColor = 'rgba(255,236,190,1)';
+      x.fillStyle = encendido > 0.05 ? 'rgba(255,240,210,' + (0.35 + 0.65 * encendido) + ')' : 'rgba(127,148,131,.35)';
+      x.beginPath(); x.arc(px, py, Math.max(3, R * 0.022), 0, Math.PI * 2); x.fill();
+    }
+    x.shadowBlur = 0;
+    if (encendido > 0.05) { x.fillStyle = 'rgba(255,240,210,' + (0.18 * encendido) + ')'; x.fillRect(0, 0, w, h); }
+    // marcos de enfoque
+    const q = fase === 'busca' ? R * (1.55 - 0.45 * Math.min(1, (dt - 900) / 900)) : R * 1.1;
+    x.strokeStyle = fase === 'busca' ? C.green : (fase === 'luz' ? C.red : C.line); x.lineWidth = 2;
+    for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
+      x.beginPath(); x.moveTo(cx + sx * q, cy + sy * (q - R * 0.12)); x.lineTo(cx + sx * q, cy + sy * q); x.lineTo(cx + sx * (q - R * 0.12), cy + sy * q); x.stroke();
+    }
+    // ruido de sensor y vineta
+    x.globalAlpha = fase === 'busca' ? 0.16 : 0.07;
+    for (let i = 0; i < 700; i++) { x.fillStyle = ruidoCam() < 0.5 ? '#fff' : '#000'; x.fillRect(ruidoCam() * w, ruidoCam() * h, 2, 2); }
+    x.globalAlpha = 1;
+    const vin = x.createRadialGradient(cx, cy, Math.min(w, h) * 0.35, cx, cy, Math.max(w, h) * 0.75);
+    vin.addColorStop(0, 'rgba(0,0,0,0)'); vin.addColorStop(1, 'rgba(0,0,0,.85)');
+    x.fillStyle = vin; x.fillRect(0, 0, w, h);
+    if (fase === 'busca') inf = 'AUTOENFOQUE · IR · GANANCIA +18 DB';
+    if (fase === 'luz') inf = 'ANILLO WS2812B · 200 MS · OBTURADOR 1/250';
+    if (fase === 'huella' || fase === 'duerme') inf = 'FOTOGRAMA ' + fmtHora(tUltimaCaptura) + ' · ' + cam.etiqueta;
   }
+  $('cam-poema').textContent = POEMA[fase];
+  $('cam-poema').style.top = (fase === 'huella' || fase === 'duerme') ? '13%' : '50%';   // la huella no se tapa
+  $('cam-inf').textContent = inf;
+  $('cam-der').innerHTML = '1920×1080 · 30 CPS<br>' + fmtHora(Date.now());
 }
 
-function startCursor(){
-  const cur = document.createElement('span');
-  cur.id = 'cursor';
-  out.appendChild(cur);
-}
+// estados de demostracion para las capturas del reporte (#demo-camara-despierta, #demo-camara-busca,
+// #demo-camara-luz, #demo-camara-huella, #demo-contrato, #demo-espera)
+(function demostracion() {
+  const d = location.hash.slice(1);
+  if (d.startsWith('demo-camara-')) {
+    const t = { despierta: 520, busca: 1650, luz: 2150, huella: 4200 }[d.slice(12)];
+    if (t != null) { demoT = t; setTimeout(() => encenderCamara('OBS-7F3A', false), 200); }
+  } else if (d === 'demo-contrato') {
+    setTimeout(() => velo.classList.add('on'), 200);
+  } else if (d === 'demo-espera') {
+    ultimoLocal = Date.now() - 23000; aceptado = true;
+    setTimeout(() => { nuevaFila('L' + Date.now(), miCodigo, true, true); iniciarDestello('RED', 'TU MIRADA', false); }, 300);
+  }
+})();
 
-setTimeout(typeNext, 400);
+fijarModo(true); pintarDestellos(); pintarFotos(); tablas(); tic();
 </script>
-
 </body>
 </html>
