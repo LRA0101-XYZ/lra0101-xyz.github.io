@@ -120,7 +120,16 @@ tr:last-child td { border-bottom: 0; }
 .barra.espera i { background: var(--red); }
 
 /* teclas */
-.teclas { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 5px; }
+.teclas { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; }
+
+/* boton principal: observar */
+.observar { display: grid; gap: 5px; width: 100%; padding: 18px 12px 14px; background: var(--red); color: #000; border: 1px solid var(--red);
+  cursor: pointer; text-align: center; animation: llamar 2.4s ease-out infinite; }
+.observar .o-tit { font-size: 30px; letter-spacing: .42em; padding-left: .42em; line-height: 1; }
+.observar .o-sub { font-size: 11px; letter-spacing: .14em; }
+.observar:hover:not(:disabled) { background: #ff5a4c; border-color: #ff5a4c; }
+.observar:disabled { background: #000; color: var(--muted); border-color: var(--line); cursor: not-allowed; animation: none; }
+@keyframes llamar { 0% { box-shadow: 0 0 0 0 rgba(226,59,46,.55); } 70%, 100% { box-shadow: 0 0 0 14px rgba(226,59,46,0); } }
 .tecla { background: #000; color: var(--text); border: 1px solid var(--line); padding: 9px 4px; cursor: pointer; white-space: nowrap; }
 .tecla:hover:not(:disabled) { background: #0b140d; border-color: var(--green); }
 .tecla[aria-pressed="true"] { background: var(--green); color: #000; border-color: var(--green); }
@@ -174,7 +183,7 @@ tr:last-child td { border-bottom: 0; }
   .senales > div + div { border-left: 0; border-top: 1px solid var(--line); }
   .alcance .rot, .alcance .lect { font-size: 10px; }
 }
-@media (prefers-reduced-motion: reduce) { .rec::before { animation: none; } body::after { display: none; } }
+@media (prefers-reduced-motion: reduce) { .rec::before, .observar { animation: none; } body::after { display: none; } }
 </style>
 </head>
 <body>
@@ -252,6 +261,10 @@ tr:last-child td { border-bottom: 0; }
           <div class="cs inf" id="cam-inf"></div>
         </div>
       </section>
+      <button class="observar" id="k-luz" type="button" aria-describedby="sum-txt">
+        <span class="o-tit">◉ OBSERVAR</span>
+        <span class="o-sub" id="obs-sub">ENCIENDE LA LUZ 200 MS SOBRE EL CULTIVO</span>
+      </button>
       <section class="panel senales" aria-label="Señales en vivo">
         <div><div class="tit"><b>PÁRPADO</b><span class="der" id="sg-perclos">PERCLOS 0.00</span></div><canvas id="parpado" width="600" height="184" aria-label="Traza de apertura del párpado del visitante en turno"></canvas></div>
         <div><div class="tit"><b>LATIDO</b><span class="der">LA SALA RESPIRA</span></div><canvas id="osc" width="600" height="184" aria-label="Forma de onda del sonido de la sala"></canvas></div>
@@ -282,7 +295,6 @@ tr:last-child td { border-bottom: 0; }
   <nav class="teclas" aria-label="Comandos">
     <button class="tecla" id="k-autom" type="button" aria-pressed="true" title="Escuchar a la sala y a la red">AUTOM</button>
     <button class="tecla" id="k-manual" type="button" aria-pressed="false" title="Escuchar solo a la red">MANUAL</button>
-    <button class="tecla luz" id="k-luz" type="button" aria-describedby="sum-txt">MIRAR</button>
     <button class="tecla" data-vista="bitacora" type="button" aria-pressed="true">BITÁCORA</button>
     <button class="tecla" data-vista="fotos" type="button" aria-pressed="false">FOTOS</button>
     <button class="tecla" data-vista="curva" type="button" aria-pressed="false">CURVA</button>
@@ -846,6 +858,8 @@ function actualizarLuz() {
   const b = $('k-luz'), r = restante();
   $('sum-barra').style.width = (100 * (1 - r / COOLDOWN)).toFixed(1) + '%';
   $('sum-barra-c').className = 'barra' + (r > 0 ? ' espera' : '');
+  $('obs-sub').textContent = !puedeEscribir ? 'TU LUZ NO ALCANZA DESDE AQUÍ' : enviando ? 'LA CÁMARA SE ESTÁ DESPERTANDO'
+    : r > 0 ? 'DÉJALO EN LA OSCURIDAD · ' + pad(r / 60000) + ':' + pad((r % 60000) / 1000) : 'ENCIENDE LA LUZ 200 MS SOBRE EL CULTIVO';
   if (!puedeEscribir) { b.disabled = true; $('sum-txt').textContent = 'SOLO PUEDES MIRAR DESDE LEJOS · TU LUZ NO ALCANZA'; $('sum-resta').textContent = 'LEJOS'; $('sum-resta').className = 'rd'; }
   else if (enviando) { b.disabled = true; $('sum-txt').textContent = 'LA CÁMARA SE ESTÁ DESPERTANDO'; }
   else if (r > 0) {
@@ -892,13 +906,14 @@ async function guardarVisita() {
 // ============================================================ teclas
 const velo = $('velo');
 const abrirContrato = () => { velo.classList.add('on'); $('aceptar').focus(); };
-$('k-luz').addEventListener('click', () => { if (!aceptado) abrirContrato(); else mirar(); });
+$('k-luz').addEventListener('click', abrirContrato);
 $('k-contrato').addEventListener('click', abrirContrato);
 $('aceptar').addEventListener('click', () => {
   const primera = !aceptado; aceptado = true;
   try { sessionStorage.setItem('agrypnia-contrato', '1'); } catch (e) {}
   velo.classList.remove('on');
-  if (primera) { log('sis', 'RED', 'CONTRATO DE ADHESIÓN ACEPTADO POR ' + miCodigo); mirar(); }
+  if (primera) log('sis', 'RED', 'CONTRATO DE ADHESIÓN ACEPTADO POR ' + miCodigo);
+  mirar();
   $('k-luz').focus();
 });
 $('cancelar').addEventListener('click', () => { velo.classList.remove('on'); $('k-luz').focus(); });
