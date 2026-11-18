@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>PANOPTIC_SYS // HARSH_CRACKLE_CONSOLAS</title>
+<title>PANOSYS // HARSH_CRACKLE_CONSOLAS</title>
 <style>
   html, body {
     margin: 0;
@@ -44,12 +44,12 @@
             position: fixed;
             inset: 0;
             background: #020403;
-            color: #00ff66;
+            color: #00ff55;
             z-index: 99999;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-family: 'Consolas', monospace;
+            font-family: var(--psys-font);
             text-align: center;
             padding: 20px;
         }
@@ -59,6 +59,9 @@
             body > *:not(#rotate-warning) { display: none !important; }
         }
     </style>
+<link rel="stylesheet" href="panosys.css">
+<link rel="stylesheet" href="dark.css">
+<link rel="stylesheet" href="dark2.css">
 </head>
 <body><div id="rotate-warning">
     <div style="font-size: 24px; margin-bottom: 15px;">⟳</div>
@@ -264,9 +267,9 @@
           ctx.fillStyle = '#000000';
         } else {
           if (cell.colorType === 1) ctx.fillStyle = '#004400';
-          else if (cell.colorType === 2) ctx.fillStyle = '#00ff00';
-          else if (cell.colorType === 3) ctx.fillStyle = '#ff0000';
-          else if (cell.colorType === 4) ctx.fillStyle = '#00ff00';
+          else if (cell.colorType === 2) ctx.fillStyle = '#00ff55';
+          else if (cell.colorType === 3) ctx.fillStyle = '#ff2a2a';
+          else if (cell.colorType === 4) ctx.fillStyle = '#00ff55';
           else ctx.fillStyle = '#031103';
         }
 
@@ -403,5 +406,14 @@
     });
 })();
 </script>
+<script src="panosys.js"></script>
+<script src="dark.js"></script>
+<!-- DARK2:trans -->
+<script src="trans2.js"></script>
+<script>
+// DARK 2.0 · la transicion como diagrama de flujo de datos (looks/). La pagina original sigue debajo con su audio.
+TRANS2.run({"hop":"RELAY_HOP_07","from":"NULL_NEGATION","to":"CANCELLED_FUTURES","dur":3,"panes":[{"mode":"matrix","at":[0,0,0.56,1]},{"mode":"radial","at":[0.56,0,0.44,1],"delay":0.1}]});
+</script>
+<!-- /DARK2:trans -->
 </body>
 </html>

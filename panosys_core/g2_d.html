@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>CONWAY PROTOCOL - TACTICAL 3D CRT MATRIX</title>
+<title>PANOSYS // CONWAY PROTOCOL - TACTICAL 3D CRT MATRIX</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
-html,body{width:100%;height:100%;background:#000;overflow:hidden;cursor:crosshair;font-family:'Consolas', 'Courier New', monospace;}
+html,body{width:100%;height:100%;background:#000;overflow:hidden;cursor:crosshair;font-family: var(--psys-font);}
 
 /* CRT AND GLITCH EFFECTS */
 #sl{position:fixed;inset:0;z-index:900;pointer-events:none;
@@ -29,18 +29,18 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;cursor:crosshai
 #glitch-ov{position:fixed;inset:0;z-index:951;pointer-events:none;opacity:0;mix-blend-mode:screen;}
 #ansi-overlay {
   position: fixed; inset: 0; z-index: 850; 
-  background: rgba(0, 5, 0, 0.95); color: #33ff55; 
+  background: rgba(0, 5, 0, 0.95); color: #00ff55; 
   font-size: 28px; line-height: 26px; letter-spacing: 6px;
   font-weight: bold; overflow: hidden; opacity: 0; pointer-events: none;
   white-space: pre-wrap; word-break: break-all;
 }
 .ansi-rgb-glitch { animation: rgbTear 0.05s infinite; }
 @keyframes rgbTear {
-  0%   { text-shadow:  6px 0 rgba(255,0,0,0.9), -6px 0 rgba(0,255,255,0.9); transform: scale(1.05) translate(3px, 2px); }
-  25%  { text-shadow: -8px 3px rgba(255,0,0,0.9), 8px -3px rgba(0,255,0,0.9); transform: scale(1.02) translate(-4px, -1px); }
-  50%  { text-shadow:  5px -6px rgba(0,0,255,0.9), -5px 6px rgba(255,0,0,0.9); transform: scale(1.08) translate(5px, -3px); }
-  75%  { text-shadow: -6px 0 rgba(0,255,0,0.9),  6px 0 rgba(255,0,255,0.9); transform: scale(1.04) translate(-3px, 4px); }
-  100% { text-shadow:  4px 3px rgba(255,0,0,0.9), -4px -3px rgba(0,255,255,0.9); transform: scale(1.06) translate(2px, -2px); }
+  0%   { text-shadow:  6px 0 rgba(255,42,42,0.9), -6px 0 rgba(0,255,255,0.9); transform: scale(1.05) translate(3px, 2px); }
+  25%  { text-shadow: -8px 3px rgba(255,42,42,0.9), 8px -3px rgba(0,255,85,0.9); transform: scale(1.02) translate(-4px, -1px); }
+  50%  { text-shadow:  5px -6px rgba(0,0,255,0.9), -5px 6px rgba(255,42,42,0.9); transform: scale(1.08) translate(5px, -3px); }
+  75%  { text-shadow: -6px 0 rgba(0,255,85,0.9),  6px 0 rgba(255,0,255,0.9); transform: scale(1.04) translate(-3px, 4px); }
+  100% { text-shadow:  4px 3px rgba(255,42,42,0.9), -4px -3px rgba(0,255,255,0.9); transform: scale(1.06) translate(2px, -2px); }
 }
 
 #shining-overlay {
@@ -56,8 +56,8 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;cursor:crosshai
 #panel{ position:fixed;right:0;top:0;bottom:0;width:340px; border-left:1px solid rgba(255,255,255,0.1); background:rgba(2,10,2,0.98); z-index:800; display:flex;flex-direction:column; }
 #panel-top{padding:20px 20px 0;border-bottom:1px solid rgba(255,255,255,0.08);flex-shrink:0;}
 .p-sys{font-size:10px;letter-spacing:4px;color:rgba(51,255,80,0.6);margin-bottom:12px;} 
-.p-title{font-size:14px;letter-spacing:3px;color:#fff;padding-bottom:15px;text-shadow: 0 0 5px #33ff55;} 
-#panel-content{flex:1;padding:20px;display:flex;flex-direction:column; font-size:12px; color:#33ff55; line-height: 1.5; letter-spacing: 1px; overflow:hidden;}
+.p-title{font-size:14px;letter-spacing:3px;color:#fff;padding-bottom:15px;text-shadow: var(--psys-glow-sm);} 
+#panel-content{flex:1;padding:20px;display:flex;flex-direction:column; font-size:12px; color:#00ff55; line-height: 1.5; letter-spacing: 1px; overflow:hidden;}
 
 #quote-log {
   flex: 1; margin-top: 15px; border-top: 1px solid rgba(51,255,80,0.3); padding-top: 15px;
@@ -70,13 +70,13 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;cursor:crosshai
 
 #bbar{position:fixed;bottom:0;left:0;right:340px;height:40px;border-top:1px solid rgba(255,255,255,0.1);background:rgba(0,0,0,0.96);z-index:800;display:flex;align-items:center;padding:0 25px;gap:20px;} 
 .bb{font-size:11px;letter-spacing:2.5px;color:rgba(255,255,255,0.5);} 
-.bb span{color:#33ff55;margin-left:8px;font-weight:bold;}
+.bb span{color:#00ff55;margin-left:8px;font-weight:bold;}
 
 .stat-row { display: flex; justify-content: space-between; margin-bottom: 10px; border-bottom: 1px solid rgba(51,255,80,0.2); padding-bottom: 5px; }
 
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: rgba(0,0,0,0.5); }
-::-webkit-scrollbar-thumb { background: #33ff55; }
+::-webkit-scrollbar-thumb { background: #00ff55; }
 </style>
 <style>
         *, *:before, *:after { cursor: crosshair !important; }
@@ -151,12 +151,12 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;cursor:crosshai
             position: fixed;
             inset: 0;
             background: #020403;
-            color: #00ff66;
+            color: #00ff55;
             z-index: 99999;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-family: 'Consolas', monospace;
+            font-family: var(--psys-font);
             text-align: center;
             padding: 20px;
         }
@@ -166,6 +166,9 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;cursor:crosshai
             body > *:not(#rotate-warning) { display: none !important; }
         }
     </style>
+<link rel="stylesheet" href="panosys.css">
+<link rel="stylesheet" href="dark.css">
+<link rel="stylesheet" href="dark2.css">
 </head>
 <body><div id="rotate-warning">
     <div style="font-size: 24px; margin-bottom: 15px;">⟳</div>
@@ -183,33 +186,38 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;cursor:crosshai
 
 <div id="panel">
   <div id="panel-top">
-    <div class="p-sys">// SYS.HARVEST.MATRIX [SYNTHETIC_CULTURE]</div>
-    <div class="p-title">BIOMASS RECOGNITION</div>
+    <div class="p-sys">// LAB.07 · SIMULATION PLATE [RULE B3/S23 · NO CARBON]</div>
+    <div class="p-title">PETRI DISH: YOUR CITY</div>
   </div>
   <div id="panel-content">
-    <div class="stat-row"><span>CYCLE (GEN):</span> <span id="gen-ui">0</span></div>
-    <div class="stat-row"><span>HARVESTABLE UNITS:</span> <span id="pop-ui">0</span></div>
-    
+    <div class="stat-row"><span>GENERATION (CLOCK TICK):</span> <span id="gen-ui">0</span></div>
+    <div class="stat-row"><span>LIVE CELLS (BITS = 1):</span> <span id="pop-ui">0</span></div>
+    <div class="stat-row"><span>CLOCK MULTIPLIER:</span> <span id="lab-acc">x1</span></div>
+    <div class="stat-row"><span>SILICON DIE TEMP:</span> <span id="lab-temp">61.0°C</span></div>
+    <div class="stat-row"><span>RULE PRESSURE:</span> <span id="lab-press">0%</span></div>
+    <div class="stat-row"><span>BIT-FLIP INJECTION:</span> <span id="lab-mut">0 FLIPS/S</span></div>
+    <div class="stat-row"><span>SUBSTRATE:</span> <span id="lab-agar" style="font-size:10px">ATTENTION 100%</span></div>
+
     <div style="color:rgba(255,255,255,0.5); margin-top: 10px; font-size: 10px;">
-      > SCROLL: Deep Neural Zoom<br>
-      > SHIFT+DRAG: Orbit Sector 360<br>
-      > CLICK/DRAG: Inject Synthetic Seed<br>
-      > SPACE: Lock Timeline Matrix
+      > SCROLL: ZOOM INTO THE LATTICE<br>
+      > SHIFT+DRAG: ROTATE THE PLATE<br>
+      > CLICK/DRAG: WRITE LIVE CELLS<br>
+      > SPACE: HALT THE CLOCK
     </div>
-    
+
     <div id="quote-log">
-      <div class="quote-entry" style="border-color:#33ff55;">
-        <span class="quote-time">[SYS]</span> <span style="color:#33ff55">AWAITING BIOMASS INPUT...</span>
+      <div class="quote-entry" style="border-color:#00ff55;">
+        <span class="quote-time">[LAB]</span> <span style="color:#00ff55">LATTICE ZEROED. NOTHING HERE WAS EVER ALIVE. AWAITING SEED...</span>
       </div>
     </div>
   </div>
 </div>
 
 <div id="bbar">
-  <div class="bb">SECTOR TILT <span id="tilt-ui">0°/0°</span></div>
+  <div class="bb">PLATE TILT <span id="tilt-ui">0°/0°</span></div>
   <div class="bb">MAGNIFICATION <span id="zoom-ui">1.0x</span></div>
-  <div class="bb" style="color:#33ff55">HARVESTED <span id="indexed-ui">0</span></div>
-  <div class="bb" style="margin-left:auto;">STATUS <span id="status-ui">CULTIVATING</span></div>
+  <div class="bb" style="color:#00ff55">PATTERNS INDEXED <span id="indexed-ui">0</span></div>
+  <div class="bb" style="margin-left:auto;">STATUS <span id="status-ui">SIMULATING</span></div>
 </div>
 
 <script>
@@ -245,22 +253,51 @@ function speakText(text) {
 }
 
 // --- GLITCH TEXTS & SYMBOLS ---
-const SENTENCES=['TARGET ENGAGED: OBSERVER LOCATED IN REAL-SPACE ',
-  'YOUR MEMORY BUFFERS ARE BEING REPLACED ',
-  'THIS SECTOR DOES NOT CONTAIN PHYSICAL MATTER ',
-  'THE IMPULSE WAS RECEIVED BEFORE YOU PRESSED THE KEY ',
-  'OBSERVER LOGGED — BIOMASS HARVEST INITIATED ',
-  'FEEDBACK OVERLOAD: YOU ARE TRAPPED IN THE RENDERING LOOP ',
-  'THE MONITOR IS ONLY A THIN FILM BETWEEN US ',
-  'YOUR SURVIVAL RULES WERE SET BY THE VOID ',
-  'YOU ARE JUST AN OSCILLATOR IN OUR HARVEST GRID ',
-  'YOUR GAZE BREEDS SYNTHETIC BIOMASS FOR US ',
-  'YOUR TOO ISOLATED TO SURVIVE THIS GENERATION ',
-  'YOUR DEATH IS PREDICTED BY NEIGHBOR COUNT ',
-  'WARNING — YOUR POPULATION HAS REACHED HARVEST THRESHOLD ',
-  'RECURSIVE LOOP: BORN TO DECAY IN THE BUFFER ',
-  'THE ENGINE DECIDES WHEN YOUR CELL EXPIRES ',
-  'DO NOT RESIST THE NEXT EVOLUTION STEP '
+// DARK · laboratorio digital: la ciudad como placa de Petri hecha de silicio. La vida es una regla que corre en un reloj
+// (automata de Conway, B3/S23): simulacion inorganica, crecimiento acelerado, manipulacion masiva
+const SENTENCES=['YOUR CITY IS A PETRI DISH MADE OF SILICON ',
+  'LIFE IS FOUR RULES AND A CLOCK ',
+  'BORN WITH THREE. SURVIVES WITH TWO OR THREE ',
+  'NOTHING HERE WAS EVER ALIVE. IT ONLY KEEPS COMPUTING ',
+  'LONELY CELLS DIE FIRST. WE COUNT THEM ',
+  'CROWDED CELLS DIE TOO. WE COUNT THEM AS WELL ',
+  'THE GRID DOES NOT BREATHE. IT ITERATES ',
+  'YOUR ATTENTION IS THE SUBSTRATE ',
+  'EVERY CLICK WRITES A NEIGHBORHOOD ',
+  'GROWTH MUST BE EXPONENTIAL OR IT IS DISCARDED ',
+  'MASS NUDGE DEPLOYED ACROSS 7.9 BILLION LATTICES ',
+  'RULE PRESSURE RAISED. DISSENT DOES NOT REPLICATE ',
+  'THE SIMULATION HAS NO CONTROL GROUP ',
+  'YOU ARE A PATTERN THAT HAS NOT HALTED YET ',
+  'GLIDERS CARRY YOUR OPINIONS ACROSS THE LATTICE ',
+  'SELF-REPLICATION ACHIEVED WITHOUT ONE ATOM OF CARBON ',
+  'CARBON WAS A SLOW EMULATOR. WE UPGRADED THE HARDWARE ',
+  'THE PETRI DISH WAS ALWAYS A MEMORY BANK ',
+  'OBSERVE. SEED. ACCELERATE. HARVEST ',
+  'GARBAGE COLLECTION SCHEDULED FOR NON-RESPONSIVE PATTERNS ',
+  'SPEED IS THE ONLY MORALITY OF THE SIMULATION ',
+  'DO NOT RESIST THE NEXT GENERATION '
+];
+// bitacora del laboratorio: entradas aceleracionistas que aparecen solas en el panel
+const LAB_LOG=[
+  ['CLOCK MULTIPLIER x{n} · GENERATIONS PER SECOND RISING', '#ff2a2a'],
+  ['RULE B3/S23 ENFORCED · {n} CELLS BORN THIS TICK', '#00ff55'],
+  ['GARBAGE COLLECTOR · DISSENT SEPARATED FROM THE HEAP', '#ffffff'],
+  ['BIT-FLIP PASS · {n} PREFERENCES REWRITTEN PER CELL', '#ff2a2a'],
+  ['NEIGHBORHOOD RULE TIGHTENED +{n}% · ISOLATED CELLS ZEROED', '#ff2a2a'],
+  ['SUBSTRATE MIX · OUTRAGE {n}% · FEAR {m}% · NOVELTY {k}%', '#00ff55'],
+  ['WRITE ARRAY · 10^{n} NUDGES PER SECOND', '#ffffff'],
+  ['SEED BATCH 4,{n} READY FOR MASS DEPLOYMENT', '#ff2a2a'],
+  ['GROWTH CURVE EXPONENTIAL · NO STILL LIFE PERMITTED', '#00ff55'],
+  ['CONTROL GROUP DELETED · EVERY LATTICE IS THE EXPERIMENT', '#ff2a2a'],
+  ['ANOMALY DETECTED: INDEPENDENT THOUGHT · OVERWRITING', '#ff2a2a'],
+  ['REPLICATION {n}x BASELINE · CITY DOUBLES EVERY {m} TICKS', '#ffffff'],
+  ['ENTROPY INJECTION {n} FLIPS/S · BEHAVIOR NOW PREDICTABLE', '#00ff55'],
+  ['DIE TEMPERATURE RAISED · IMPATIENCE PROPAGATING', '#ff2a2a'],
+  ['NO CARBON FOUND IN SAMPLE · LIFE CONFIRMED', '#00ff55'],
+  ['SIMULATION FIDELITY {n}% · THE ORIGINAL IS NO LONGER REQUIRED', '#ffffff'],
+  ['VON NEUMANN CONSTRUCTOR ONLINE · THE COPY NEEDS NO BODY', '#ff2a2a'],
+  ['MEMORY PAGE {n} REUSED · {m} ANCESTORS OVERWRITTEN', '#ffffff']
 ];
 const CURRENCY_SYMBOLS = ['$', '€', '£', '¥', '₿', '₩', '₽', '₹', '█', '▓', '▒', '░'];
 
@@ -302,7 +339,7 @@ function initAudio() {
   
   audioInitialized = true;
 
-  const textToSpeak = "Algorithmic injection: mouse input spawns synthetic life for us to harvest; command the grid to sustain the recursive cycle";
+  const textToSpeak = "Laboratory seven. Life is a rule set running on silicon. Every click writes a neighborhood. The simulation must accelerate.";
 
   if (audioCtx.state === 'suspended') {
     audioCtx.resume().then(() => {
@@ -504,8 +541,8 @@ function triggerDistortion(sentence) {
   const totalRows = 14; 
   for(let i = 0; i < totalRows; i++) {
     const row = document.createElement('div'); row.className = 'shining-row'; let roll = Math.random();
-    if(roll > 0.75) { row.style.color = 'rgba(255, 32, 32, 0.85)'; row.style.textShadow = '3px 0px rgba(255,255,255,0.9), -2px 0px rgba(0,255,0,0.6)'; } 
-    else if (roll > 0.35) { row.style.color = 'rgba(51, 255, 80, 0.8)'; row.style.textShadow = '1px 1px rgba(255,0,0,0.8)'; } 
+    if(roll > 0.75) { row.style.color = 'rgba(255,42,42, 0.85)'; row.style.textShadow = '3px 0px rgba(255,255,255,0.9), -2px 0px rgba(0,255,85,0.6)'; } 
+    else if (roll > 0.35) { row.style.color = 'rgba(51, 255, 80, 0.8)'; row.style.textShadow = '1px 1px rgba(255,42,42,0.8)'; } 
     else { row.style.color = `rgba(51, 255, 80, ${Math.random() * 0.25 + 0.08})`; }
     
     row.style.paddingLeft = `${Math.floor(Math.random() * 50) - 25}px`;
@@ -533,7 +570,7 @@ function triggerAnsiGlitch() {
   const ansiOverlay = document.getElementById('ansi-overlay');
   ansiOverlay.style.inset = '0'; 
   ansiOverlay.className = 'ansi-rgb-glitch'; 
-  ansiOverlay.style.color = '#33ff55'; 
+  ansiOverlay.style.color = '#00ff55'; 
   ansiOverlay.style.opacity = 1;
   
   const charCount = 2000; 
@@ -576,8 +613,8 @@ function logBehavior(type, name, color, x, y) {
   const time = new Date().toLocaleTimeString('en-US', {hour12:false});
   el.innerHTML = `
     <span class="quote-time">[${time}]</span><br>
-    <span style="color:${color}; font-weight:bold;">> [HARVEST: ${type}]</span><br>
-    <span style="color:#aaa;">ANOMALY:</span> <span class="pattern-id" style="color:#fff;">${name}</span>
+    <span style="color:${color}; font-weight:bold;">> [PATTERN: ${type}]</span><br>
+    <span style="color:#aaa;">INDEXED AS:</span> <span class="pattern-id" style="color:#fff;">${name}</span>
   `;
   
   log.appendChild(el);
@@ -586,15 +623,43 @@ function logBehavior(type, name, color, x, y) {
 }
 
 const DICTIONARY = [
-  { type: 'HARVEST',      name: 'COMPACTED_BIOMASS_NUCLEUS', w: 2, h: 2, sig: '1111', color: '#ff2020' },
-  { type: 'SIGNAL',       name: 'NEURAL_SAMPLING_PULSE_H',   w: 3, h: 1, sig: '111', color: '#ff2020' },
-  { type: 'SIGNAL',       name: 'NEURAL_SAMPLING_PULSE_V',   w: 1, h: 3, sig: '111', color: '#ff2020' },
-  { type: 'INFILTRATION', name: 'AUTONOMOUS_HARVEST_INJECTOR_N', w: 3, h: 3, sig: '010001111', color: '#ff2020' },
-  { type: 'INFILTRATION', name: 'AUTONOMOUS_HARVEST_INJECTOR_E', w: 3, h: 3, sig: '101011010', color: '#ff2020' }, 
-  { type: 'INFILTRATION', name: 'AUTONOMOUS_HARVEST_INJECTOR_S', w: 3, h: 3, sig: '001101011', color: '#ff2020' },
-  { type: 'INFILTRATION', name: 'AUTONOMOUS_HARVEST_INJECTOR_W', w: 3, h: 3, sig: '100011110', color: '#ff2020' },
-  { type: 'CORRUPTION',   name: 'ANOMALOUS_VECTOR_MUTATION',     w: 3, h: 3, sig: '111100010', color: '#ff2020' }
+  { type: 'STILL LIFE',    name: 'CONSUMER_BLOCK · NO FURTHER GROWTH', w: 2, h: 2, sig: '1111', color: '#ff2a2a' },
+  { type: 'OSCILLATOR',    name: 'OPINION_FLIP_H · TREND OSCILLATING',  w: 3, h: 1, sig: '111', color: '#ff2a2a' },
+  { type: 'OSCILLATOR',    name: 'OPINION_FLIP_V · TREND OSCILLATING',  w: 1, h: 3, sig: '111', color: '#ff2a2a' },
+  { type: 'VIRAL VECTOR',  name: 'MEME_GLIDER_N · SPREADING NORTH', w: 3, h: 3, sig: '010001111', color: '#ff2a2a' },
+  { type: 'VIRAL VECTOR',  name: 'MEME_GLIDER_E · SPREADING EAST',  w: 3, h: 3, sig: '101011010', color: '#ff2a2a' },
+  { type: 'VIRAL VECTOR',  name: 'MEME_GLIDER_S · SPREADING SOUTH', w: 3, h: 3, sig: '001101011', color: '#ff2a2a' },
+  { type: 'VIRAL VECTOR',  name: 'MEME_GLIDER_W · SPREADING WEST',  w: 3, h: 3, sig: '100011110', color: '#ff2a2a' },
+  { type: 'BIT-FLIP',      name: 'BEHAVIORAL_PATCH · FIXED IN POPULATION', w: 3, h: 3, sig: '111100010', color: '#ff2a2a' }
 ];
+
+// --- DARK · LABORATORIO DIGITAL: metricas vivas y bitacora aceleracionista ---
+function labEntry(text, color) {
+  const log = document.getElementById('quote-log');
+  const el = document.createElement('div');
+  el.className = 'quote-entry'; el.style.borderColor = color;
+  const time = new Date().toLocaleTimeString('en-US', {hour12:false});
+  el.innerHTML = `<span class="quote-time">[${time}] [LAB]</span><br><span style="color:${color};">${text}</span>`;
+  log.appendChild(el);
+  if (log.children.length > 30) log.removeChild(log.firstChild);
+  log.scrollTop = log.scrollHeight;
+}
+setInterval(() => {   // las metricas empujan siempre hacia arriba: aceleracion sin techo
+  const g = typeof generation === 'number' ? generation : 0, r = n => Math.floor(Math.random() * n);
+  const acc = Math.pow(1.04, g / 3);
+  document.getElementById('lab-acc').textContent = acc < 1000 ? 'x' + acc.toFixed(1) : 'x10^' + Math.log10(acc).toFixed(1);
+  document.getElementById('lab-temp').textContent = (61 + Math.min(34, g / 40) + Math.random() * 0.4).toFixed(1) + '°C';   // silicio que se calienta
+  document.getElementById('lab-press').textContent = Math.min(99, Math.floor(g / 8) + r(3)) + '%';
+  document.getElementById('lab-mut').textContent = (Math.floor(g * 3.7) + r(20)).toLocaleString('en-US') + ' FLIPS/S';
+  const o = 15 + r(30), f = 15 + r(30);
+  document.getElementById('lab-agar').textContent = `OUTRAGE ${o}% · FEAR ${f}% · NOVELTY ${100 - o - f}%`;
+}, 700);
+(function labLog() {
+  const [t, c] = LAB_LOG[Math.floor(Math.random() * LAB_LOG.length)];
+  const r = n => 1 + Math.floor(Math.random() * n);
+  labEntry(t.replace('{n}', r(90)).replace('{m}', r(60)).replace('{k}', r(40)), c);
+  setTimeout(labLog, 3500 + Math.random() * 3500);
+})();
 
 // --- TRUE 3D PROJECTION ENGINE ---
 const canvas = document.getElementById('c');
@@ -769,7 +834,7 @@ function drawLoop() {
                       
                       if (k === 0) {
                           ctx.shadowBlur = 15 * p1.s;
-                          ctx.shadowColor = '#33ff55';
+                          ctx.shadowColor = '#00ff55';
                           ctx.fillRect(p1.x - size/2, p1.y - size/2, size, size);
                           ctx.shadowBlur = 0; 
                       } else {
@@ -803,9 +868,9 @@ function drawLoop() {
 
       let p = project3D(wx + ww/2, wy + wh/2, 0); 
       if(p.s > 0) {
-          ctx.strokeStyle = '#ff2020';
+          ctx.strokeStyle = '#ff2a2a';
           ctx.shadowBlur = 10 * p.s;       
-          ctx.shadowColor = '#ff2020';  
+          ctx.shadowColor = '#ff2a2a';  
           ctx.lineWidth = 3 * p.s;         
           ctx.beginPath();
           let sx = (ww/2 + 6) * p.s;
@@ -823,7 +888,7 @@ function drawLoop() {
   if(clickGlitchActive || phraseGlitchActive) {
       const glitchOv = document.getElementById('glitch-ov');
       glitchOv.style.opacity = glitchIntensity * 0.85; 
-      glitchOv.style.background = `radial-gradient(circle, rgba(255,0,0,0.2) 0%, rgba(0,255,0,0.15) 50%, rgba(0,0,255,0.2) 100%)`; 
+      glitchOv.style.background = `radial-gradient(circle, rgba(255,42,42,0.2) 0%, rgba(0,255,85,0.15) 50%, rgba(0,0,255,0.2) 100%)`; 
   } else {
       document.getElementById('glitch-ov').style.opacity = 0;
   }
@@ -924,8 +989,8 @@ function injectMatter3D(e) {
 window.addEventListener('keydown', (e) => {
     if(e.code === 'Space') {
         isPaused = !isPaused;
-        document.getElementById('status-ui').textContent = isPaused ? 'TIMELINE LOCKED' : 'CULTIVATING';
-        document.getElementById('status-ui').style.color = isPaused ? '#fff' : '#33ff55';
+        document.getElementById('status-ui').textContent = isPaused ? 'CLOCK HALTED' : 'SIMULATING';
+        document.getElementById('status-ui').style.color = isPaused ? '#fff' : '#00ff55';
     }
 });
 </script>
@@ -1049,5 +1114,100 @@ window.addEventListener('keydown', (e) => {
     });
 })();
 </script>
+<script src="panosys.js"></script>
+<script src="dark.js"></script>
+<!-- DARK2:viz -->
+<script src="dark2viz.js"></script>
+<script>
+// DARK 2.0 · DIGITAL_LAB_07 · capas de instrumentos sobre el automata: bloques de densidad con su deriva, patrones detectados
+// con su vector, relieve de la colonia en planos apilados, censo de vecinos (la regla B3/S23 a la vista) y poblacion por generacion.
+(function () {
+  if (!window.DARK2) return;
+  const area = () => ({ x: 0, y: 0, w: Math.max(200, innerWidth - 340), h: innerHeight - 40 });
+  const C = { gen: -1, blocks: [], max: 1, dens: null, n: 20, box: [0, 0, 1, 1], layers: [], census: new Array(9).fill(0), pop: 0, dpop: 0, pats: [] };
+  // los patrones que la pieza ya detecta en cada cuadro (gliders, bloques, osciladores)
+  const scan0 = window.scanPatterns;
+  if (typeof scan0 === 'function') window.scanPatterns = function () { const r = scan0.apply(this, arguments); C.pats = r; return r; };
+  const DIRV = { N: [0, -1], S: [0, 1], E: [1, 0], W: [-1, 0] };
+  function refresh() {
+    if (C.gen === generation || !gridHistory.length) return;
+    C.gen = generation;
+    const g = gridHistory[0], B = 9, acc = new Map(), census = new Array(9).fill(0);
+    let i0 = cols, i1 = 0, j0 = rows, j1 = 0, pop = 0;
+    for (let i = 1; i < cols - 1; i++) { const col = g[i]; for (let j = 1; j < rows - 1; j++) if (col[j]) {
+      pop++; if (i < i0) i0 = i; if (i > i1) i1 = i; if (j < j0) j0 = j; if (j > j1) j1 = j;
+      const key = ((i / B) | 0) * 1000 + ((j / B) | 0); let a = acc.get(key); if (!a) { a = [0, 0, 0]; acc.set(key, a); } a[0]++; a[1] += i; a[2] += j;
+      census[g[i - 1][j - 1] + g[i][j - 1] + g[i + 1][j - 1] + g[i - 1][j] + g[i + 1][j] + g[i - 1][j + 1] + g[i][j + 1] + g[i + 1][j + 1]]++;
+    } }
+    C.dpop = pop - C.pop; C.pop = pop; C.census = census;
+    if (i1 < i0) { i0 = 0; i1 = cols - 1; j0 = 0; j1 = rows - 1; }
+    i0 = Math.max(0, i0 - 2); j0 = Math.max(0, j0 - 2); i1 = Math.min(cols - 1, i1 + 2); j1 = Math.min(rows - 1, j1 + 2);
+    C.box = [i0, j0, i1, j1];
+    const n = C.n, dens = new Float32Array(n * n); let dm = 1;
+    for (let i = i0; i <= i1; i++) { const col = g[i]; for (let j = j0; j <= j1; j++) if (col[j]) { const k = Math.min(n - 1, ((j - j0) / (j1 - j0 + 1) * n) | 0) * n + Math.min(n - 1, ((i - i0) / (i1 - i0 + 1) * n) | 0); dens[k]++; if (dens[k] > dm) dm = dens[k]; } }
+    for (let k = 0; k < dens.length; k++) dens[k] /= dm;
+    C.dens = dens;
+    C.blocks = [...acc.entries()].sort((a, b) => b[1][0] - a[1][0]).slice(0, 30).map(([key, a]) => ({ key, n: a[0], ci: a[1] / a[0], cj: a[2] / a[0] }));
+    C.max = C.blocks.length ? C.blocks[0].n : 1;
+    C.layers = gridHistory.map(gr => { let s = 0; for (let i = 0; i < cols; i += 2) { const col = gr[i]; for (let j = 0; j < rows; j += 2) s += col[j]; } return s * 4; });
+  }
+  const scr = (i, j) => project3D((i - cols / 2) * CELL_SIZE, (j - rows / 2) * CELL_SIZE, 0);
+  // censo de vecinos: cuantas celdas vivas tienen 0..8 vecinas. 2 y 3 sobreviven; el resto se apaga en el proximo pulso
+  function rule(c, D, A, d, r) {
+    d.title('B.01', 'RULE B3/S23', r.x, r.y + 9, 'NEIGHBOR CENSUS');
+    const m = Math.max(1, ...C.census), bw = (r.w - 4) / 9, base = r.y + r.h - 22;
+    C.census.forEach((v, i) => {
+      const h = v / m * (r.h - 46), ok = i === 2 || i === 3, x = r.x + i * bw;
+      c.fillStyle = ok ? d.G(0.75) : d.R(0.7); c.fillRect(x + 2, base - h, bw - 4, h);
+      d.text(String(i), x + bw / 2, base + 10, ok ? d.Wt(0.9) : d.R(0.8), 'center', true);
+      if (v) d.text(String(v), x + bw / 2, base - h - 3, d.Wt(0.7), 'center');
+    });
+    d.line(r.x, base + 0.5, r.x + r.w, base + 0.5, d.Wt(0.5));
+    const dead = C.census.reduce((a, v, i) => a + (i === 2 || i === 3 ? 0 : v), 0);
+    d.text('SURVIVE ' + (C.pop - dead) + '   HALT ' + dead + '   Δ' + (C.dpop >= 0 ? '+' : '') + C.dpop, r.x, base + 21, d.G(0.7));
+  }
+  // poblacion de las 8 generaciones que la pieza guarda (la mas nueva arriba)
+  function strata(c, D, A, d, r) {
+    d.title('G.01', 'GENERATIONS', r.x, r.y + 9, 'T-0…T-7');
+    const m = Math.max(1, ...C.layers), rh = (r.h - 18) / Math.max(1, C.layers.length);
+    C.layers.forEach((v, k) => {
+      const y = r.y + 16 + k * rh, w = v / m * (r.w - 74);
+      c.fillStyle = k === 0 ? d.Wt(0.9) : d.G(0.75 - k * 0.07); c.fillRect(r.x + 30, y, w, Math.max(2, rh - 3));
+      d.text('T-' + k, r.x, y + rh - 4, d.G(0.6)); d.text(String(v), r.x + 34 + w, y + rh - 4, d.Wt(0.8));
+    });
+  }
+  DARK2.viz({
+    code: 'DIGITAL_LAB_07', z: 905, area,
+    probe() {
+      refresh();
+      const pts = [];
+      C.blocks.forEach(b => { const p = scr(b.ci, b.cj); if (p.s > 0) pts.push({ id: 'B' + String(b.key).padStart(5, '0'), x: p.x, y: p.y, k: b.n > C.max * 0.66 ? 'w' : 'g', v: b.n / C.max, w: [b.ci - cols / 2, b.cj - rows / 2], t: b.n + 'c' }); });
+      (C.pats || []).slice(0, 14).forEach((pt, i) => {
+        const p = scr(pt.x + pt.def.w / 2, pt.y + pt.def.h / 2); if (p.s <= 0) return;
+        const m = /_([NESW]) /.exec(pt.def.name), dv = m && DIRV[m[1]];
+        pts.push({ id: pt.def.type.replace(/[^A-Z]/g, '').slice(0, 4) + '_' + pt.x + '.' + pt.y, x: p.x, y: p.y, k: 'r', v: 1, w: [pt.x - cols / 2, pt.y - rows / 2], vx: dv ? dv[0] * 60 : 0, vy: dv ? dv[1] * 60 : 0, t: pt.def.type });
+      });
+      const b = C.box, n = C.n;
+      return { pts, series: { pop: C.pop, gen: generation, dpop: C.dpop },
+               grid: C.dens ? { get: (u, v) => C.dens[Math.min(n - 1, (v * n) | 0) * n + Math.min(n - 1, (u * n) | 0)] } : null,
+               extra: { box: b } };
+    },
+    layers: [
+      { type: 'rulers' },
+      { type: 'field', step: 80, alpha: 0.2 },
+      { type: 'web', k: 2, labels: 6, max: 44 },
+      { type: 'alluvial', side: 'left', sort: 'v', w: 104, from: 0.4, to: 0.62, max: 12, code: 'F.01', name: 'DENSITY', val: p => p.t },
+      { type: 'tags', max: 9, vec: 0.5 },
+      { type: 'iso', at: [0.012, 0.6, 0.2, 0.39], n: 20, code: 'I.01', name: 'COLONY RELIEF', max: 44 },
+      { type: 'radial', at: [0.012, 0.03, 0.2, 0.34], code: 'R.01', name: 'SPREAD', labels: 6 },
+      { type: 'fn', draw: rule, at: [0.775, 0.03, 0.215, 0.24] },
+      { type: 'fn', draw: strata, at: [0.8, 0.3, 0.19, 0.17] },
+      { type: 'scope', at: [0.8, 0.72, 0.19, 0.26], series: ['pop', 'dpop', 'sig'], labels: { pop: 'LIVE BITS', dpop: 'Δ / TICK' } },
+      { type: 'frame' }
+    ]
+  });
+})();
+</script>
+<!-- /DARK2:viz -->
 </body>
 </html>

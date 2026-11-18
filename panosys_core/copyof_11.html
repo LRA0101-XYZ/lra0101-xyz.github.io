@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PHOSPHOR_PERFECTION</title>
+<title>PANOSYS // PHOSPHOR_PERFECTION</title>
 <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     
     body, html {
         background-color: #020000; 
         color: #33ff33; 
-        font-family: 'Consolas', 'Courier New', Courier, monospace;
+        font-family: var(--psys-font);
         overflow-x: hidden;
         min-height: 100vh;
         cursor: crosshair;
@@ -42,7 +42,7 @@
         position: fixed;
         top: 0; left: 0; bottom: 0; right: 0;
         background: linear-gradient(rgba(0, 50, 0, 0.05) 50%, rgba(50, 0, 0, 0.05) 50%), 
-                    linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.06));
+                    linear-gradient(90deg, rgba(255,42,42, 0.06), rgba(0,255,85, 0.06));
         z-index: 10;
         background-size: 100% 4px, 4px 100%;
         pointer-events: none;
@@ -56,14 +56,14 @@
     }
 
     @keyframes glowFlickerRed {
-        0%, 100% { text-shadow: 0 0 8px #ff3333, 0 0 16px #ff3333, 0 0 24px #ff3333; opacity: 1; }
-        33% { text-shadow: 0 0 6px #ff3333, 0 0 12px #ff3333, 0 0 18px #ff3333; opacity: 0.95; }
-        66% { text-shadow: 0 0 10px #ff3333, 0 0 20px #ff3333, 0 0 28px #ff3333; opacity: 0.98; }
-        80% { text-shadow: 0 0 5px #ff3333, 0 0 10px #ff3333; opacity: 0.92; }
+        0%, 100% { text-shadow: var(--psys-glow-lg); opacity: 1; }
+        33% { text-shadow: var(--psys-glow-lg); opacity: 0.95; }
+        66% { text-shadow: var(--psys-glow-lg); opacity: 0.98; }
+        80% { text-shadow: var(--psys-glow-lg); opacity: 0.92; }
     }
 
     .red-phosphor {
-        color: #ff3333;
+        color: #ff2a2a;
         animation: glowFlickerRed 0.2s infinite alternate;
         display: inline-block;
     }
@@ -108,12 +108,12 @@
         position: fixed;
         inset: 0;
         background: #020403;
-        color: #00ff66;
+        color: #00ff55;
         z-index: 99999;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        font-family: 'Consolas', monospace;
+        font-family: var(--psys-font);
         text-align: center;
         padding: 20px;
     }
@@ -122,6 +122,9 @@
         body > *:not(#rotate-warning) { display: none !important; }
     }
 </style>
+<link rel="stylesheet" href="panosys.css">
+<link rel="stylesheet" href="dark.css">
+<link rel="stylesheet" href="dark2.css">
 </head>
 <body>
 <div id="rotate-warning">
@@ -442,5 +445,65 @@
     initAudio();
     typeWriterSync();
 </script>
+<script src="panosys.js"></script>
+<script src="dark.js"></script>
+<!-- DARK2:viz -->
+<script src="dark2viz.js"></script>
+<script>
+// DARK 2.0 · MEAT_RENDER · capas ligeras sobre el texto: cada "copy" escrito en rojo es una generacion; una linea las encadena con
+// la fidelidad que le queda a cada una, y a un lado las copias se apilan como planos que van perdiendo puntos.
+(function () {
+  if (!window.DARK2) return;
+  const area = () => ({ x: 0, y: 0, w: innerWidth, h: innerHeight });
+  const FID = 0.965, C = { at: 0, pts: [], total: 0 };
+  const hash = (a, b) => { let h = (a * 374761393 + b * 668265263) | 0; h = (h ^ (h >> 13)) * 1274126177; return ((h ^ (h >> 16)) >>> 0) / 4294967295; };
+  function refresh() {
+    const now = performance.now(); if (now - C.at < 300) return; C.at = now;
+    const reds = terminal.querySelectorAll('.red-phosphor'); C.total = reds.length;
+    const out = [];
+    for (let i = Math.max(0, reds.length - 26); i < reds.length; i++) { const r = reds[i].getBoundingClientRect(); if (r.width && r.bottom > 0 && r.top < innerHeight) out.push({ i: i + 1, x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width }); }
+    C.pts = out;
+  }
+  // la cadena: de cada copia a la siguiente, con lo que queda del original
+  function chain(c, D, A, d) {
+    const T = C.pts; if (T.length < 2) return;
+    c.strokeStyle = d.R(0.5); c.setLineDash([3, 3]); c.beginPath(); T.forEach((t, i) => (i ? c.lineTo(t.x + d.jx() * 0.3, t.y + 10) : c.moveTo(t.x, t.y + 10))); c.stroke(); c.setLineDash([]);
+    T.forEach((t, i) => { c.strokeStyle = d.R(0.75); c.strokeRect(t.x - t.w / 2 - 2, t.y - 9, t.w + 4, 19); if (i >= T.length - 7) d.text(d.f1(Math.pow(FID, t.i) * 100) + '%', t.x, t.y + 22, d.Wt(0.85), 'center'); });
+  }
+  // las copias apiladas: cada plano es una generacion; los puntos que faltan son lo que se perdio al copiar
+  function stack(c, D, A, d, r) {
+    const n = Math.max(1, Math.min(18, copyState || C.total)), gen0 = Math.max(0, (copyState || C.total) - n), a = r.w / 2, ox = r.x + r.w / 2, gap = Math.min(26, (r.h - a - 30) / Math.max(1, n - 1)), G = 7;
+    d.title('C.01', 'COPY OF A COPY', r.x, r.y + 9, 'GEN ' + (gen0 + n));
+    for (let q = n - 1; q >= 0; q--) {   // del mas viejo (abajo) al mas nuevo (arriba)
+      const gen = gen0 + n - q, f = Math.pow(FID, gen), oy = r.y + 22 + q * gap, P = (u, v) => [ox + (u - v) * a + d.jx() * 0.3, oy + (u + v) * a * 0.5];
+      c.strokeStyle = q === 0 ? d.Wt(0.8) : d.G(0.18 + 0.4 * f); c.beginPath(); [[0, 0], [1, 0], [1, 1], [0, 1]].forEach(([u, v], i) => { const p = P(u, v); i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); }); c.closePath(); c.stroke();
+      c.fillStyle = q === 0 ? d.Wt(0.9) : d.G(0.75);
+      for (let j = 0; j < G; j++) for (let i = 0; i < G; i++) if (hash(i + j * G, gen) < f) { const p = P((i + 0.5) / G, (j + 0.5) / G); c.fillRect(p[0] - 1, p[1] - 0.5, 2, 1.5); }
+      if (q % 3 === 0) d.text('G' + String(gen).padStart(3, '0') + ' ' + d.f1(f * 100) + '%', r.x, oy + a * 0.5 + 3, q === 0 ? d.Wt(0.9) : d.G(0.6));
+    }
+  }
+  DARK2.viz({
+    code: 'MEAT_RENDER', z: 40, area,
+    probe() {
+      refresh();
+      const pts = C.pts.map(t => ({ id: 'CPY' + String(t.i).padStart(3, '0'), x: t.x, y: t.y, k: 'r', v: Math.pow(FID, t.i), t: d1(Math.pow(FID, t.i) * 100) + '%' }));
+      const r = cursor.getBoundingClientRect(); if (r.top > 0 && r.top < innerHeight) pts.push({ id: 'CURSOR', x: r.left, y: r.top + r.height / 2, k: 'w', v: 1, sel: true });
+      return { pts, series: { gen: copyState || C.total, fid: Math.pow(FID, copyState || C.total) * 100, lines: terminal.children.length } };
+    },
+    layers: [
+      { type: 'rulers', cursor: false },
+      { type: 'fn', draw: chain },
+      { type: 'alluvial', side: 'left', sort: 'id', w: 96, from: 0.3, to: 0.72, max: 16, code: 'F.01', name: 'GENERATIONS', val: p => p.t || '' },
+      { type: 'tags', max: 2, vec: 0.5 },
+      { type: 'glyphs', at: [0.76, 0.05, 0.23, 0.24], bg: 0.84, text: () => terminal.textContent, extra: () => 'COPIES ' + C.total },
+      { type: 'fn', draw: stack, at: [0.82, 0.36, 0.165, 0.6], bg: 0.8 },
+      { type: 'scope', at: [0.012, 0.76, 0.17, 0.2], bg: 0.84, series: ['gen', 'fid', 'lines'], labels: { gen: 'GENERATION', fid: 'FIDELITY %', lines: 'LINES' } },
+      { type: 'frame' }
+    ]
+  });
+  function d1(n) { return (Math.round(n * 10) / 10).toFixed(1); }
+})();
+</script>
+<!-- /DARK2:viz -->
 </body>
 </html>

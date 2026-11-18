@@ -1,0 +1,58 @@
+/* PANOSYS — sistema visual compartido.
+   Se carga al final del <head> de cada pieza: sus valores mandan sobre los de la pagina. */
+
+:root {
+  /* Paleta */
+  --psys-bg: #020403;
+  --psys-g: #00ff55;        /* verde fosforo */
+  --psys-g-dim: #00aa44;
+  --psys-g-deep: #003310;
+  --psys-r: #ff2a2a;        /* alerta */
+  --psys-w: #e8ffe8;        /* destello */
+
+  /* Tipografia */
+  --psys-font: 'Consolas', 'Courier New', monospace;
+  --psys-fs-title: 26px;
+  --psys-fs-body: 14px;
+  --psys-fs-small: 10px;
+  --psys-ls: 2px;
+
+  /* Brillo */
+  --psys-glow-sm: 0 0 4px currentColor;
+  --psys-glow-lg: 0 0 6px currentColor, 0 0 14px currentColor;
+
+  /* Capa CRT: un solo lugar para ajustar toda la serie */
+  --psys-scan: repeating-linear-gradient(0deg, rgba(0,0,0,.18) 0, rgba(0,0,0,.18) 1px, transparent 1px, transparent 3px);
+  --psys-vignette: radial-gradient(ellipse at 50% 50%, transparent 25%, rgba(0,0,0,.85) 100%);
+  --psys-flicker: psys-flicker 4s steps(1) infinite;
+}
+
+/* Capas CRT existentes en las piezas -> valores comunes */
+#vg, #vignette { background: var(--psys-vignette) !important; }
+#sl, #scanlines { background: var(--psys-scan) !important; }
+
+/* Capa CRT inyectada en las piezas que no tienen una propia (ver panosys.js) */
+#psys-crt { position: fixed; inset: 0; pointer-events: none; z-index: 9000; }
+#psys-crt .scan { position: absolute; inset: 0; background: var(--psys-scan); animation: var(--psys-flicker); }
+#psys-crt .vig { position: absolute; inset: 0; background: var(--psys-vignette); }
+
+/* HUD de serie */
+#psys-hud {
+  position: fixed; right: 14px; bottom: 10px; z-index: 9500; pointer-events: none;
+  font: var(--psys-fs-small)/1.2 var(--psys-font); letter-spacing: var(--psys-ls);
+  color: var(--psys-g); text-shadow: var(--psys-glow-sm); opacity: .6; white-space: nowrap;
+}
+#psys-hud .rec { color: var(--psys-r); animation: psys-blink 1s steps(1) infinite; }
+
+/* Animaciones comunes, disponibles como clases */
+.psys-blink   { animation: psys-blink 1s steps(1) infinite; }
+.psys-flicker { animation: var(--psys-flicker); }
+.psys-glitch  { animation: psys-glitch .35s steps(2) infinite; }
+
+@keyframes psys-blink { 50% { opacity: 0; } }
+@keyframes psys-flicker { 0%,100% { opacity: 1; } 12% { opacity: .85; } 13% { opacity: 1; } 61% { opacity: .9; } 62% { opacity: 1; } }
+@keyframes psys-glitch {
+  0%   { transform: translate(0); text-shadow: 2px 0 var(--psys-r), -2px 0 cyan; }
+  50%  { transform: translate(-2px, 1px); text-shadow: -2px 0 var(--psys-r), 2px 0 cyan; }
+  100% { transform: translate(1px, -1px); text-shadow: 1px 0 var(--psys-r), -1px 0 cyan; }
+}

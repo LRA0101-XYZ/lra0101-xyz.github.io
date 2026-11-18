@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PANOSYS // SHADOW_UPLINK</title>
+<!--
+  DARK · transicion nueva (reemplaza a trans5). 8 s entre la caverna (g5_b) y la torre del censo (g7_F):
+  la sombra sale de la caverna como paquete y viaja por la malla de vigilancia de PANOSYS (camaras, antenas y satelites,
+  que son relés del sistema de sistemas) hasta LENS 04, y baja a la torre del censo.
+  Es una ruptura, como las demas transiciones: el trayecto se ve a rafagas entre destellos estroboscopicos.
+-->
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #000; font-family: var(--psys-font, 'Consolas', monospace); }
+  canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; }
+  #hud { position: fixed; left: 24px; top: 20px; z-index: 5; color: #00ff55; font-size: 13px; letter-spacing: 3px; line-height: 1.9; text-shadow: 0 0 6px currentColor; }
+  #hud .r { color: #ff2a2a; }
+  #big { position: fixed; inset: 0; z-index: 6; display: flex; align-items: center; justify-content: center; color: #ff2a2a; font-size: 6vw; font-weight: bold; letter-spacing: .1em; opacity: 0; text-shadow: 0 0 20px #ff2a2a; }
+</style>
+<link rel="stylesheet" href="panosys.css">
+<link rel="stylesheet" href="dark.css">
+<link rel="stylesheet" href="dark2.css">
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hud"></div>
+<div id="big">HANDOFF COMPLETE</div>
+<script>
+  const cv = document.getElementById('c'), cx = cv.getContext('2d'), hud = document.getElementById('hud'), big = document.getElementById('big');
+  let W, H; const DPR = Math.min(devicePixelRatio || 1, 2);
+  function resize() { W = innerWidth; H = innerHeight; cv.width = W * DPR; cv.height = H * DPR; cx.setTransform(DPR, 0, 0, DPR, 0, 0); }
+  addEventListener('resize', resize); resize();
+
+  const hex = n => (Math.random() * Math.pow(16, n) | 0).toString(16).toUpperCase().padStart(n, '0');
+  const PACKET = '0x' + hex(6), T0 = performance.now(), DUR = 8000;
+  const orbits = [0.22, 0.32, 0.43].map((r, i) => ({ r, tilt: 0.28 + i * 0.05, sats: Array.from({ length: 4 + i * 2 }, (_, k) => ({ a: k / (4 + i * 2) * Math.PI * 2 + Math.random(), s: (0.25 + Math.random() * 0.3) * (i % 2 ? -1 : 1) })) }));
+  const cols = Array.from({ length: 60 }, () => ({ x: Math.random(), y: Math.random() * -1, v: 0.2 + Math.random() * 0.6 }));
+
+  // ---------- sonido: barrido ascendente, un pitido por salto, golpe final ----------
+  let ac = null;
+  function audio() {
+    try {
+      ac = new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === 'suspended') ac.resume();
+      const t = ac.currentTime, b = ac.createBuffer(1, ac.sampleRate * 8, ac.sampleRate), d = b.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      const s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
+      s.buffer = b; f.type = 'bandpass'; f.Q.value = 6;
+      f.frequency.setValueAtTime(120, t); f.frequency.exponentialRampToValueAtTime(5200, t + 6);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.35, t + 1); g.gain.setValueAtTime(0.35, t + 6); g.gain.exponentialRampToValueAtTime(0.0001, t + 7.6);
+      s.connect(f).connect(g).connect(ac.destination); s.start(t); s.stop(t + 8);
+      const sub = ac.createOscillator(), sg = ac.createGain(); sub.frequency.value = 38; sg.gain.value = 0.25; sub.connect(sg).connect(ac.destination); sub.start(t); sub.stop(t + 7.8);
+    } catch (e) {}
+  }
+  function blip(f) {
+    if (!ac) return; const t = ac.currentTime, o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'square'; o.frequency.setValueAtTime(f, t); o.frequency.exponentialRampToValueAtTime(f * 0.5, t + 0.12);
+    g.gain.setValueAtTime(0.18, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.15); o.connect(g).connect(ac.destination); o.start(t); o.stop(t + 0.16);
+  }
+  function tick() {   // clic de ruido en cada corte del estrobo
+    if (!ac) return; const t = ac.currentTime, n = ac.sampleRate * 0.03, b = ac.createBuffer(1, n, ac.sampleRate), d = b.getChannelData(0);
+    for (let i = 0; i < n; i++) d[i] = Math.random() < 0.5 ? -1 : 1;
+    const s = ac.createBufferSource(), g = ac.createGain(); s.buffer = b; g.gain.value = 0.28; s.connect(g).connect(ac.destination); s.start(t);
+  }
+  function hit() {
+    if (!ac) return; const t = ac.currentTime, o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'sawtooth'; o.frequency.setValueAtTime(160, t); o.frequency.exponentialRampToValueAtTime(30, t + 0.7);
+    g.gain.setValueAtTime(0.6, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.8); o.connect(g).connect(ac.destination); o.start(t); o.stop(t + 0.85);
+  }
+  audio(); addEventListener('pointerdown', () => { if (ac && ac.state === 'suspended') ac.resume(); }, true);
+
+  // ---------- texto del enlace ----------
+  const LINES = [
+    [300, '> UPLINK // SOURCE: CAVE_PROJECTION'],
+    [1200, '> PACKET ' + PACKET + ' · PAYLOAD: YOUR SHADOW'],
+    [2000, '> MESH: CAMERA · ANTENNA · SATELLITE · TOWER'],
+    [2600, '> RELAY: LENS 04 · ' + (300 + Math.random() * 35000 | 0).toLocaleString('en-US') + ' KM'],
+    [4200, '> HANDOFF → CENSUS_TOWER', 'r'],
+    [5600, '> YOUR RECORD IS ALREADY WAITING']
+  ];
+  LINES.forEach(([t, text, c]) => setTimeout(() => { const d = document.createElement('div'); if (c) d.className = c; d.textContent = text; hud.appendChild(d); }, t));
+
+  // ---------- dibujo ----------
+  let hops = 0;
+  function frame(now) {
+    const e = now - T0, p = Math.min(1, e / DUR), ox = W * 0.42, oy = H * 0.52;
+    cx.fillStyle = 'rgba(0,0,0,0.35)'; cx.fillRect(0, 0, W, H);
+
+    // cascada de datos al fondo
+    cx.font = '12px Consolas, monospace'; cx.fillStyle = 'rgba(0,255,85,0.18)';
+    cols.forEach(c => { c.y += c.v * 0.012; if (c.y > 1.1) c.y = -0.2; cx.fillText(hex(2), c.x * W, c.y * H); });
+
+    // orbitas y satelites
+    orbits.forEach((o, i) => {
+      const rx = Math.min(W, H) * o.r * 1.6, ry = rx * o.tilt;
+      cx.strokeStyle = `rgba(255,42,42,${0.18 + i * 0.08})`; cx.lineWidth = 1;
+      cx.beginPath(); cx.ellipse(ox, oy, rx, ry, -0.2, 0, Math.PI * 2); cx.stroke();
+      o.sats.forEach(s => {
+        s.a += s.s * 0.02 * (1 + p * 3);
+        const x = ox + Math.cos(s.a) * rx, y = oy + Math.sin(s.a) * ry;
+        cx.fillStyle = '#ff2a2a'; cx.fillRect(x - 2, y - 2, 4, 4);
+      });
+    });
+    // la tierra (la caverna) abajo y la torre a la derecha
+    cx.fillStyle = '#00ff55'; cx.fillRect(ox - 1, H - 40, 2, 40);
+    cx.fillText('CAVE', ox + 8, H - 12);
+    const tx = W * 0.86, ty = H * 0.78;
+    cx.strokeStyle = '#ffffff'; cx.beginPath(); cx.moveTo(tx, ty); cx.lineTo(tx - 14, H); cx.moveTo(tx, ty); cx.lineTo(tx + 14, H); cx.moveTo(tx - 9, ty + 30); cx.lineTo(tx + 9, ty + 30); cx.stroke();
+    cx.fillStyle = '#ffffff'; cx.fillText('CENSUS TOWER', tx - 44, ty - 10);
+
+    // el paquete: cueva -> orbita (salta entre satelites) -> torre
+    const path = [[ox, H - 40]].concat(orbits.map((o, i) => { const s = o.sats[0], rx = Math.min(W, H) * o.r * 1.6, ry = rx * o.tilt; return [ox + Math.cos(s.a) * rx, oy + Math.sin(s.a) * ry]; }), [[tx, ty]]);
+    const seg = Math.min(path.length - 2, Math.floor(p * 1.25 * (path.length - 1))), f = (p * 1.25 * (path.length - 1)) % 1;
+    if (seg + 1 < path.length) {
+      const [x0, y0] = path[seg], [x1, y1] = path[seg + 1], x = x0 + (x1 - x0) * f, y = y0 + (y1 - y0) * f;
+      cx.strokeStyle = 'rgba(255,42,42,0.9)'; cx.lineWidth = 2; cx.beginPath(); cx.moveTo(path[0][0], path[0][1]);
+      for (let i = 1; i <= seg; i++) cx.lineTo(path[i][0], path[i][1]);
+      cx.lineTo(x, y); cx.stroke();
+      cx.fillStyle = '#fff'; cx.beginPath(); cx.arc(x, y, 4, 0, Math.PI * 2); cx.fill();
+      if (seg > hops) { hops = seg; blip(500 + seg * 220); }
+    }
+
+    // estrobo: la transicion es una ruptura. El trayecto solo se ve a rafagas, cortado por destellos.
+    const bucket = Math.floor(e / 55);
+    if (bucket !== frame.bucket) {
+      frame.bucket = bucket; const r = Math.random();
+      frame.mode = r < 0.42 ? 'scene' : r < 0.62 ? 'white' : r < 0.77 ? 'red' : r < 0.9 ? 'black' : 'tear';
+      frame.word = ['UPLINK', PACKET, 'LENS 04', 'CENSUS', 'YOUR SHADOW', 'RELAY', 'HANDOFF'][Math.random() * 7 | 0];
+      if (frame.mode !== 'scene') tick();
+      hud.style.visibility = frame.mode === 'scene' || frame.mode === 'tear' ? 'visible' : 'hidden';
+    }
+    if (frame.mode === 'white' || frame.mode === 'red') {
+      cx.fillStyle = frame.mode === 'white' ? '#ffffff' : '#ff2a2a'; cx.fillRect(0, 0, W, H);
+      cx.fillStyle = '#000'; cx.font = 'bold ' + Math.round(Math.min(W, H) * 0.14) + 'px Consolas, monospace'; cx.textAlign = 'center';
+      cx.fillText(frame.word, W / 2 + (Math.random() - 0.5) * 30, H / 2 + Math.min(W, H) * 0.05); cx.textAlign = 'left';
+    } else if (frame.mode === 'black') {
+      cx.fillStyle = '#000'; cx.fillRect(0, 0, W, H);
+    } else if (frame.mode === 'tear') {
+      for (let y = 0; y < H; y += 8 + Math.random() * 30) { cx.fillStyle = Math.random() < 0.5 ? 'rgba(255,42,42,0.8)' : 'rgba(0,255,85,0.6)'; cx.fillRect((Math.random() - 0.5) * 200, y, W, 2 + Math.random() * 6); }
+    }
+
+    // final: barrido rojo y traspaso
+    if (e > 6300) {
+      const k = (e - 6300) / 1700;
+      cx.fillStyle = `rgba(255,42,42,${0.15 + k * 0.3})`;
+      for (let y = 0; y < H; y += 6) if (Math.random() < 0.5) cx.fillRect(0, y, W, 2);
+      big.style.opacity = Math.random() < 0.7 ? 1 : 0.2;
+      if (!frame.hit) { frame.hit = true; hit(); }
+    }
+    if (e < DUR + 500) requestAnimationFrame(frame); else { cx.fillStyle = '#000'; cx.fillRect(0, 0, W, H); big.style.opacity = 0; }
+  }
+  requestAnimationFrame(frame);
+</script>
+<script src="panosys.js"></script>
+<script src="dark.js"></script>
+<!-- DARK2:trans -->
+<script src="trans2.js"></script>
+<script>
+// DARK 2.0 · la transicion como diagrama de flujo de datos (looks/). La pagina original sigue debajo con su audio.
+TRANS2.run({"hop":"SHADOW_UPLINK","from":"CAVE_PROJECTION","to":"CENSUS_TOWER","dur":8,"panes":[{"mode":"tracker"}],"caption":"TERMINAL → SENSOR → OPERATOR"});
+</script>
+<!-- /DARK2:trans -->
+</body>
+</html>

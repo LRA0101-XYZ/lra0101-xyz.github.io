@@ -2,12 +2,12 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>SYS_SURVEILLANCE // 0x00</title>
+    <title>PANOSYS // SYS_SURVEILLANCE // 0x00</title>
     <style>
         body {
             background-color: #000000;
-            color: #00ff00;
-            font-family: 'Consolas', monospace;
+            color: #00ff55;
+            font-family: var(--psys-font);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -17,12 +17,12 @@
             overflow: hidden;
         }
         .terminal-box {
-            border: 1px dashed #00ff00;
+            border: 1px dashed #00ff55;
             padding: 40px;
             max-width: 600px;
             width: 100%;
             text-align: center;
-            background: rgba(0, 255, 0, 0.02);
+            background: rgba(0,255,85, 0.02);
             box-sizing: border-box;
             position: relative;
             z-index: 2;
@@ -30,22 +30,22 @@
         .main-text {
             font-size: 1.3rem;
             letter-spacing: 4px;
-            color: #00ff00;
-            text-shadow: 0 0 10px rgba(0, 255, 0, 0.4);
+            color: #00ff55;
+            text-shadow: 0 0 10px rgba(0,255,85, 0.4);
             margin: 0 0 15px 0;
         }
         .sub-text {
             font-size: 0.8rem;
             letter-spacing: 2px;
-            color: #00ff00;
+            color: #00ff55;
             opacity: 0.7;
             margin: 0 0 25px 0;
         }
         .progress-bar {
             width: 100%;
             height: 4px;
-            border: 1px solid #00ff00;
-            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid #00ff55;
+            background: rgba(0,255,85, 0.1);
             position: relative;
             overflow: hidden;
         }
@@ -55,8 +55,8 @@
             left: 0;
             height: 100%;
             width: 0%;
-            background: #00ff00;
-            box-shadow: 0 0 8px #00ff00;
+            background: #00ff55;
+            box-shadow: 0 0 8px #00ff55;
             animation: load 10s linear forwards;
         }
         @keyframes load {
@@ -98,12 +98,12 @@
             position: fixed;
             inset: 0;
             background: #020403;
-            color: #00ff66;
+            color: #00ff55;
             z-index: 99999;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-family: 'Consolas', monospace;
+            font-family: var(--psys-font);
             text-align: center;
             padding: 20px;
         }
@@ -113,6 +113,9 @@
             body > *:not(#rotate-warning) { display: none !important; }
         }
     </style>
+<link rel="stylesheet" href="panosys.css">
+<link rel="stylesheet" href="dark.css">
+<link rel="stylesheet" href="dark2.css">
 </head>
 <body><div id="rotate-warning">
     <div style="font-size: 24px; margin-bottom: 15px;">⟳</div>
@@ -246,5 +249,35 @@
     });
 })();
 </script>
+<script src="panosys.js"></script>
+<script src="dark.js"></script>
+<!-- DARK2:viz -->
+<script src="dark2viz.js"></script>
+<script>
+// DARK 2.0 · FLATLINE · casi nada: el marco de serie y tres trazos de signos vitales que dan un ultimo pulso y se quedan planos.
+// El final es por sustraccion: aqui no entran mas instrumentos.
+(function () {
+  if (!window.DARK2) return;
+  const area = () => ({ x: 0, y: 0, w: innerWidth, h: innerHeight });
+  const T0 = performance.now();
+  function vitals(c, D, A, d, r) {
+    const t = (performance.now() - T0) / 1000, rows = [['PULSE', 0.9], ['SIGNAL', 1.6], ['OBSERVER', 2.4]], h = r.h / rows.length;
+    rows.forEach(([name, last], i) => {
+      const y = r.y + i * h + h * 0.6, dead = t > last + 0.6;
+      c.strokeStyle = dead ? d.G(0.55) : d.Wt(0.9); c.lineWidth = 1; c.beginPath();
+      for (let x = 0; x <= r.w; x += 3) { const u = x / r.w, ph = u * 6 - (t - last) * 3; let v = 0; if (!dead && ph > -1 && ph < 0) v = Math.sin(ph * Math.PI * 4) * Math.exp(ph * 3) * (h * 0.4); x ? c.lineTo(r.x + x, y - v) : c.moveTo(r.x + x, y - v); }
+      c.stroke();
+      d.text(name, r.x - 8, y + 3, d.G(0.6), 'right'); d.text(dead ? '0.0' : '—', r.x + r.w + 8, y + 3, dead ? d.R(0.9) : d.Wt(0.8), 'left', true);
+    });
+    d.text('FLATLINE · T+' + d.f1(t) + 's · NO BACKUP EXISTS', r.x, r.y + r.h + 12, d.G(0.5));
+  }
+  DARK2.viz({
+    code: 'FLATLINE', z: 40, area,
+    probe() { return { pts: [] }; },
+    layers: [{ type: 'fn', draw: vitals, at: [0.3, 0.76, 0.4, 0.13] }, { type: 'frame' }]
+  });
+})();
+</script>
+<!-- /DARK2:viz -->
 </body>
 </html>

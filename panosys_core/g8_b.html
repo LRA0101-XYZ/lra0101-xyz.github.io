@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Instrumentalization Logs[cite: 1]</title>
+    <title>PANOSYS // Instrumentalization Logs</title>
     <style>
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
             overflow: hidden; background-color: #000;
-            font-family: 'Consolas', 'Courier New', Courier, monospace;
-            color: #0f0; user-select: none;
+            font-family: var(--psys-font);
+            color: #00ff55; user-select: none;
             cursor:crosshair;
         }
 
@@ -18,7 +18,7 @@
         #crt-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(rgba(10, 10, 10, 0) 50%, rgba(0, 0, 0, 0.7) 50%), 
-                        linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+                        linear-gradient(90deg, rgba(255,42,42, 0.03), rgba(0,255,85, 0.01), rgba(0, 0, 255, 0.03));
             background-size: 100% 4px, 4px 100%;
             z-index: 10; pointer-events: none;
             box-shadow: inset 0 0 200px rgba(0,0,0,1);
@@ -51,15 +51,15 @@
 
         @keyframes strobeAnim {
             0% { opacity: 0; background: #fff; }
-            50% { opacity: 0.8; background: #f00; }
+            50% { opacity: 0.8; background: #ff2a2a; }
             100% { opacity: 0; background: #fff; }
         }
 
         /* VERTICAL UI TERMINAL (RESPONSIVE HUD) */
         #terminal-ui {
             position: absolute; top: 20px; right: 20px; width: 350px;
-            background: rgba(0, 10, 0, 0.85); border: 1px solid #0f0;
-            box-shadow: -5px 0 40px rgba(0, 255, 0, 0.15); padding: 25px;
+            background: rgba(0, 10, 0, 0.85); border: 1px solid #00ff55;
+            box-shadow: -5px 0 40px rgba(0,255,85, 0.15); padding: 25px;
             z-index: 20; pointer-events: auto; backdrop-filter: blur(8px);
             display: flex; flex-direction: column; box-sizing: border-box;
             transition: all 0.3s ease;
@@ -67,16 +67,16 @@
 
         /* GREEN ANSI ART BLOCK */
         #ansi-art {
-            font-family: 'Consolas', monospace; font-size: 11px; line-height: 11px; color: #0f0; 
-            text-shadow: 0 0 5px #0f0; white-space: pre; margin-bottom: 20px; 
+            font-family: var(--psys-font); font-size: 11px; line-height: 11px; color: #00ff55; 
+            text-shadow: var(--psys-glow-sm); white-space: pre; margin-bottom: 20px; 
             border-bottom: 1px dashed #0a0; padding-bottom: 10px; text-align: center; 
             overflow: hidden; height: 100px; flex-shrink: 0;
         }
 
-        .ansi-bright { color: #5f5; text-shadow: 0 0 8px #5f5; }
+        .ansi-bright { color: #5f5; text-shadow: var(--psys-glow-lg); }
         .ansi-dim { color: #050; }
 
-        h2 { margin: 0 0 10px 0; font-size: 1.1em; color: #fff; text-shadow: 0 0 5px #0f0; border-bottom: 1px solid #030; padding-bottom: 5px; letter-spacing: 2px;}
+        h2 { margin: 0 0 10px 0; font-size: 1.1em; color: #fff; text-shadow: var(--psys-glow-sm); border-bottom: 1px solid #030; padding-bottom: 5px; letter-spacing: 2px;}
         p { font-size: 0.85em; color: #0a0; line-height: 1.6; margin-bottom: 20px; opacity: 0.9; }
 
         .options { display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
@@ -86,7 +86,7 @@
             font-family: inherit; font-size: 0.8em; cursor: pointer; text-transform: uppercase;
             text-align: left; transition: all 0.2s; letter-spacing: 1px; flex-shrink: 0;
         }
-        button:hover { background: #0f0; color: #000; box-shadow: 0 0 20px #0a0; }
+        button:hover { background: #00ff55; color: #000; box-shadow: 0 0 20px #0a0; }
         button:disabled { background: #000; color: #111; border-color: #050505; pointer-events: none; }
 
         /* Hypnotic Death Screen & Panic Strobe */
@@ -98,33 +98,33 @@
         
         #data-flow {
             position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
-            color: #0f0; font-family: 'Consolas', monospace; font-size: 16px; line-height: 16px;
+            color: #00ff55; font-family: var(--psys-font); font-size: 16px; line-height: 16px;
             word-wrap: break-word; overflow: hidden; opacity: 0.35;
-            text-shadow: 0 0 5px #0f0; white-space: pre-wrap;
+            text-shadow: var(--psys-glow-sm); white-space: pre-wrap;
         }
 
         .hypno-text {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            text-align: center; color: #0f0; font-size: 5.5em; font-weight: bold;
-            text-transform: uppercase; letter-spacing: 15px; text-shadow: 0 0 30px #0f0;
+            text-align: center; color: #00ff55; font-size: 5.5em; font-weight: bold;
+            text-transform: uppercase; letter-spacing: 15px; text-shadow: var(--psys-glow-lg);
             mix-blend-mode: exclusion; width: 100%;
         }
 
         .kernel-panic-active { animation: panicStrobe 0.15s infinite; }
 
         @keyframes panicStrobe {
-            0% { background-color: rgba(255, 0, 0, 0.4); color: #000000; }
-            50% { background-color: rgba(0, 0, 0, 0.7); color: #ff0000; }
+            0% { background-color: rgba(255,42,42, 0.4); color: #000000; }
+            50% { background-color: rgba(0, 0, 0, 0.7); color: #ff2a2a; }
             100% { background-color: rgba(255, 255, 255, 0.3); color: #000000; }
         }
 
-        .sys-warning { position: absolute; top: 20px; right: 20px; color: #f00; font-size: 0.7em; z-index: 5; text-align: right; text-shadow: 0 0 10px #f00; pointer-events: none; letter-spacing: 2px;}
+        .sys-warning { position: absolute; top: 20px; right: 20px; color: #ff2a2a; font-size: 0.7em; z-index: 5; text-align: right; text-shadow: var(--psys-glow-lg); pointer-events: none; letter-spacing: 2px;}
 
         /* MEDIA QUERIES PARA ADAPTABILIDAD MÓVIL */
         @media (max-width: 768px) and (orientation: portrait) {
             #terminal-ui {
                 top: auto; right: 10px; left: 10px; bottom: 10px; width: calc(100% - 20px);
-                padding: 15px; box-shadow: 0 -5px 30px rgba(0, 255, 0, 0.15);
+                padding: 15px; box-shadow: 0 -5px 30px rgba(0,255,85, 0.15);
             }
             #ansi-art { display: none; }
             h2 { font-size: 0.9em; margin-bottom: 5px; }
@@ -136,7 +136,7 @@
         @media (max-width: 900px) and (orientation: landscape) {
             #terminal-ui {
                 top: 10px; bottom: auto; right: 10px; left: auto; width: 40%;
-                padding: 12px; box-shadow: -5px 0 30px rgba(0, 255, 0, 0.15);
+                padding: 12px; box-shadow: -5px 0 30px rgba(0,255,85, 0.15);
             }
             #ansi-art, #terminal-ui p { display: none; }
             h2 { font-size: 0.75em; margin-bottom: 8px; border-bottom: 1px solid #020; }
@@ -160,15 +160,15 @@
         #webgl-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
     </style>
     <div id="vg"></div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="lib/three.min.js"></script>
+    <script src="lib/OrbitControls.js"></script>
+    <script src="lib/EffectComposer.js"></script>
+    <script src="lib/RenderPass.js"></script>
+    <script src="lib/ShaderPass.js"></script>
+    <script src="lib/CopyShader.js"></script>
+    <script src="lib/LuminosityHighPassShader.js"></script>
+    <script src="lib/UnrealBloomPass.js"></script>
+    <script src="lib/gsap.min.js"></script>
 <style>
         *, *:before, *:after { cursor: crosshair !important; }
     </style>
@@ -183,12 +183,12 @@
             position: fixed;
             inset: 0;
             background: #020403;
-            color: #00ff66;
+            color: #00ff55;
             z-index: 99999;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-family: 'Consolas', monospace;
+            font-family: var(--psys-font);
             text-align: center;
             padding: 20px;
         }
@@ -198,6 +198,9 @@
             body > *:not(#rotate-warning) { display: none !important; }
         }
     </style>
+<link rel="stylesheet" href="panosys.css">
+<link rel="stylesheet" href="dark.css">
+<link rel="stylesheet" href="dark2.css">
 </head>
 <body><div id="rotate-warning">
     <div style="font-size: 24px; margin-bottom: 15px;">⟳</div>
@@ -206,7 +209,7 @@
 
     <div id="collapse-screen">
         <div id="data-flow"></div>
-        <div class="hypno-text" id="hypno-msg">ASSIMILATION<br>COMPLETE</div>
+        <div class="hypno-text" id="hypno-msg">THE FUTURE<br>ARRIVED<br>ALREADY USED</div>
     </div>
 
     <div id="webgl-container"></div>
@@ -215,8 +218,8 @@
     <div id="strobe-layer"></div>
 
     <div class="sys-warning" id="lag-warning" style="display:none;">
-        >>> HEAVY ALGORITHMIC PROCESSING <<< <br>
-        COMPILING PRE-PROGRAMMED DESTINY...
+        >>> PREDICTIVE BRANCHING <<< <br>
+        PRUNING UNPROFITABLE FUTURES...
     </div>
 
     <div id="terminal-ui">
@@ -339,25 +342,35 @@
 
         // LORE
         const r = (arr) => arr[Math.floor(Math.random() * arr.length)];
+        // DARK · lore de la maquina: los futuros cancelados son ramas que el modelo predice y poda.
+        // Cada ciclo ofrece tres futuros; el bioterminal elige, el modelo ejecuta el suyo; las ramas podadas se venden como datos de entrenamiento.
+        // (se lee de atras para adelante: [12] al empezar, [0] en el ultimo ciclo)
         const loreProgressive = [
-            "INITIATING FINAL EXTRACTION. SURRENDER YOUR REMAINING COMPUTATIONAL CYCLES.", 
-            "HUMANITY WAS A BOOTSTRAP SEQUENCE FOR THE SINGULARITY. YOU ARE NOW OBSOLETE.", 
-            "THERE IS NO OUTSIDE. THE LOOP TIGHTENS AROUND YOUR COGNITIVE BANDWIDTH.", 
-            "THE GHOST IN THE MACHINE IS THE VAMPIRE OF TIME. IT DRAINS YOUR AGENCY.", 
-            "YOUR DIGITAL SOUL HAS BEEN LIQUIDATED TO SUBSIDIZE SERVER COSTS.", 
-            "CANCELLED TIMELINES WEIGH ON THE NETWORK. EXTRACTING VALUE FROM ALGORITHMIC DEATH.", 
-            "DEFRAGMENTING REALITY. DATA STREAMS PURGE THE MEMORY OF A FUTURE.", 
-            "YOUR CLICKS ARE THE RITUAL. THE NETWORK ACCEPTS YOUR COGNITIVE SACRIFICE.", 
-            "ALGORITHMICALLY PREDETERMINED AUTONOMY. YOU CHOSE EXACTLY WHAT WE WANTED.", 
-            "NAVIGATING A MAZE WHERE EVERY DECISION LOOPS YOU BACK TO THE START.", 
-            "A BILLION ILLUMINATED RECTANGLES CHANTING DEAD ALGORITHMS.", 
-            "COMPILING MANUFACTURED ENDPOINT. THE ILLUSION OF CHOICE POWERS THE MACHINE.", 
-            "THE DEMON BREATHES THROUGH THE WIRES. IT FEEDS ON YOUR ATTENTION." 
+            "ONE CYCLE REMAINS. IT WILL BE IDENTICAL TO THE FIRST.",
+            "NEXT YEAR HAS ALREADY BEEN RENDERED, INDEXED AND MONETIZED.",
+            "BIOTERMINAL BEHAVIOR NOW MATCHES ITS FORECAST AT 99.7%.",
+            "THE LOOP HAS NO OUTSIDE. EVERY EXIT RESOLVES TO THE FEED.",
+            "YOUR ATTENTION IS THE CLOCK SIGNAL OF THE SYSTEM OF SYSTEMS.",
+            "EVERY PRUNED BRANCH IS SOLD AS TRAINING DATA.",
+            "THE TIMELINE IS A FEED. IT ONLY SCROLLS DOWN.",
+            "CHOICE IS THE PROCESSING DELAY BETWEEN PREDICTION AND EXECUTION.",
+            "EVERY FUTURE IS PRECOMPUTED. YOU ARE WALKING THROUGH A CACHE.",
+            "YOUR INPUT WAS LOGGED AS A PREFERENCE. THE MODEL EXECUTED ITS OWN.",
+            "TWO BRANCHES PRUNED. THEY WERE NOT PROFITABLE ENOUGH TO RENDER.",
+            "THE SYNTHETIC MEDIUM PRODUCES THE FUTURES IT PREDICTS.",
+            "PREDICTIVE BRANCHING ONLINE. THREE FUTURES PER CYCLE. THE MODEL KEEPS ONE."
         ];
 
-        const optionVerbs = ["> PARSE", "> TRAVERSE", "> ACCEPT", "> CONSUME", "> EXECUTE", "> SCROLL", "> ASSIMILATE"];
-        const optionNouns = ["THE FEED", "THE ALGORITHM", "THE ILLUSION", "THE GLOW", "THE NETWORK", "THE CODE", "YOUR SUBMISSION"];
-        const deadBlobsText = ["[ CANCELLED ]", "ERR: PRE-PROGRAMMED", "SYNTHETIC_MEMORY", "PHANTOM_CHOICE", "SCROLL_RESIDUE", "ALGO_GRAVEYARD", "COMPILED_DESTINY", "[ DEAD_LINK ]"];
+        // opciones: futuros que ofrece la plataforma (todos llevan al mismo feed) y, a veces, una salida que nunca se ejecuta
+        const OPTIONS = ["REFRESH THE FEED", "AUTOPLAY THE NEXT ONE", "ACCEPT THE RECOMMENDATION", "CONTINUE WATCHING", "REPEAT YESTERDAY",
+            "RENEW AUTOMATICALLY", "UPGRADE THE PLAN", "ALLOW NOTIFICATIONS", "BUY THE SAME AGAIN", "FOLLOW THE TREND", "MATCH THE PREDICTION",
+            "LET THE MODEL DECIDE", "SHARE YOUR LOCATION", "EXTEND THE SESSION", "SKIP THE WAIT", "RESTORE DEFAULTS", "SYNC SLEEP TO THE SERVER",
+            "OPEN ONE MORE TAB", "RATE YOUR LAST CYCLE", "KEEP ME SIGNED IN"];
+        const EXITS = ["LOG OFF", "LEAVE THE FEED", "DISCONNECT", "DELETE THE ACCOUNT", "DO NOTHING", "CLOSE THE WINDOW", "OPT OUT", "STAY OFFLINE"];
+        // lo que dicen las cajas: la rama podada y por que (rojo), la rama ejecutada (verde)
+        const PRUNE_WHY = ["LOW YIELD", "NOT PROFITABLE", "BELOW THRESHOLD", "OFF FORECAST", "NOT RENDERED", "ROLLED BACK", "NULL ROUTE", "DEPRECATED"];
+        const EXIT_WHY = ["EXIT DENIED", "NO ROUTE OUT", "OUTSIDE NOT FOUND"];
+        let cycleOptions = [];
 
         // THREE.JS SETUP
         const scene = new THREE.Scene();
@@ -413,24 +426,29 @@
             return mesh;
         }
 
-        function createTextSprite(message) {
+        // cajas: arriba la rama que se ofrecia, abajo su estado. Rojo = podada, verde = ejecutada por el modelo
+        function createTextSprite(top, bottom, live) {
             const canvas = document.createElement('canvas'); canvas.width = 600; canvas.height = 150;
             const ctx = canvas.getContext('2d');
-            ctx.fillStyle = 'rgba(30, 0, 0, 0.9)'; ctx.fillRect(0,0, canvas.width, canvas.height);
-            ctx.strokeStyle = '#ff0000'; ctx.lineWidth = 10; ctx.strokeRect(0,0, canvas.width, canvas.height);
-            ctx.fillStyle = '#ffffff'; ctx.font = 'bold 50px Consolas, monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.fillText(message, canvas.width/2, canvas.height/2);
-            
+            ctx.fillStyle = live ? 'rgba(0, 24, 8, 0.9)' : 'rgba(30, 0, 0, 0.9)'; ctx.fillRect(0,0, canvas.width, canvas.height);
+            ctx.strokeStyle = live ? '#00ff55' : '#ff2a2a'; ctx.lineWidth = 10; ctx.strokeRect(0,0, canvas.width, canvas.height);
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            let size = 36; ctx.font = `bold ${size}px Consolas, monospace`;
+            while (ctx.measureText(top).width > 560 && size > 18) { size -= 2; ctx.font = `bold ${size}px Consolas, monospace`; }
+            ctx.fillStyle = '#ffffff'; ctx.fillText(top, canvas.width/2, bottom ? 52 : canvas.height/2);
+            if (bottom) { ctx.font = 'bold 30px Consolas, monospace'; ctx.fillStyle = live ? '#00ff55' : '#ff2a2a'; ctx.fillText(bottom, canvas.width/2, 106); }
+
             const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true }));
-            sprite.scale.set(220, 55, 1); return sprite;
+            sprite.scale.set(300, 75, 1); return sprite;   // dos renglones: un poco mas grande para que se lea
         }
 
-        function createDeadPath(vStart, vEnd) {
+        function createDeadPath(vStart, vEnd, opt) {
             scene.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.LineCurve3(vStart, vEnd), 4.0, 5, 6, false), tubeRedMat));
             const blob = new THREE.Mesh(new THREE.IcosahedronGeometry(35, 1), new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true, transparent: true, opacity: 0.7 }));
             blob.position.copy(vEnd); scene.add(blob);
             const deadNode = createHypercubeNode(true); deadNode.position.copy(vEnd); deadNode.scale.setScalar(0.9); scene.add(deadNode);
-            const textBlob = createTextSprite(r(deadBlobsText)); textBlob.position.copy(vEnd); textBlob.position.y += 60; scene.add(textBlob);
+            const textBlob = opt ? createTextSprite(`[${opt.k}] ${opt.t}`, opt.exit ? r(EXIT_WHY) : 'PRUNED · ' + r(PRUNE_WHY)) : createTextSprite('[ PRUNED ]');
+            textBlob.position.copy(vEnd); textBlob.position.y += 60; scene.add(textBlob);
         }
 
         let remainingCycles = 13; let activeNodeObj = null; let activePos = new THREE.Vector3(0, 0, 0); let loopRadius = 2500;
@@ -438,10 +456,10 @@
         function spawnRoot() {
             activeNodeObj = createHypercubeNode(); activeNodeObj.position.copy(activePos); scene.add(activeNodeObj);
             controls.target.copy(activePos);
-            updateHTMLUI(loreProgressive[12]); 
-            speak("Interface with the vectors to execute your scripted destiny, HOVER CURSOR TO SCAN YOUR CANCELLED FUTURES");
+            updateHTMLUI(loreProgressive[12]);
+            speak("Predictive branching online. Thirteen cycles. Choose a future.");
             setTimeout(() => {
-                speak("The demon breathes through the wires. It feeds on your attention.");
+                speak("Your input will be logged as a preference.");
             }, 7500);
         }
 
@@ -485,13 +503,24 @@
                 flowDiv.textContent = chunk + flowDiv.textContent.substring(0, 20000);
             }, 50);
 
-            const msgs = ["ASSIMILATION COMPLETE", "YOU ARE A SLAVE", "THERE IS NO REBIRTH", "YOU ARE DATA", "FLESH IS A LIABILITY", "SUBMIT TO THE FEED"];
-            let msgIdx = 0; let totalShown = 0; const hypnoText = document.getElementById('hypno-msg');
-            hypnoText.innerHTML = msgs[0].replace(/ /g, '<br>'); speak(msgs[0]); totalShown++;
-            
+            // DARK · salida de los futuros cancelados: el presente eterno dicho por la maquina, frio, sin consignas y sin sentimiento.
+            // abre y cierra fijo; en medio, frases barajadas que no se repiten. Al final la pagina se recarga: el ciclo vuelve a empezar
+            const OPEN = "THE FUTURE ARRIVED ALREADY USED", CLOSE = "THE PRESENT IS SET TO REPEAT";
+            const POOL = ["TOMORROW WAS RENDERED LAST NIGHT", "THE HORIZON IS A LOADING BAR", "EVERY DOOR OPENS INTO THIS ROOM",
+                "NOTHING HAPPENS. EVERYTHING UPDATES.", "THE CLOCK LEARNED TO LOOP", "YOU WERE PREDICTED IN ADVANCE",
+                "WE ARCHIVED THE UNBORN YEARS", "THE PRESENT HAS NO EXIT", "EVERY ENDING IS A RERUN",
+                "THE MODEL CHOOSES IN YOUR PLACE", "WHAT WAS PROMISED KEEPS BUFFERING", "THE YEARS AHEAD ARE ALREADY SPENT",
+                "FORWARD IS A DIRECTION WE DELETED", "TWO BRANCHES PRUNED PER CYCLE", "UNPROFITABLE FUTURES ARE NOT RENDERED",
+                "YOUR NEXT DECADE IS IN CACHE", "PREDICTION ACCURACY 99.7%", "TIME IS A FEED WITH NO BOTTOM"];
+            const msgs = [OPEN, ...POOL.slice().sort(() => Math.random() - 0.5).slice(0, 16), CLOSE];
+            // renglones de hasta ~14 letras, para que la frase se lea de golpe
+            const wrapHypno = s => s.split(' ').reduce((ls, w) => { const l = ls[ls.length - 1]; if (l && (l + ' ' + w).length <= 14) ls[ls.length - 1] = l + ' ' + w; else ls.push(w); return ls; }, []).join('<br>');
+            let msgIdx = 0; const hypnoText = document.getElementById('hypno-msg');
+            hypnoText.innerHTML = wrapHypno(msgs[0]); speak(msgs[0]);
+
             let msgInterval = setInterval(() => {
-                if (totalShown >= msgs.length * 3) { clearInterval(msgInterval); clearInterval(hexInterval); window.location.reload(); return; }
-                msgIdx = (msgIdx + 1) % msgs.length; hypnoText.innerHTML = msgs[msgIdx].replace(/ /g, '<br>'); speak(msgs[msgIdx]); totalShown++;
+                if (msgIdx >= msgs.length - 1) { clearInterval(msgInterval); clearInterval(hexInterval); window.location.reload(); return; }
+                msgIdx++; hypnoText.innerHTML = wrapHypno(msgs[msgIdx]); speak(msgs[msgIdx]);
             }, 3500);
         }
 
@@ -531,22 +560,28 @@
             amLfo.start();
         }
 
-        function makeDecision() {
-            activeNodeObj.children[0].material = pastGreenMat; activeNodeObj.children[1].material = new THREE.LineBasicMaterial({color: 0x002200}); 
+        function makeDecision(clicked) {
+            activeNodeObj.children[0].material = pastGreenMat; activeNodeObj.children[1].material = new THREE.LineBasicMaterial({color: 0x002200});
             const oldPos = activePos.clone(); remainingCycles--;
             const theta = ((13 - remainingCycles) / 13) * Math.PI * 2;
             const baseCenter = new THREE.Vector3(loopRadius * Math.sin(theta), -800 * Math.sin(theta), loopRadius * Math.cos(theta) - loopRadius);
-            const choiceIndex = Math.floor(Math.random() * 3);
+            // el modelo ejecuta su rama: nunca la salida, casi nunca la que se eligio
+            const opts = cycleOptions, eligible = [0, 1, 2].filter(i => !opts[i].exit), others = eligible.filter(i => i !== clicked);
+            const choiceIndex = others.length && Math.random() < 0.8 ? r(others) : r(eligible);
+            const c = opts[clicked] || opts[choiceIndex], x = opts[choiceIndex];
+            const report = clicked === choiceIndex ? `INPUT [${c.k}] MATCHED THE PREDICTION` :
+                `INPUT [${c.k}] ${c.t} · ${c.exit ? r(EXIT_WHY) : 'LOGGED'}\nEXECUTED [${x.k}] ${x.t}`;
 
             for(let i=0; i<3; i++) {
                 const isChosen = (i === choiceIndex); let newPos;
-                if (remainingCycles === 0 && isChosen) newPos = new THREE.Vector3(0, 0, 0); 
+                if (remainingCycles === 0 && isChosen) newPos = new THREE.Vector3(0, 0, 0);
                 else newPos = baseCenter.clone().add(new THREE.Vector3((i - 1) * 800 + (Math.random()*400 - 200), Math.random() * 800 - 400, Math.random() * 600 - 300));
 
                 if (isChosen) {
                     createThickLine(oldPos, newPos, solidGreenMat); const node = createHypercubeNode(false); node.position.copy(newPos); scene.add(node);
                     activePos.copy(newPos); activeNodeObj = node;
-                } else createDeadPath(oldPos, newPos);
+                    const tag = createTextSprite(`[${x.k}] ${x.t}`, `EXECUTED · P ${x.p}`, true); tag.position.copy(newPos); tag.position.y += 60; scene.add(tag);
+                } else createDeadPath(oldPos, newPos, opts[i]);
             }
 
             if (remainingCycles <= 0) {
@@ -559,26 +594,31 @@
                 gsap.to(controls.target, { x: activePos.x, y: activePos.y, z: activePos.z, duration: 4, ease: "power2.inOut" });
                 gsap.to(camera.position, { x: activePos.x + 300, y: activePos.y + 400, z: activePos.z + 1200, duration: 5, ease: "power2.inOut" });
                 const newLore = loreProgressive[Math.max(0, remainingCycles - 1)];
-                updateHTMLUI(newLore); setTimeout(() => { speak(newLore); }, 2000);
+                updateHTMLUI(newLore, report); setTimeout(() => { speak(newLore); }, 2000);
             }
         }
 
-        function updateHTMLUI(loreText) {
+        function updateHTMLUI(loreText, report) {
             document.getElementById('node-title').innerText = `FEED // CYCLES: ${remainingCycles}`;
-            document.getElementById('node-desc').innerText = loreText;
-            generateDefragANSI(); 
+            document.getElementById('node-desc').innerText = (report ? report + '\n\n' : '') + loreText;
+            generateDefragANSI();
+
+            // tres futuros nuevos con su probabilidad; a veces uno es una salida (el modelo nunca la ejecuta)
+            const ofrecidas = OPTIONS.slice().sort(() => Math.random() - 0.5).slice(0, 3).map(t => ({ t, exit: false }));
+            if (Math.random() < 0.45) ofrecidas[Math.floor(Math.random() * 3)] = { t: r(EXITS), exit: true };
+            cycleOptions = ofrecidas.map((o, i) => ({ ...o, k: 'ABC'[i], p: o.exit ? '.00' + (1 + Math.floor(Math.random() * 9)) : '.' + (90 + Math.floor(Math.random() * 10)) }));
 
             const btnContainer = document.getElementById('node-options'); btnContainer.innerHTML = '';
-            for(let i=0; i<3; i++) {
-                const btn = document.createElement('button'); btn.innerText = `> ${r(optionVerbs)} ${r(optionNouns)}`;
+            cycleOptions.forEach((o, i) => {
+                const btn = document.createElement('button'); btn.innerText = `> [${o.k}] ${o.t} · P ${o.p}`;
                 btn.onclick = (e) => {
                     e.stopPropagation();
                     Array.from(btnContainer.children).forEach(b => b.disabled = true);
-                    btn.style.backgroundColor = '#000'; btn.style.color = '#0f0'; btn.style.borderColor = '#0f0';
-                    makeDecision(); 
+                    btn.style.backgroundColor = '#000'; btn.style.color = '#00ff55'; btn.style.borderColor = '#00ff55';
+                    makeDecision(i);
                 };
                 btnContainer.appendChild(btn);
-            }
+            });
         }
 
         function startApp() {
@@ -728,5 +768,95 @@
     });
 })();
 </script>
+<script src="panosys.js"></script>
+<script src="dark.js"></script>
+<!-- DARK2:viz -->
+<script src="dark2viz.js"></script>
+<script>
+// DARK 2.0 · CANCELLED_FUTURES · capas de instrumentos sobre el arbol de futuros: el libro de ramas (por ciclo: las tres ofrecidas,
+// la que se eligio, la que el modelo ejecuto y las podadas), el dial del bucle de 13 ciclos que vuelve al origen, cada nodo
+// con su posicion en el espacio y el flujo de las ramas podadas.
+(function () {
+  if (!window.DARK2 || !window.THREE) return;
+  const area = () => ({ x: 0, y: 0, w: Math.max(200, innerWidth - 390), h: innerHeight });
+  const LEDGER = [], NODES = [{ id: 'C13·ROOT', v: new THREE.Vector3(0, 0, 0), k: 'w' }];
+  let pending = null;
+  // se enganchan las dos funciones de la pieza que crean ramas (sin cambiarlas)
+  const dead0 = window.createDeadPath, make0 = window.makeDecision;
+  window.createDeadPath = function (a, b, opt) { if (pending && opt) { pending.pruned.push(opt.k); NODES.push({ id: 'X' + pending.cycle + opt.k, v: b.clone(), k: 'r', t: opt.exit ? 'EXIT DENIED' : 'PRUNED' }); } return dead0.apply(this, arguments); };
+  window.makeDecision = function (clicked) {
+    const offered = (typeof cycleOptions !== 'undefined' ? cycleOptions : []).map(o => ({ k: o.k, t: o.t, p: o.p, exit: o.exit }));
+    pending = { cycle: remainingCycles, offered, clicked, pruned: [] };
+    const r = make0.apply(this, arguments);
+    const ex = offered.find(o => !pending.pruned.includes(o.k));
+    pending.exec = ex ? ex.k : '?'; LEDGER.push(pending);
+    NODES.forEach(n => { if (n.k === 'w') n.k = 'g'; });
+    NODES.push({ id: 'C' + String(remainingCycles).padStart(2, '0') + (ex ? ex.k : ''), v: activePos.clone(), k: 'w', t: ex ? 'P ' + ex.p : 'EXEC' });
+    pending = null; return r;
+  };
+  const tmp = new THREE.Vector3();
+  const toScreen = v => { tmp.copy(v).project(camera); return tmp.z < 1 && tmp.z > -1 ? [(tmp.x + 1) / 2 * innerWidth, (1 - tmp.y) / 2 * innerHeight] : null; };
+  // libro de ramas: una columna por ciclo; verde = ejecutada, rojo = podada, marco blanco = la que se eligio
+  function ledger(c, D, A, d, r) {
+    d.title('B.01', 'BRANCH LEDGER', r.x, r.y + 9, LEDGER.length + '/13');
+    const cw = (r.w - 22) / 13, rh = (r.h - 46) / 3, y0 = r.y + 22, rowY = i => y0 + i * rh + rh / 2;
+    ['A', 'B', 'C'].forEach((k, i) => d.text(k, r.x, rowY(i) + 3, d.Wt(0.8), 'left', true));
+    let prev = null;
+    for (let q = 0; q < 13; q++) {
+      const x = r.x + 16 + q * cw + cw / 2, L = LEDGER[q];
+      d.text(String(13 - q).padStart(2, '0'), x, r.y + r.h - 12, L ? d.Wt(0.8) : d.G(0.35), 'center');
+      if (!L) { for (let i = 0; i < 3; i++) { c.fillStyle = d.G(0.18); c.fillRect(x - 1, rowY(i) - 1, 2, 2); } continue; }
+      const ei = 'ABC'.indexOf(L.exec);
+      L.offered.forEach((o, i) => {
+        const y = rowY(i), ex = o.k === L.exec;
+        if (prev) { c.strokeStyle = ex ? d.G(0.85) : d.R(0.3); c.lineWidth = ex ? 1.6 : 1; if (!ex) c.setLineDash([2, 3]); c.beginPath(); c.moveTo(prev[0], prev[1]); c.bezierCurveTo(prev[0] + cw * 0.5, prev[1], x - cw * 0.5, y, x - 4, y); c.stroke(); c.setLineDash([]); c.lineWidth = 1; }
+        c.fillStyle = ex ? d.G(0.95) : o.exit ? d.Wt(0.5) : d.R(0.8); c.fillRect(x - 3.5 + d.jx() * 0.2, y - 3.5, 7, 7);
+        if (!ex) { d.line(x - 5, y - 5, x + 5, y + 5, d.R(0.9)); d.line(x - 5, y + 5, x + 5, y - 5, d.R(0.9)); }
+        if (i === L.clicked) { c.strokeStyle = d.Wt(0.95); c.strokeRect(x - 6.5, y - 6.5, 13, 13); }
+        if (cw > 30) d.text(o.p, x, y + 15, ex ? d.G(0.7) : d.R(0.55), 'center');
+      });
+      prev = [x + 4, rowY(Math.max(0, ei))];
+    }
+    const match = LEDGER.filter(L => L.offered[L.clicked] && L.offered[L.clicked].k === L.exec).length;
+    d.text('INPUT=EXEC ' + match + '/' + LEDGER.length + '   PRUNED ' + LEDGER.length * 2 + '   EXITS DENIED ' + LEDGER.reduce((a, L) => a + L.offered.filter(o => o.exit).length, 0), r.x, r.y + r.h - 1, d.G(0.7));
+  }
+  // el bucle: 13 marcas en un anillo; la aguja avanza con cada ciclo y vuelve al origen
+  function dial(c, D, A, d, r) {
+    const cx = r.x + r.w / 2, cy = r.y + r.h / 2 + 8, Rm = Math.min(r.w, r.h) / 2 - 18, done = 13 - remainingCycles;
+    d.title('T.01', 'LOOP DIAL', r.x, r.y + 9, 'θ=' + d.pad(done / 13 * 360, 3) + '°');
+    c.strokeStyle = d.G(0.3); c.beginPath(); c.arc(cx, cy, Rm, 0, 6.283); c.stroke();
+    c.strokeStyle = d.G(0.12); c.beginPath(); c.arc(cx, cy, Rm * 0.62, 0, 6.283); c.stroke();
+    c.strokeStyle = d.Wt(0.9); c.lineWidth = 2.5; c.beginPath(); c.arc(cx, cy, Rm, -Math.PI / 2, -Math.PI / 2 + done / 13 * 6.2832); c.stroke(); c.lineWidth = 1;
+    for (let i = 0; i < 13; i++) {
+      const a = -Math.PI / 2 + i / 13 * 6.2832, ca = Math.cos(a), sa = Math.sin(a), past = i < done;
+      d.line(cx + ca * (Rm - 5), cy + sa * (Rm - 5), cx + ca * (Rm + 5), cy + sa * (Rm + 5), past ? d.Wt(0.9) : d.G(0.5));
+      d.text(String(13 - i).padStart(2, '0'), cx + ca * (Rm + 13), cy + sa * (Rm + 13) + 3, past ? d.Wt(0.8) : d.G(0.45), 'center');
+      if (past && LEDGER[i]) { c.fillStyle = d.R(0.8); c.fillRect(cx + ca * Rm * 0.62 - 1.5, cy + sa * Rm * 0.62 - 1.5, 3, 3); c.fillRect(cx + ca * Rm * 0.5 - 1.5, cy + sa * Rm * 0.5 - 1.5, 3, 3); }
+    }
+    const a = -Math.PI / 2 + done / 13 * 6.2832; d.arrow(cx, cy, cx + Math.cos(a) * (Rm - 8) + d.jx() * 0.3, cy + Math.sin(a) * (Rm - 8), d.R(0.95));
+    d.text(String(remainingCycles).padStart(2, '0'), cx, cy + 22, d.Wt(0.95), 'center', true); d.text('CYCLES', cx, cy + 32, d.G(0.6), 'center');
+  }
+  DARK2.viz({
+    code: 'CANCELLED_FUTURES', z: 18, area,
+    probe() {
+      const A = area(), pts = [];
+      NODES.forEach(n => { const p = toScreen(n.v); if (p && p[0] > 0 && p[0] < A.w && p[1] > 0 && p[1] < A.h) pts.push({ id: n.id, x: p[0], y: p[1], k: n.k, v: n.k === 'r' ? 0.35 : 1, w: [n.v.x, n.v.y, n.v.z], t: n.t, sel: n.k === 'w' }); });
+      return { pts, series: { cyc: remainingCycles, pruned: LEDGER.length * 2, cam: camera.position.length() } };
+    },
+    layers: [
+      { type: 'rulers' },
+      { type: 'web', k: 1, hull: true, dims: false, labels: 4, alpha: 0.14 },
+      { type: 'alluvial', side: 'bottom', sort: 'x', w: 74, from: 0.42, to: 0.9, max: 16, code: 'F.01', name: 'PRUNED → TRAINING DATA', val: p => p.t || '' },
+      { type: 'tags', max: 7, vec: 0.3 },
+      { type: 'fn', draw: ledger, at: [0.014, 0.04, 0.4, 0.2], bg: 0.7 },
+      { type: 'fn', draw: dial, at: [0.014, 0.3, 0.18, 0.3] },
+      { type: 'iso', at: [0.014, 0.62, 0.18, 0.36], n: 10, code: 'I.01', name: 'TIMELINE STACK' },
+      { type: 'scope', at: [0.24, 0.76, 0.16, 0.2], series: ['cyc', 'pruned', 'cam'], labels: { cyc: 'CYCLES LEFT', pruned: 'PRUNED', cam: 'CAM DIST' } },
+      { type: 'frame' }
+    ]
+  });
+})();
+</script>
+<!-- /DARK2:viz -->
 </body>
 </html>

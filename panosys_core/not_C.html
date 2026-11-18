@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MU-TH-UR // POETIC_ENTROPY</title>
+    <title>PANOSYS // MU-TH-UR // POETIC_ENTROPY</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body, html {
             background-color: #010201;
-            color: #22ff55;
-            font-family: Consolas, 'Courier New', Courier, monospace;
+            color: #00ff55;
+            font-family: var(--psys-font);
             overflow-x: hidden;
             min-height: 100vh;
             cursor: crosshair;
@@ -24,7 +24,7 @@
         #hud-top {
             position: fixed; top: 0; left: 0; width: 100%;
             padding: 8px 20px; background: rgba(1, 2, 1, 0.95);
-            border-bottom: 1px solid rgba(34, 255, 85, 0.5);
+            border-bottom: 1px solid rgba(0,255,85, 0.5);
             display: flex; justify-content: space-between;
             font-size: 11px; font-weight: bold; z-index: 60; text-transform: uppercase;
         }
@@ -35,7 +35,7 @@
             display: flex;
             flex-direction: column;
             align-items: stretch;
-            font-size: 18px; line-height: 1.6; text-shadow: 0 0 25px rgba(34, 255, 85, 1), 0 0 50px rgba(34, 255, 85, 0.7);
+            font-size: 18px; line-height: 1.6; text-shadow: 0 0 25px rgba(0,255,85, 1), 0 0 50px rgba(0,255,85, 0.7);
             white-space: pre; word-wrap: normal;
         }
         #terminal-content {
@@ -46,11 +46,11 @@
         }
         .cursor {
             display: inline-block; width: 11px; height: 18px;
-            background-color: #22ff55; vertical-align: middle;
-            animation: blink 0.8s step-end infinite; box-shadow: 0 0 16px #22ff55;
+            background-color: #00ff55; vertical-align: middle;
+            animation: blink 0.8s step-end infinite; box-shadow: 0 0 16px #00ff55;
         }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
-        .err-tag { color: #010201; background-color: #22ff55; text-shadow: none; font-weight: bold; }
+        .err-tag { color: #010201; background-color: #00ff55; text-shadow: none; font-weight: bold; }
    
 #vg {
     position: fixed;
@@ -74,12 +74,12 @@
             position: fixed;
             inset: 0;
             background: #020403;
-            color: #00ff66;
+            color: #00ff55;
             z-index: 99999;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-family: 'Consolas', monospace;
+            font-family: var(--psys-font);
             text-align: center;
             padding: 20px;
         }
@@ -89,6 +89,9 @@
             body > *:not(#rotate-warning) { display: none !important; }
         }
     </style>
+<link rel="stylesheet" href="panosys.css">
+<link rel="stylesheet" href="dark.css">
+<link rel="stylesheet" href="dark2.css">
 </head>
 <body><div id="rotate-warning">
     <div style="font-size: 24px; margin-bottom: 15px;">⟳</div>
@@ -343,7 +346,7 @@
             if (frenzyCharsRemaining <= 0 && Math.random() < 0.03) {
                 frenzyCharsRemaining = Math.floor(Math.random() * 150) + 40;
                 statusIndicator.innerText = "STATUS: HYPER-ACCELERATION";
-                statusIndicator.style.color = "#ff2222"; 
+                statusIndicator.style.color = "#ff2a2a"; 
             }
 
             if (frenzyCharsRemaining > 0) {
@@ -352,7 +355,7 @@
                 
                 if (frenzyCharsRemaining === 0) {
                     statusIndicator.innerText = "STATUS: INERTIA";
-                    statusIndicator.style.color = "#22ff55";
+                    statusIndicator.style.color = "#00ff55";
                 }
             } else {
                 if (nextChar === '\n') {
@@ -521,5 +524,65 @@
     });
 })();
 </script>
+<script src="panosys.js"></script>
+<script src="dark.js"></script>
+<!-- DARK2:viz -->
+<script src="dark2viz.js"></script>
+<script>
+// DARK 2.0 · NULL_NEGATION · capas ligeras sobre el texto: cada (NOT) escrito es un punto; una cadena de arcos los une en orden,
+// una tachadura cruza su renglon, el cursor lleva su vector y a la derecha se cuenta la frecuencia de cada letra.
+// El texto sigue siendo la pieza: los instrumentos quedan en los margenes.
+(function () {
+  if (!window.DARK2) return;
+  const area = () => ({ x: 0, y: 30, w: innerWidth, h: innerHeight - 30 });
+  const NOT = /\(\s?N\s?O\s?T\s?\)/g, C = { at: 0, toks: [], total: 0, len: 0, rate: 0 };
+  function refresh() {
+    const now = performance.now(); if (now - C.at < 350) return;
+    const txt = outputStream.textContent, dt = (now - C.at) / 1000; C.rate = C.at ? Math.max(0, (txt.length - C.len) / dt) : 0; C.len = txt.length; C.at = now;
+    C.total = (txt.match(NOT) || []).length;
+    const toks = [], w = document.createTreeWalker(outputStream, NodeFilter.SHOW_TEXT), rg = document.createRange(); let node, seen = 0;
+    while ((node = w.nextNode())) {
+      const s = node.nodeValue; let m; NOT.lastIndex = 0;
+      while ((m = NOT.exec(s))) {
+        seen++;
+        try { rg.setStart(node, m.index); rg.setEnd(node, m.index + m[0].length); const r = rg.getBoundingClientRect(); if (r.width && r.bottom > 30 && r.top < innerHeight) toks.push({ i: seen, x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width }); } catch (e) {}
+      }
+    }
+    C.toks = toks.slice(-40);
+  }
+  // la cadena de la negacion: un arco de cada (NOT) al siguiente y una tachadura sobre su renglon
+  function chain(c, D, A, d) {
+    const T = C.toks; if (!T.length) return;
+    T.forEach((t, i) => {
+      const a = 0.25 + 0.6 * (i / T.length);
+      d.line(t.x - t.w / 2 - 90, t.y + d.jx() * 0.2, t.x + t.w / 2 + 90, t.y, d.R(a * 0.55));
+      c.strokeStyle = d.R(a); c.strokeRect(t.x - t.w / 2 - 3, t.y - 9, t.w + 6, 18);
+      if (i) { const p = T[i - 1], mx = (p.x + t.x) / 2, my = (p.y + t.y) / 2, bend = Math.min(140, Math.hypot(t.x - p.x, t.y - p.y) * 0.35);
+        c.strokeStyle = d.R(a * 0.6); c.beginPath(); c.moveTo(p.x, p.y); c.quadraticCurveTo(mx + bend, my, t.x, t.y); c.stroke(); }
+      if (i >= T.length - 6) d.text('¬' + String(t.i).padStart(3, '0'), t.x + t.w / 2 + 6, t.y - 11, d.R(0.9), 'left', true);
+    });
+  }
+  DARK2.viz({
+    code: 'NULL_NEGATION', z: 55, area,
+    probe() {
+      refresh();
+      const pts = C.toks.slice(-18).map(t => ({ id: '¬' + String(t.i).padStart(3, '0'), x: t.x, y: t.y, k: 'r', v: 0.6, t: '(NOT)' }));
+      const cur = document.querySelector('.cursor'); if (cur) { const r = cur.getBoundingClientRect(); if (r.top > 0 && r.top < innerHeight) pts.push({ id: 'CURSOR', x: r.left, y: r.top + r.height / 2, k: 'w', v: 1, sel: true, t: d1(C.rate) + ' ch/s' }); }
+      return { pts, series: { rate: C.rate, nots: C.total, chars: C.len / 100 } };
+    },
+    layers: [
+      { type: 'rulers', top: 4, cursor: false },
+      { type: 'fn', draw: chain },
+      { type: 'alluvial', side: 'right', sort: 'y', w: 84, from: 0.36, to: 0.66, max: 14, code: 'F.01', name: 'NULL SINK', val: p => p.t },
+      { type: 'tags', max: 3, vec: 0.5 },
+      { type: 'glyphs', at: [0.735, 0.05, 0.255, 0.25], bg: 0.84, text: () => outputStream.textContent, extra: () => '(NOT) ' + C.total },
+      { type: 'scope', at: [0.8, 0.72, 0.19, 0.25], bg: 0.84, series: ['rate', 'nots', 'chars'], labels: { rate: 'TYPING ch/s', nots: '(NOT) COUNT', chars: 'CHARS ×100' } },
+      { type: 'frame' }
+    ]
+  });
+  function d1(n) { return (Math.round(n * 10) / 10).toFixed(1); }
+})();
+</script>
+<!-- /DARK2:viz -->
 </body>
 </html>

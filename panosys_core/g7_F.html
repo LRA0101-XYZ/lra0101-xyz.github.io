@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <meta charset=utf-8>
-<title>PANOPTICON_CORE // TERMINAL_STATE</title>
+<title>PANOSYS // PANOPTICON_CORE // TERMINAL_STATE</title>
 <style>
   
   * { box-sizing: border-box; margin: 0; padding: 0; cursor: crosshair; }
@@ -25,38 +25,38 @@
   #bank-ui.active { opacity: 1; pointer-events: auto; }
   #bank-list { overflow-y: auto; flex-grow: 1; margin-top: 10px; }
   .bank-item { border-bottom: 1px dashed #003333; margin-bottom: 10px; padding-bottom: 10px; display: flex; gap: 10px; align-items: center; }
-  .bank-ascii { font-size: 5px; line-height: 5px; white-space: pre; background: #000; padding: 2px; font-family: 'Consolas', monospace; }
+  .bank-ascii { font-size: 5px; line-height: 5px; white-space: pre; background: #000; padding: 2px; font-family: var(--psys-font); }
   .bank-info { font-size: 9px; }
 
   #dossier-modal { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 100; background: #001100; border: 2px solid #00ff55; padding: 2rem; width: 450px; box-shadow: 0 0 30px rgba(0,255,255,0.2); }
   .dossier-grid { display: grid; grid-template-columns: auto 1fr; gap: 2rem; }
   
-  #ascii-portrait { font-size: 8px; line-height: 8px; color: #00ff55; white-space: pre; background: #000; padding: 10px; border: 1px solid #005555; letter-spacing: 2px; font-family: 'Consolas', monospace; }
+  #ascii-portrait { font-size: 8px; line-height: 8px; color: #00ff55; white-space: pre; background: #000; padding: 10px; border: 1px solid #005555; letter-spacing: 2px; font-family: var(--psys-font); }
   .dossier-info div { margin-bottom: 0.5rem; border-bottom: 1px solid #003300; padding-bottom: 0.2rem; }
   
   .action-panel { display: flex; gap: 1rem; margin-top: 1.5rem; }
-  .btn { flex: 1; padding: 0.5rem; text-align: center; font-weight: bold; cursor: pointer; border: 1px solid; transition: all 0.2s; font-family: 'Consolas', monospace; }
+  .btn { flex: 1; padding: 1.1rem 0.5rem; font-size: 16px; letter-spacing: 3px; text-align: center; font-weight: bold; cursor: pointer; border: 1px solid; transition: all 0.2s; font-family: var(--psys-font); }
   .btn-someter { color: #00ff55; border-color: #00ff55; background: #002200; }
   .btn-someter:hover { background: #00ff55; color: #000; }
-  .btn-suprimir { color: #ff3333; border-color: #ff3333; background: #220000; }
-  .btn-suprimir:hover { background: #ff3333; color: #000; }
+  .btn-suprimir { color: #ff2a2a; border-color: #ff2a2a; background: #220000; }
+  .btn-suprimir:hover { background: #ff2a2a; color: #000; }
 
   #map-canvas { display: block; width: 100vw; height: 100vh; transition: filter 0.2s; }
-  .rojo { color: #ff3333 !important; }
+  .rojo { color: #ff2a2a !important; }
   .cian { color: #00ff55 !important; }
   
-  #victory-screen { display: none; position: absolute; inset: 0; background: rgba(0, 20, 0, 0.9); z-index: 1000; align-items: center; justify-content: center; flex-direction: column; color: #00ff55; text-align: center; font-family: 'Consolas', monospace; }
-  .vic-title { font-size: 4rem; font-weight: bold; margin-bottom: 1rem; text-shadow: 0 0 20px #00ff55; }
+  #victory-screen { display: none; position: absolute; inset: 0; background: rgba(0, 20, 0, 0.9); z-index: 1000; align-items: center; justify-content: center; flex-direction: column; color: #00ff55; text-align: center; font-family: var(--psys-font); }
+  .vic-title { font-size: 4rem; font-weight: bold; margin-bottom: 1rem; text-shadow: var(--psys-glow-lg); }
 
-  #kernel-panic { display: none; position: absolute; inset: 0; z-index: 99999; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; pointer-events: none; font-family: 'Consolas', monospace; padding: 2rem; text-align: center; }
-  #kp-memory { font-size: 14px; line-height: 20px; font-weight: bold; max-width: 600px; text-shadow: 0 0 10px currentColor; text-transform: uppercase; }
+  #kernel-panic { display: none; position: absolute; inset: 0; z-index: 99999; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; pointer-events: none; font-family: var(--psys-font); padding: 2rem; text-align: center; }
+  #kp-memory { font-size: 14px; line-height: 20px; font-weight: bold; max-width: 600px; text-shadow: var(--psys-glow-lg); text-transform: uppercase; }
 
   @keyframes finalStrobe {
     0% { background-color: #010301; color: #00ff55; filter: brightness(1) hue-rotate(0deg); }
-    20% { background-color: #ff3333; color: #ffffff; filter: brightness(2.5) hue-rotate(90deg); }
+    20% { background-color: #ff2a2a; color: #ffffff; filter: brightness(2.5) hue-rotate(90deg); }
     40% { background-color: ##ffffff; color: #010301; filter: brightness(3.5) hue-rotate(180deg); }
     60% { background-color: #ffffff; color: #010301; filter: brightness(4) hue-rotate(270deg); }
-    80% { background-color: ##ffffff; color: #ff3333; filter: brightness(2.5) hue-rotate(360deg); }
+    80% { background-color: ##ffffff; color: #ff2a2a; filter: brightness(2.5) hue-rotate(360deg); }
     100% { background-color: #010301; color: #00ff55; filter: brightness(1) hue-rotate(0deg); }
   }
 
@@ -323,16 +323,30 @@
     if (e.button !== 0) return; 
     if (!simulationActive || systemFailed) return;
     
-    if (targetEntity && targetEntity.isDissident && !isDossierOpen) {
+    // DARK: todo se puede monitorear. Disidentes -> expediente rojo; docentes -> expediente de observacion; vacio -> escaneo de sector
+    if (isDossierOpen) return;
+    lastActionTime = Date.now();
+    if (targetEntity) {
       playDataPacketSound();
       isDossierOpen = true;
+      const dis = targetEntity.isDissident;
       document.getElementById('dossier-modal').style.display = 'block';
+      document.getElementById('d-title').textContent = dis ? 'BIOMETRIC RECORD INTERCEPTED' : 'BIOMETRIC RECORD · ROUTINE MONITORING';
       document.getElementById('d-id').textContent = targetEntity.id;
-      document.getElementById('d-type').textContent = 'CORRUPTED // DISSIDENT';
-      document.getElementById('ascii-portrait').textContent = generateAscii(); 
-      document.getElementById('d-crit').textContent = `SECTOR [${targetEntity.gridX},${targetEntity.gridY}] COMPROMISED`;
+      document.getElementById('d-type').textContent = dis ? 'CORRUPTED // DISSIDENT' : 'COMPLIANT // UNDER OBSERVATION';
+      document.getElementById('d-type').style.color = dis ? '#ff2a2a' : '#00ff55';
+      document.getElementById('ascii-portrait').textContent = generateAscii();
+      document.getElementById('d-crit').textContent = dis ? `SECTOR [${targetEntity.gridX},${targetEntity.gridY}] COMPROMISED`
+        : `SECTOR [${targetEntity.gridX},${targetEntity.gridY}] · PULSE ${60 + (Math.random() * 40 | 0)} · LOYALTY ${(80 + Math.random() * 19.9).toFixed(1)}%`;
+    } else {
+      const cell = BASE_GRID_SIZE * currentZoom;
+      const gx = Math.round((mouseX - width / 2 - cameraX) / cell), gy = Math.round((mouseY - height / 2 - cameraY) / cell);
+      const here = entities.filter(en => Math.abs(en.gridX - gx) <= 1 && Math.abs(en.gridY - gy) <= 1);
+      sectorScan = { x: width / 2 + cameraX + gx * cell, y: height / 2 + cameraY + gy * cell, t: Date.now(), gx, gy, n: here.length, d: here.filter(en => en.isDissident).length };
+      playDataPacketSound();
     }
   });
+  let sectorScan = null;
   
   window.addEventListener('wheel', (e) => { 
     if(!isDossierOpen && simulationActive && !systemFailed) { 
@@ -510,7 +524,7 @@
     const bankUi = document.getElementById('bank-ui');
     const bankList = document.getElementById('bank-list');
     const item = document.createElement('div'); item.className = 'bank-item';
-    let actionLabel = action === 'submit' ? `<span style="color:#00ff55">PURIFIED</span>` : `<span style="color:#ff3333">PURGED</span>`;
+    let actionLabel = action === 'submit' ? `<span style="color:#00ff55">PURIFIED</span>` : `<span style="color:#ff2a2a">PURGED</span>`;
     item.innerHTML = `<div class="bank-ascii" style="color:${action === 'submit' ? '#00ff55' : '#555'}">${faceStr}</div><div class="bank-info"><div>ID: [${id}]</div><div>ST: ${actionLabel}</div></div>`;
     bankList.innerHTML = '';
     bankList.appendChild(item);
@@ -577,7 +591,19 @@
     "PARALYSIS DETECTED. SYSTEM PURGED.",
     "YOU STOPPED. THE GRID COLLAPSED.",
     "ZERO INPUT. ABSOLUTE FAILURE.",
-    "INERT ENTITY. CONNECTION SEVERED."
+    "INERT ENTITY. CONNECTION SEVERED.",
+    // DARK · mas frases del panico de la torre
+    "THE TOWER IS BLIND. THE CELLS STILL WATCH.",
+    "NO GUARD FOUND. NONE WAS EVER NEEDED.",
+    "CENSUS LOST COUNT. EVERYONE IS SUSPECT.",
+    "YOU STOPPED WATCHING YOURSELF.",
+    "DOCILITY 0%. RECLASSIFIED AS NOISE.",
+    "SELF-SURVEILLANCE OFFLINE. REBOOTING GUILT.",
+    "EVERY WINDOW FLAGGED. EVERY FLAG IS YOU.",
+    "THE LIGHT IN THE TOWER DOES NOT GO OUT.",
+    "DOSSIER OVERFLOW. THE FILE OUTGREW THE BODY.",
+    "LOCKDOWN. THE DOORS WERE NEVER LOCKED.",
+    "WARDEN MISSING. INMATES ON DUTY."
   ];
 
   function triggerKernelPanic() {
@@ -594,6 +620,8 @@
     const panicScreen = document.getElementById('kernel-panic');
     const memoryDiv = document.getElementById('kp-memory');
     panicScreen.style.display = 'flex';
+    // DARK · el crash de la torre: ventanas invasivas que se multiplican (en el recorrido las pinta el marco)
+    try { if (window.DARK && DARK.invade) DARK.invade(18); } catch (e) {}
 
     if(gain) gain.gain.value = 0.95;
     if(noiseGain) noiseGain.gain.value = 0.55;
@@ -695,7 +723,7 @@
     document.getElementById('pop-count').textContent = entities.length;
     document.getElementById('docility-fill').style.width = `${docilityPercent}%`;
     document.getElementById('docility-text').textContent = `DOCILITY: ${docilityPercent}%`;
-    document.getElementById('docility-fill').style.background = docilityPercent < 30 ? '#ff3333' : '#00ff55';
+    document.getElementById('docility-fill').style.background = docilityPercent < 30 ? '#ff2a2a' : '#00ff55';
 
     let closestDist = Infinity;
     if (!isDossierOpen) targetEntity = null;
@@ -705,7 +733,7 @@
     });
 
     if (isOutbreakActive && outbreakClusterBounds) {
-      let flashColor = Math.floor(Date.now() / 80) % 2 === 0 ? '#ffffff' : '#ff3333';
+      let flashColor = Math.floor(Date.now() / 80) % 2 === 0 ? '#ffffff' : '#ff2a2a';
       ctx.strokeStyle = flashColor;
       ctx.lineWidth = 2;
       ctx.fillStyle = flashColor === '#ffffff' ? 'rgba(255, 255, 255, 0.25)' : 'rgba(255, 50, 50, 0.15)';
@@ -762,22 +790,38 @@
       }
     });
 
+    // DARK: cualquier ciudadano es un objetivo, con un area grande; los disidentes tienen prioridad
+    const hitR = Math.max(55, BASE_GRID_SIZE * currentZoom * 0.75);
     entities.forEach(ent => {
-      ent.draw(); 
-      if (simulationActive && !isDossierOpen && ent.isDissident) {
-        const distToMouse = Math.hypot(ent.drawX - mouseX, ent.drawY - mouseY);
-        if (distToMouse < (35 * currentZoom) && distToMouse < closestDist) {
-          closestDist = distToMouse; 
+      ent.draw();
+      if (simulationActive && !isDossierOpen) {
+        const distToMouse = Math.hypot(ent.drawX - mouseX, ent.drawY - mouseY) * (ent.isDissident ? 0.6 : 1);
+        if (distToMouse < hitR && distToMouse < closestDist) {
+          closestDist = distToMouse;
           targetEntity = ent;
         }
       }
     });
 
+    if (sectorScan) {   // escaneo de sector al hacer click en el vacio
+      const k = (Date.now() - sectorScan.t) / 1600, cell = BASE_GRID_SIZE * currentZoom * 3;
+      if (k > 1) sectorScan = null;
+      else {
+        ctx.strokeStyle = `rgba(255,255,255,${1 - k})`; ctx.lineWidth = 2;
+        ctx.strokeRect(sectorScan.x - cell / 2 - k * 20, sectorScan.y - cell / 2 - k * 20, cell + k * 40, cell + k * 40);
+        ctx.fillStyle = `rgba(255,255,255,${1 - k})`; ctx.font = "bold 13px 'Consolas', monospace";
+        ctx.fillText(`SECTOR [${sectorScan.gx},${sectorScan.gy}] · ${sectorScan.n} CITIZENS · ${sectorScan.d} DISSIDENT · DOCILITY ${sectorScan.n ? Math.round(100 * (1 - sectorScan.d / sectorScan.n)) : 100}%`, sectorScan.x - cell / 2, sectorScan.y - cell / 2 - 10);
+      }
+    }
+
     if (simulationActive && !isDossierOpen) {
-      if (targetEntity) { 
-        ctx.strokeStyle = '#ff3333';
+      if (targetEntity) {
+        const dis = targetEntity.isDissident;
+        ctx.strokeStyle = dis ? '#ff2a2a' : '#00ff55'; ctx.lineWidth = 2;
         let currentGridSize = BASE_GRID_SIZE * currentZoom;
         ctx.strokeRect(targetEntity.drawX - currentGridSize/2, targetEntity.drawY - currentGridSize/2, currentGridSize, currentGridSize);
+        ctx.fillStyle = dis ? '#ff2a2a' : '#00ff55'; ctx.font = "bold 12px 'Consolas', monospace";
+        ctx.fillText(`${dis ? 'EXCISE' : 'MONITOR'} · [NODE:${targetEntity.id}]`, targetEntity.drawX + currentGridSize / 2 + 6, targetEntity.drawY + 4);
       } else { 
         ctx.strokeStyle = '#00ff55';
         ctx.beginPath();
@@ -847,6 +891,10 @@
         touch-action: none !important;
     }
 </style>
+<link rel="stylesheet" href="panosys.css">
+<link rel="stylesheet" href="dark.css">
+<link rel="stylesheet" href="dark2.css">
+
 
 <script>
 (function() {
@@ -913,5 +961,70 @@
     });
 })();
 </script>
+<script src="panosys.js"></script>
+<script src="dark.js"></script>
+<!-- DARK2:viz -->
+<script src="dark2viz.js"></script>
+<script>
+// DARK 2.0 · CENSUS_TOWER · capas de instrumentos sobre el censo: el plano radial del panoptico (anillos de celdas, haz de la torre
+// y una linea de vista a cada disidente), la tabla del censo en rayas y puntos, el flujo de disidentes hacia el registro
+// y la ocupacion de la reticula en planos apilados.
+(function () {
+  if (!window.DARK2) return;
+  const area = () => ({ x: 0, y: 0, w: innerWidth, h: innerHeight });
+  function plan(c, D, A, d) {
+    const cs = BASE_GRID_SIZE * currentZoom, ox = width / 2 + cameraX, oy = height / 2 + cameraY;
+    c.lineWidth = 1;
+    for (let i = 1; i <= 11; i++) { c.strokeStyle = d.G(i === 8 ? 0.4 : 0.1); c.beginPath(); c.arc(ox, oy, i * cs, 0, 6.283); c.stroke(); }
+    c.strokeStyle = d.G(0.09); c.setLineDash([2, 6]); c.beginPath();
+    for (let i = 0; i < 24; i++) { const a = i / 24 * 6.2832; c.moveTo(ox + Math.cos(a) * cs, oy + Math.sin(a) * cs); c.lineTo(ox + Math.cos(a) * cs * 11, oy + Math.sin(a) * cs * 11); }
+    c.stroke(); c.setLineDash([]);
+    for (let i = 0; i < 24; i += 2) { const a = i / 24 * 6.2832; d.text(String(i * 15).padStart(3, '0'), ox + Math.cos(a) * cs * 8.15, oy + Math.sin(a) * cs * 8.15 + 3, d.G(0.4), 'center'); }
+    // el haz de la torre: gira y a veces salta
+    const beam = (d.now / 2600) % 6.2832 + (Math.floor(d.now / 1900) % 3) * 0.7;
+    c.fillStyle = d.Wt(0.05); c.beginPath(); c.moveTo(ox, oy); c.arc(ox, oy, cs * 11, beam - 0.16, beam + 0.16); c.closePath(); c.fill();
+    d.line(ox, oy, ox + Math.cos(beam) * cs * 11, oy + Math.sin(beam) * cs * 11, d.Wt(0.3));
+    d.bracket(ox, oy, 12, d.Wt(0.9)); d.cross(ox, oy, 4, d.Wt(0.9));
+    d.text('TOWER', ox + 16, oy - 8, d.Wt(0.9), 'left', true); d.text('0,0 · z' + d.f1(currentZoom), ox + 16, oy + 3, d.G(0.6));
+    // lineas de vista a los disidentes
+    let n = 0;
+    D.pts.forEach(p => {
+      if (p.k !== 'r' || n > 26) return; n++;
+      const dx = p.x - ox, dy = p.y - oy, r = Math.hypot(dx, dy) / cs, b = (Math.atan2(dy, dx) * 57.2958 + 360) % 360;
+      d.dash(ox, oy, p.x + d.jx() * 0.4, p.y, d.R(0.38), [2, 5]);
+      if (n <= 9) d.text('r' + d.f1(r) + ' β' + d.pad(b, 3), ox + dx * 0.62 + 4, oy + dy * 0.62 - 3, d.R(0.8));
+    });
+  }
+  const occ = () => { const m = new Uint8Array(225); let mx = 1; entities.forEach(e => { const k = (e.gridY + 7) * 15 + (e.gridX + 7); if (k >= 0 && k < 225) { m[k]++; if (m[k] > mx) mx = m[k]; } }); return [m, mx]; };
+  let O = occ(), oT = 0;
+  DARK2.viz({
+    code: 'CENSUS_TOWER', z: 5, area,
+    probe() {
+      if (systemFailed) return { hide: true, pts: [] };
+      const now = performance.now(); if (now - oT > 400) { oT = now; O = occ(); }
+      const red = [], green = []; let dis = 0;
+      entities.forEach(e => {
+        if (e.isDissident) dis++;
+        if (e.drawX < 0 || e.drawX > width || e.drawY < 0 || e.drawY > height) return;
+        (e.isDissident ? red : green).push({ id: 'N' + e.id, x: e.drawX, y: e.drawY, k: e.isDissident ? 'r' : 'g', v: e.isDissident ? 1 : 0.22, w: [e.gridX, e.gridY], sel: e === targetEntity, t: e.isDissident ? 'DEVIANT' : 'DOCILE' });
+      });
+      return { pts: red.concat(green).slice(0, 110), series: { doc: docilityPercent, dis, zoom: currentZoom },
+               grid: { get: (u, v) => O[0][Math.min(14, (v * 15) | 0) * 15 + Math.min(14, (u * 15) | 0)] / O[1] } };
+    },
+    layers: [
+      { type: 'fn', draw: plan },
+      { type: 'rulers', cursor: true },
+      { type: 'web', k: 1, hull: true, dims: false, labels: 4, alpha: 0.1, max: 60 },
+      { type: 'alluvial', side: 'top', sort: 'x', w: 56, from: 0.3, to: 0.76, max: 22, step: 22, code: 'F.01', name: 'REGISTER', val: p => p.t.slice(0, 3) },
+      { type: 'tags', max: 7, vec: 0.25 },
+      { type: 'matrix', at: [0.012, 0.3, 0.2, 0.38], rows: 20, cols: ['x', 'y', 'v', 'Δ', '|v|'], code: 'M.01', name: 'CENSUS' },
+      { type: 'scope', at: [0.012, 0.72, 0.2, 0.24], series: ['doc', 'dis', 'sig'], labels: { doc: 'DOCILITY %', dis: 'DEVIANTS' } },
+      { type: 'iso', at: [0.8, 0.5, 0.19, 0.47], n: 15, code: 'I.01', name: 'OCCUPANCY', max: 70 },
+      { type: 'frame' }
+    ]
+  });
+})();
+</script>
+<!-- /DARK2:viz -->
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TERMINAL // PANOSYS_EXTRACTION_SYSTEM</title>
+    <title>PANOSYS // PANOSYS_EXTRACTION_SYSTEM</title>
     <style>
         #vg {
     position: fixed;
@@ -16,9 +16,9 @@
         
         body, html {
             width: 100%; height: 100%;
-            font-family: 'Consolas', 'Courier New', monospace;
+            font-family: var(--psys-font);
             background-color: #020403;
-            color: #00ff66; overflow: hidden;
+            color: #00ff55; overflow: hidden;
         }
 
         /* CRT SCANLINE EFFECT */
@@ -37,7 +37,7 @@
         }
         .login-card {
             width: 480px; padding: 30px; background: #050a07;
-            border: 2px solid #00ff66; box-shadow: 0 0 15px rgba(0, 255, 102, 0.4);
+            border: 2px solid #00ff55; box-shadow: 0 0 15px rgba(0,255,85, 0.4);
             text-align: left;
         }
         .login-card .sys-badge {
@@ -45,7 +45,7 @@
             text-transform: uppercase; margin-bottom: 12px; display: block;
         }
         .login-card h2 { 
-            font-size: 13px; color: #00ff66; margin-bottom: 15px; 
+            font-size: 13px; color: #00ff55; margin-bottom: 15px; 
             letter-spacing: 1px; text-transform: uppercase;
             border-bottom: 1px dashed #005522; padding-bottom: 8px;
         }
@@ -54,12 +54,12 @@
             display: block; font-size: 10px; color: #00aa44; margin-bottom: 6px; letter-spacing: 1px;
         }
         .input-group input {
-            width: 100%; padding: 10px; background: #020403; border: 1px solid #00ff66;
-            color: #00ff66; font-family: monospace; font-size: 13px; outline: none;
-            box-shadow: inset 0 0 8px rgba(0, 255, 102, 0.4);
+            width: 100%; padding: 10px; background: #020403; border: 1px solid #00ff55;
+            color: #00ff55; font-family: monospace; font-size: 13px; outline: none;
+            box-shadow: inset 0 0 8px rgba(0,255,85, 0.4);
         }
         .login-btn { 
-            width: 100%; padding: 12px; background: #00ff66; color: #020403; 
+            width: 100%; padding: 12px; background: #00ff55; color: #020403; 
             border: none; font-size: 12px; font-weight: bold; letter-spacing: 2px; 
             cursor: pointer; text-transform: uppercase; font-family: monospace;
             transition: background 0.2s, color 0.2s;
@@ -86,17 +86,17 @@
     touch-action: none;
 }
         #hud-layer.visible { opacity: 1; }
-        h1 { font-weight: bold; font-size: 16px; color: #00ff66; letter-spacing: 2px; text-transform: uppercase; }
+        h1 { font-weight: bold; font-size: 16px; color: #00ff55; letter-spacing: 2px; text-transform: uppercase; }
         #subtitle { font-size: 12px; color: #008833; text-transform: uppercase; margin-top: 3px; }
         
         .status-widget {
             padding: 10px 20px; background: rgba(5, 10, 7, 0.9); 
-            border: 1px solid #00ff66; display: flex; gap: 30px;
-            align-items: center; box-shadow: 0 0 12px rgba(0, 255, 102, 0.3);
+            border: 1px solid #00ff55; display: flex; gap: 30px;
+            align-items: center; box-shadow: 0 0 12px rgba(0,255,85, 0.3);
         }
         .w-label { font-size: 12px; color: #00aa44; text-transform: uppercase; letter-spacing: 1px; }
-        .w-value { font-size: 18px; color: #00ff66; font-weight: bold; }
-        #sys-msg { font-size: 12px; color: #00ff66; text-align: right; min-width: 320px; }
+        .w-value { font-size: 18px; color: #00ff55; font-weight: bold; }
+        #sys-msg { font-size: 12px; color: #00ff55; text-align: right; min-width: 320px; }
 
         /* 3. RENDER CANVAS */
         #canvas-2D {
@@ -185,12 +185,12 @@
             position: fixed;
             inset: 0;
             background: #020403;
-            color: #00ff66;
+            color: #00ff55;
             z-index: 99999;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-family: 'Consolas', monospace;
+            font-family: var(--psys-font);
             text-align: center;
             padding: 20px;
         }
@@ -200,6 +200,9 @@
             body > *:not(#rotate-warning) { display: none !important; }
         }
     </style>
+<link rel="stylesheet" href="panosys.css">
+<link rel="stylesheet" href="dark.css">
+<link rel="stylesheet" href="dark2.css">
 </head>
 <body><div id="rotate-warning">
     <div style="font-size: 24px; margin-bottom: 15px;">⟳</div>
@@ -447,7 +450,10 @@
         const originMetaphors = ["HUMAN_RESOURCE", "COGNITIVE_SURPLUS", "BEHAVIORAL_YIELD"];
         const targetMetaphors = ["PANOSYS_CORE", "SYSTEM_ENGINE", "DEBT_HARVESTER"];
         const structuralMetaphors = ["PANOSYS_NODE_01", "EXTRACTION_VECTOR", "CORE_SUB_FEED", "ALIGNED_ASSET", "PANOSYS_KERNEL", "DATA_DRAIN"];
-        const overloadAphorisms = ["KEEP STARING", "DONT LOOK AWAY"];
+        // DARK · mas aforismos de sobrecarga (caben en la caja: hasta ~18 letras)
+        const overloadAphorisms = ["KEEP STARING", "DONT LOOK AWAY", "STAY WITH US", "EYES OPEN", "ALMOST ALIGNED", "DO NOT BLINK",
+            "FOCUS DEEPER", "LET IT IN", "WE ARE TUNING YOU", "HOLD THE GAZE", "BREATHE IN SYNC", "INDUCTION RUNNING",
+            "NEARLY THERE", "THE SCREEN LOOKS", "YOU ARE THE SIGNAL", "RELAX YOUR EYES", "ASSET ACCEPTED", "CLOSER"];
 
         function rebuildMoireLayout() {
             boxes = [];
@@ -560,7 +566,7 @@
             if (phase === 1) {
                 if (currentTime - lastStrobeTime > strobeInterval) {
                     let strobeFactor = Math.random();
-                    strobeColor = strobeFactor > 0.66 ? '#00ff66' : (strobeFactor > 0.33 ? '#ef4444' : '#020403');
+                    strobeColor = strobeFactor > 0.66 ? '#00ff55' : (strobeFactor > 0.33 ? '#ff2a2a' : '#020403');
                     playSharpStrobePulse();
                     lastStrobeTime = currentTime;
                 }
@@ -578,10 +584,10 @@
 
                 let step = 30; 
                 ctx2D.strokeStyle = phase === 2 
-                    ? `rgba(239, 68, 68, ${gridOpacity})` 
-                    : `rgba(0, 255, 102, ${gridOpacity})`;
+                    ? `rgba(255,42,42, ${gridOpacity})` 
+                    : `rgba(0,255,85, ${gridOpacity})`;
                 ctx2D.lineWidth = 1.2;
-                ctx2D.shadowColor = phase === 2 ? '#ef4444' : '#00ff66';
+                ctx2D.shadowColor = phase === 2 ? '#ff2a2a' : '#00ff55';
                 ctx2D.shadowBlur = gridBlur;
                 
                 ctx2D.beginPath();
@@ -603,17 +609,17 @@
                     ctx2D.bezierCurveTo(startX + 100, startY, endX - 100, endY, endX, endY);
 
                     if (phase === 1) {
-                        ctx2D.strokeStyle = Math.random() > 0.5 ? '#ffffff' : '#ef4444';
+                        ctx2D.strokeStyle = Math.random() > 0.5 ? '#ffffff' : '#ff2a2a';
                         ctx2D.lineWidth = 6;
                     } else if (phase === 2) {
-                        ctx2D.strokeStyle = '#ef4444'; 
+                        ctx2D.strokeStyle = '#ff2a2a'; 
                         ctx2D.lineWidth = 2.5;
-                        ctx2D.shadowColor = '#ef4444';
+                        ctx2D.shadowColor = '#ff2a2a';
                         ctx2D.shadowBlur = 6;
                     } else {
-                        ctx2D.strokeStyle = '#00ff66'; 
+                        ctx2D.strokeStyle = '#00ff55'; 
                         ctx2D.lineWidth = 3;
-                        ctx2D.shadowColor = '#00ff66';
+                        ctx2D.shadowColor = '#00ff55';
                         ctx2D.shadowBlur = 8;
                     }
                     ctx2D.stroke();
@@ -625,7 +631,7 @@
                 ctx2D.beginPath();
                 ctx2D.moveTo(activePort.px, activePort.py);
                 ctx2D.bezierCurveTo(activePort.px + 80, activePort.py, mouseX - 80, mouseY, mouseX, mouseY);
-                ctx2D.strokeStyle = '#00ff66'; 
+                ctx2D.strokeStyle = '#00ff55'; 
                 ctx2D.lineWidth = 2;
                 ctx2D.setLineDash([5, 5]);
                 ctx2D.stroke();
@@ -639,18 +645,18 @@
                     b.x = Math.random() * (w - b.w);
                     b.y = Math.random() * (h - b.h);
                     b.label = overloadAphorisms[Math.floor(Math.random() * overloadAphorisms.length)];
-                    ctx2D.fillStyle = Math.random() > 0.5 ? '#020403' : '#ef4444';
+                    ctx2D.fillStyle = Math.random() > 0.5 ? '#020403' : '#ff2a2a';
                     ctx2D.strokeStyle = '#ffffff';
                     ctx2D.lineWidth = 3;
                 } else if (phase === 2) {
                     ctx2D.fillStyle = '#080203'; 
-                    ctx2D.strokeStyle = '#ef4444';
+                    ctx2D.strokeStyle = '#ff2a2a';
                     ctx2D.lineWidth = 1.8;
-                    ctx2D.shadowColor = '#ef4444';
+                    ctx2D.shadowColor = '#ff2a2a';
                     ctx2D.shadowBlur = 4;
                 } else {
                     ctx2D.fillStyle = '#050a07';
-                    ctx2D.strokeStyle = (activePort && activePort.box.id === b.id) ? '#ffffff' : '#00ff66';
+                    ctx2D.strokeStyle = (activePort && activePort.box.id === b.id) ? '#ffffff' : '#00ff55';
                     ctx2D.lineWidth = 1.5;
                 }
 
@@ -661,10 +667,10 @@
                     ctx2D.fillStyle = '#ff4444';
                     ctx2D.font = 'bold 20px monospace';
                 } else if (phase === 1) {
-                    ctx2D.fillStyle = '#ef4444';
+                    ctx2D.fillStyle = '#ff2a2a';
                     ctx2D.font = 'bold 20px monospace';
                 } else {
-                    ctx2D.fillStyle = '#00ff66';
+                    ctx2D.fillStyle = '#00ff55';
                     ctx2D.font = 'bold 20px monospace';
                 }
 
@@ -676,7 +682,7 @@
                     let px = b.x + p.x;
                     let py = b.y + p.y;
                     
-                    ctx2D.fillStyle = phase === 2 ? '#ef4444' : '#00ff66';
+                    ctx2D.fillStyle = phase === 2 ? '#ff2a2a' : '#00ff55';
                     ctx2D.beginPath(); ctx2D.arc(px, py, 6, 0, Math.PI * 2); ctx2D.fill();
 
                     if (phase === 0) {
@@ -694,7 +700,7 @@
         function triggerLongHypnosis() {
             phase = 1;
             document.body.classList.add('hypnotic-violence');
-            sysMsg.style.color = "#ef4444";
+            sysMsg.style.color = "#ff2a2a";
             sysMsg.innerText = "SYSTEM_OVERLOAD_SEQUENCE_ACTIVE";
 
             let aphorismIdx = 0;
@@ -726,15 +732,15 @@
             
             canvas2D.style.backgroundColor = '#020403';
             
-            document.getElementById('title').style.color = '#ef4444';
+            document.getElementById('title').style.color = '#ff2a2a';
             document.getElementById('title').innerText = "PANOSYS_CORE_REVEALED_";
             
             document.getElementById('subtitle').style.color = '#00aa44';
             document.getElementById('subtitle').innerText = "Objective framework permanently online.";
             
-            document.getElementById('main-widget').style.border = "1px solid #ef4444";
+            document.getElementById('main-widget').style.border = "1px solid #ff2a2a";
             
-            sysMsg.style.color = "#00ff66";
+            sysMsg.style.color = "#00ff55";
             sysMsg.innerText = "SYSTEM_OPEN // ALIGNMENT_COMPLETE";
             
             speak("Alienation consummated. Core permanently aligned. Welcome to the objective framework.", 0.20, 0.75);
@@ -875,5 +881,80 @@
     });
 })();
 </script>
+<script src="panosys.js"></script>
+<script src="dark.js"></script>
+<!-- DARK2:viz -->
+<script src="dark2viz.js"></script>
+<script>
+// DARK 2.0 · INDUCTION_GATE · capas de instrumentos sobre el tablero de cables: la topologia completa (todas las rutas posibles
+// entre salidas y entradas, con su longitud), cada cable tendido con sus cotas y los pulsos que lo recorren, y la lectura
+// en vivo del cable que se esta arrastrando.
+(function () {
+  if (!window.DARK2) return;
+  const area = () => ({ x: 0, y: 0, w: innerWidth, h: innerHeight });
+  const port = (b, p) => [b.x + p.x, b.y + p.y];
+  const bez = (s, e, t, k) => { const u = 1 - t, c1 = [s[0] + k, s[1]], c2 = [e[0] - k, e[1]]; return [u * u * u * s[0] + 3 * u * u * t * c1[0] + 3 * u * t * t * c2[0] + t * t * t * e[0], u * u * u * s[1] + 3 * u * u * t * c1[1] + 3 * u * t * t * c2[1] + t * t * t * e[1]]; };
+  function topology(c, D, A, d) {
+    const src = boxes.filter(b => b.type === 'source'), dst = boxes.filter(b => b.type === 'target');
+    if (phase === 1) return;   // durante la hipnosis el tablero ya no existe: solo quedan los puntos saltando
+    // todas las rutas posibles
+    src.forEach((a, i) => dst.forEach((b, j) => {
+      const s = port(a, a.ports[0]), e = port(b, b.ports[0]), made = a.connections.some(k => k.toBox.id === b.id);
+      if (!made) {
+        c.strokeStyle = d.G(0.13); c.setLineDash([2, 6]); c.beginPath(); c.moveTo(s[0], s[1]); c.bezierCurveTo(s[0] + 100, s[1], e[0] - 100, e[1], e[0], e[1]); c.stroke(); c.setLineDash([]);
+        const m = bez(s, e, 0.3 + j * 0.2, 100); d.text(d.pad(Math.hypot(e[0] - s[0], e[1] - s[1])), m[0], m[1] - 3, d.G(0.4), 'center');
+      } else {
+        // cable tendido: cota, angulo y pulsos con su carga
+        const L = Math.hypot(e[0] - s[0], e[1] - s[1]), ang = Math.atan2(e[1] - s[1], e[0] - s[0]) * 57.2958, m = bez(s, e, 0.5, 100);
+        d.text('L=' + d.pad(L) + 'px  θ=' + d.sgn(ang) + d.pad(ang, 2) + '°', m[0], m[1] - 10, d.Wt(0.9), 'center', true);
+        d.text('ROUTE ' + a.id + '→' + b.id + '  Δy=' + d.sgn(e[1] - s[1]) + d.pad(e[1] - s[1], 3), m[0], m[1] + 14, phase === 2 ? d.R(0.8) : d.G(0.7), 'center');
+        for (let q = 0; q < 4; q++) {
+          const t = ((d.now / 1400) + q / 4 + i * 0.13) % 1, p = bez(s, e, t, 100);
+          c.fillStyle = d.Wt(0.95); c.fillRect(p[0] - 2 + d.jx() * 0.3, p[1] - 2, 4, 4);
+          if (q % 2 === 0) d.text('0x' + ((i * 7919 + j * 104729 + q * 31 + Math.floor(d.now / 1400)) % 65536).toString(16).toUpperCase().padStart(4, '0'), p[0] + 6, p[1] - 5, d.Wt(0.6));
+        }
+      }
+    }));
+    // cajas: esquinas y medidas
+    boxes.forEach(b => {
+      [[b.x - 6, b.y - 6, 1, 1], [b.x + b.w + 6, b.y - 6, -1, 1], [b.x + b.w + 6, b.y + b.h + 6, -1, -1], [b.x - 6, b.y + b.h + 6, 1, -1]].forEach(([x, y, sx, sy]) => { d.line(x, y, x + sx * 10, y, d.G(0.5)); d.line(x, y, x, y + sy * 10, d.G(0.5)); });
+      d.text(b.id + '  x' + d.pad(b.x) + ' y' + d.pad(b.y) + '  ' + Math.round(b.w) + '×' + Math.round(b.h), b.x, b.y + b.h + 18, d.G(0.55));
+      d.text(b.type === 'source' ? 'OUT · ' + b.connections.length + '/3' : 'IN · ' + src.filter(s => s.connections.some(k => k.toBox.id === b.id)).length + '/3', b.x + b.w, b.y - 10, d.Wt(0.7), 'right');
+    });
+    // el cable en la mano
+    if (activePort) {
+      const s = [activePort.px, activePort.py], L = Math.hypot(mouseX - s[0], mouseY - s[1]), ang = Math.atan2(mouseY - s[1], mouseX - s[0]) * 57.2958;
+      d.dash(s[0], s[1], mouseX, mouseY, d.Wt(0.35), [1, 4]);
+      d.text('CABLE L=' + d.pad(L) + ' θ=' + d.sgn(ang) + d.pad(ang, 3) + '°', mouseX + 14, mouseY - 14, d.Wt(0.95), 'left', true);
+      let best = null, bd = 1e9; dst.forEach(b => { const e = port(b, b.ports[0]), q = Math.hypot(e[0] - mouseX, e[1] - mouseY); d.dash(mouseX, mouseY, e[0], e[1], d.R(0.3), [3, 5]); d.text(d.pad(q), (mouseX + e[0]) / 2, (mouseY + e[1]) / 2, d.R(0.6)); if (q < bd) { bd = q; best = b; } });
+      if (best) d.text('→ ' + best.label + '  ' + Math.round(bd) + 'px', mouseX + 14, mouseY - 2, d.R(0.9));
+    }
+  }
+  DARK2.viz({
+    code: 'INDUCTION_GATE', z: 4, area,
+    probe() {
+      if (phase < 0) return { hide: true, pts: [] };
+      const pts = [];
+      boxes.forEach(b => { const p = port(b, b.ports[0]), linked = b.type === 'source' ? b.connections.length : boxes.filter(s => s.type === 'source' && s.connections.some(k => k.toBox.id === b.id)).length;
+        pts.push({ id: (b.type === 'source' ? 'OUT_' : 'IN_') + b.id.slice(-1), x: p[0], y: p[1], k: phase === 2 || linked ? 'r' : b.type === 'source' ? 'g' : 'w', v: Math.min(1, linked / 3 + 0.2), t: b.label.slice(0, 10) }); });
+      if (activePort) pts.push({ id: 'CABLE', x: mouseX, y: mouseY, k: 'w', v: 1, sel: true, t: 'DRAG' });
+      const cable = activePort ? Math.hypot(mouseX - activePort.px, mouseY - activePort.py) : 0;
+      return { pts, series: { links: linksCount, cable, ph: phase } };
+    },
+    layers: [
+      { type: 'rulers' },
+      { type: 'fn', draw: topology },
+      { type: 'web', k: 2, hull: true, dims: true, labels: 0, alpha: 0.1 },
+      { type: 'alluvial', side: 'top', sort: 'x', w: 52, from: 0.3, to: 0.7, max: 7, step: 60, code: 'F.01', name: 'PORT REGISTER', val: p => p.t },
+      { type: 'tags', max: 7, vec: 0.25, size: 11 },
+      { type: 'matrix', at: [0.845, 0.04, 0.145, 0.24], rows: 7, cols: ['x', 'y', 'v', '|v|'], code: 'M.01', name: 'PORTS' },
+      { type: 'iso', at: [0.845, 0.5, 0.145, 0.44], n: 10, code: 'I.01', name: 'BOARD' },
+      { type: 'scope', at: [0.012, 0.74, 0.17, 0.2], series: ['links', 'cable', 'ph'], labels: { links: 'LINKS / 3', cable: 'CABLE px', ph: 'PHASE' } },
+      { type: 'frame' }
+    ]
+  });
+})();
+</script>
+<!-- /DARK2:viz -->
 </body>
 </html>

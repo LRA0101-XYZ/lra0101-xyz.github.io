@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>0x00_ALIEN_HYPER_LINK</title>
+<title>PANOSYS // 0x00_ALIEN_HYPER_LINK</title>
 <style>
   html, body {
     margin: 0;
@@ -21,25 +21,25 @@
   #alien-terminal {
     width: 100vw;
     height: 100vh;
-    font-family: 'Courier New', Courier, monospace;
+    font-family: var(--psys-font);
     font-size: 1.1vw;
     line-height: 1.1;
     white-space: pre-wrap;
     word-break: break-all;
     box-sizing: border-box;
     padding: 30px;
-    color: #00ff00;
+    color: #00ff55;
   }
 
-  .g { color: #00ff00; }
-  .G { color: #39ff14; text-shadow: 0 0 8px #39ff14; font-weight: bold; }
-  .r { color: #ff0000; }
-  .R { color: #ff3333; background-color: #2a0000; font-weight: bold; }
-  .w { color: #ffffff; text-shadow: 0 0 12px #ffffff; }
+  .g { color: #00ff55; }
+  .G { color: #00ff55; text-shadow: var(--psys-glow-lg); font-weight: bold; }
+  .r { color: #ff2a2a; }
+  .R { color: #ff2a2a; background-color: #2a0000; font-weight: bold; }
+  .w { color: #ffffff; text-shadow: var(--psys-glow-lg); }
   .d { color: #031203; } 
   
-  .inv { background-color: #00ff00; color: #000000; }
-  .inv-r { background-color: #ff0000; color: #ffffff; }
+  .inv { background-color: #00ff55; color: #000000; }
+  .inv-r { background-color: #ff2a2a; color: #ffffff; }
 
   .psycho-melt {
     filter: invert(1) hue-rotate(120deg) contrast(5) saturate(10) !important;
@@ -50,7 +50,7 @@
   }
 
   .psycho-flash {
-    background-color: #ff0000 !important;
+    background-color: #ff2a2a !important;
     filter: invert(1) hue-rotate(280deg) contrast(10) !important;
   }
 
@@ -71,12 +71,12 @@
             position: fixed;
             inset: 0;
             background: #020403;
-            color: #00ff66;
+            color: #00ff55;
             z-index: 99999;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-family: 'Consolas', monospace;
+            font-family: var(--psys-font);
             text-align: center;
             padding: 20px;
         }
@@ -86,6 +86,9 @@
             body > *:not(#rotate-warning) { display: none !important; }
         }
     </style>
+<link rel="stylesheet" href="panosys.css">
+<link rel="stylesheet" href="dark.css">
+<link rel="stylesheet" href="dark2.css">
 </head>
 <body><div id="rotate-warning">
     <div style="font-size: 24px; margin-bottom: 15px;">⟳</div>
@@ -491,5 +494,14 @@
     });
 })();
 </script>
+<script src="panosys.js"></script>
+<script src="dark.js"></script>
+<!-- DARK2:trans -->
+<script src="trans2.js"></script>
+<script>
+// DARK 2.0 · la transicion como diagrama de flujo de datos (looks/). La pagina original sigue debajo con su audio.
+TRANS2.run({"hop":"RELAY_HOP_04","from":"MONOLITH_LOOP","to":"ROOT_OUTBREAK","dur":4,"panes":[{"mode":"fan"}],"caption":"SENSOR FAN-OUT"});
+</script>
+<!-- /DARK2:trans -->
 </body>
 </html>

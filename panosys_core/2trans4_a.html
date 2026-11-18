@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>MONOLITHIC_NOISE_FM_0x00</title>
+<title>PANOSYS // MONOLITHIC_NOISE_FM_0x00</title>
 <style>
   html, body {
     margin: 0;
@@ -12,8 +12,8 @@
     user-select: none;
     width: 100vw;
     height: 100vh;
-    font-family: 'Consolas', 'Courier New', monospace;
-    color: #00ff00;
+    font-family: var(--psys-font);
+    color: #00ff55;
     cursor: crosshair;
   }
 
@@ -35,13 +35,13 @@
     box-sizing: border-box;
     overflow: hidden;
     font-size: 10px;
-    color: #00ff00;
+    color: #00ff55;
   }
 
   .a-normal { color: #004400; }
-  .a-bright { color: #00ff00; font-weight: bold; }
+  .a-bright { color: #00ff55; font-weight: bold; }
   .a-dim { color: #001500; }
-  .a-block { color: #000000; background-color: #00ff00; font-weight: bold; }
+  .a-block { color: #000000; background-color: #00ff55; font-weight: bold; }
 
   /* --- ESTADO DE CONGELAMIENTO EN BLANCO PURA LUZ --- */
   body.hardware-freeze-glitch {
@@ -52,7 +52,7 @@
   body.hardware-freeze-glitch #error-matrix span {
     color: #ffffff !important;
     background-color: transparent !important;
-    text-shadow: 0 0 6px #ffffff, 0 0 12px #ffffff !important;
+    text-shadow: var(--psys-glow-lg)!important;
   }
 
   body.hardware-freeze-glitch #error-matrix span.a-block {
@@ -79,12 +79,12 @@
             position: fixed;
             inset: 0;
             background: #020403;
-            color: #00ff66;
+            color: #00ff55;
             z-index: 99999;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-family: 'Consolas', monospace;
+            font-family: var(--psys-font);
             text-align: center;
             padding: 20px;
         }
@@ -94,6 +94,9 @@
             body > *:not(#rotate-warning) { display: none !important; }
         }
     </style>
+<link rel="stylesheet" href="panosys.css">
+<link rel="stylesheet" href="dark.css">
+<link rel="stylesheet" href="dark2.css">
 </head>
 <body><div id="rotate-warning">
     <div style="font-size: 24px; margin-bottom: 15px;">⟳</div>
@@ -433,5 +436,14 @@
     });
 })();
 </script>
+<script src="panosys.js"></script>
+<script src="dark.js"></script>
+<!-- DARK2:trans -->
+<script src="trans2.js"></script>
+<script>
+// DARK 2.0 · la transicion como diagrama de flujo de datos (looks/). La pagina original sigue debajo con su audio.
+TRANS2.run({"hop":"RELAY_HOP_05","from":"ROOT_OUTBREAK","to":"CAVE_PROJECTION","dur":4,"panes":[{"mode":"alluvial"}],"caption":"ORIGIN → DESTINATION"});
+</script>
+<!-- /DARK2:trans -->
 </body>
 </html>

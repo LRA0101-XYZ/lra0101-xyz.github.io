@@ -1,0 +1,59 @@
+/* DARK 2.0 — unificacion de la estetica. Se carga al final (despues de panosys.css y dark.css): manda sobre cada pieza.
+   Una sola paleta (verde fosforo, rojo alerta, blanco destello sobre negro), una sola tipografia, un solo estilo de panel,
+   un solo escaneo (el erratico de dark.js) y un solo lenguaje de instrumentos (dark2viz.js). */
+:root {
+  --d2-g: #00ff55; --d2-r: #ff2a2a; --d2-w: #e8ffe8; --d2-bg: #020403;
+  --d2-line: rgba(0, 255, 85, .32);            /* borde de todo panel */
+  --d2-panel: rgba(0, 6, 2, .94);              /* fondo de todo panel */
+  --d2-mono: 'Consolas', 'Courier New', monospace;
+}
+
+/* ---------- una tipografia ---------- */
+html, body, button, input, textarea, pre, code, canvas { font-family: var(--d2-mono) !important; }
+::selection { background: var(--d2-r); color: #000; }
+
+/* ---------- un solo escaneo: las piezas ya no barren por su cuenta ---------- */
+#scanline { display: none !important; animation: none !important; }
+
+/* ---------- un estilo de panel: mismo borde, mismo fondo, misma esquina ---------- */
+#panel, #bbar, #topleft, #top-bar, #hud, #bank-ui, #terminal-ui, #hud-top, #dossier-modal, #console-log, #err-ticker, .login-card, .terminal-box {
+  border-color: var(--d2-line) !important;
+}
+#panel, #hud, #bank-ui, #terminal-ui, #dossier-modal, .login-card { background: var(--d2-panel) !important; }
+#hud, #bank-ui, #terminal-ui, #dossier-modal, .login-card { border-width: 1px !important; border-style: solid !important; box-shadow: 0 0 22px rgba(0, 255, 85, .12) !important; }
+/* esquinas de registro en los paneles flotantes (el mismo gesto del marco de instrumentos) */
+#hud::before, #bank-ui::before, #terminal-ui::before, .login-card::before, .terminal-box::before {
+  content: ''; position: absolute; left: -5px; top: -5px; width: 12px; height: 12px; pointer-events: none;
+  border-left: 1px solid var(--d2-g); border-top: 1px solid var(--d2-g);
+}
+#hud::after, #bank-ui::after, #terminal-ui::after, .login-card::after, .terminal-box::after {
+  content: ''; position: absolute; right: -5px; bottom: -5px; width: 12px; height: 12px; pointer-events: none;
+  border-right: 1px solid var(--d2-g); border-bottom: 1px solid var(--d2-g);
+}
+.login-card, .terminal-box { position: relative; }
+#hud-top { border-bottom-width: 1px !important; }
+
+/* rotulos de panel: mismo espaciado en toda la serie */
+.p-sys, .hud-title, .section-title, #node-title, .bb, .stat-row, .macro-val { letter-spacing: 2px; }
+
+/* ---------- una paleta: fuera cian, azul, ambar y los verdes sueltos ---------- */
+.cian { color: var(--d2-g) !important; }
+#glitch-ov { background: radial-gradient(circle, rgba(255, 42, 42, .2) 0%, rgba(0, 255, 85, .15) 55%, rgba(232, 255, 232, .08) 100%) !important; }
+.red-phosphor { color: var(--d2-r) !important; }
+/* el desgarro RGB de las piezas, en la paleta de la serie (mismo nombre: reemplaza al de cada pieza) */
+@keyframes rgbTear {
+  0%   { text-shadow:  6px 0 rgba(255, 42, 42, .9), -6px 0 rgba(0, 255, 85, .9); transform: scale(1.05) translate(3px, 2px); }
+  25%  { text-shadow: -6px 4px rgba(232, 255, 232, .9), 6px -4px rgba(255, 42, 42, .9); transform: scale(1.03) translate(-4px, 1px); }
+  50%  { text-shadow:  5px -6px rgba(0, 255, 85, .9), -5px 6px rgba(255, 42, 42, .9); transform: scale(1.08) translate(5px, -3px); }
+  75%  { text-shadow: -4px -3px rgba(255, 42, 42, .9), 4px 3px rgba(232, 255, 232, .9); transform: scale(1.02) translate(-2px, 4px); }
+  100% { text-shadow:  4px 3px rgba(255, 42, 42, .9), -4px -3px rgba(0, 255, 85, .9); transform: scale(1.06) translate(2px, -2px); }
+}
+@keyframes psys-glitch {
+  0%   { transform: translate(0); text-shadow: 2px 0 var(--d2-r), -2px 0 var(--d2-g); }
+  50%  { transform: translate(-2px, 1px); text-shadow: -2px 0 var(--d2-r), 2px 0 var(--d2-w); }
+  100% { transform: translate(1px, -1px); text-shadow: 1px 0 var(--d2-r), -1px 0 var(--d2-g); }
+}
+
+/* ---------- capas 2.0 ---------- */
+#d2-viz { image-rendering: auto; }
+#t2 { background: transparent; }

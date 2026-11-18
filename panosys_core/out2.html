@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PANOPTIC_SYS // HYPER_SPEED_GLITCH_COLLAPSE</title>
+    <title>PANOSYS // HYPER_SPEED_GLITCH_COLLAPSE</title>
     <style>
         html, body {
             margin: 0;
@@ -11,8 +11,8 @@
             width: 100%;
             height: 100%;
             overflow: hidden;
-            background-color: #00ff00;
-            font-family: 'Consolas', monospace;
+            background-color: #00ff55;
+            font-family: var(--psys-font);
         }
         canvas {
             width: 100vw;
@@ -42,12 +42,12 @@
             position: fixed;
             inset: 0;
             background: #020403;
-            color: #00ff66;
+            color: #00ff55;
             z-index: 99999;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-family: 'Consolas', monospace;
+            font-family: var(--psys-font);
             text-align: center;
             padding: 20px;
         }
@@ -57,6 +57,9 @@
             body > *:not(#rotate-warning) { display: none !important; }
         }
     </style>
+<link rel="stylesheet" href="panosys.css">
+<link rel="stylesheet" href="dark.css">
+<link rel="stylesheet" href="dark2.css">
 </head>
 <body><div id="rotate-warning">
     <div style="font-size: 24px; margin-bottom: 15px;">⟳</div>
@@ -422,5 +425,62 @@
     });
 })();
 </script>
+<script src="panosys.js"></script>
+<script src="dark.js"></script>
+<!-- DARK2:viz -->
+<script src="dark2viz.js"></script>
+<script>
+// DARK 2.0 · SIGNAL_COLLAPSE · todo converge: todos los instrumentos a la vez, alimentados por la misma formula que hace el sonido
+// de la pieza (el bytebeat). La onda cruza la pantalla, sus ocho bits forman una matriz, y los puntos que salen de ella saltan
+// de lugar en cada cuadro: las etiquetas, el casco y los haces no alcanzan a estabilizarse.
+(function () {
+  if (!window.DARK2 || typeof bytebeat !== 'function') return;
+  const area = () => ({ x: 0, y: 0, w: innerWidth, h: innerHeight });
+  const T0 = performance.now(), tNow = () => (performance.now() - T0) / 1000;
+  const raw = t => { const q = Math.floor(t * (32000 + Math.sin(t * 12) * 15000)); return ((q * (q >> 5 | q >> 9)) ^ (q >> 2)) & 255; };
+  // la onda del colapso y su matriz de bits
+  function wave(c, D, A, d) {
+    const t = tNow(), n = 220, y0 = A.y + A.h * 0.5, amp = A.h * 0.16;
+    c.strokeStyle = d.Wt(0.85); c.lineWidth = 1.5; c.beginPath();
+    for (let i = 0; i < n; i++) { const s = bytebeat(t + i * 0.00012), x = A.x + i / (n - 1) * A.w, y = y0 + s * amp + d.jx() * 0.3; i ? c.lineTo(x, y) : c.moveTo(x, y); }
+    c.stroke(); c.lineWidth = 1;
+    d.dash(A.x, y0, A.x + A.w, y0, d.R(0.5), [4, 6]);
+    d.text('W.01 // BYTEBEAT  t*(t>>5|t>>9)^(t>>2)   T+' + d.f1(t) + 's', A.x + 40, y0 - amp - 8, d.Wt(0.9), 'left', true);
+    // matriz de bits: 8 filas, una columna por muestra
+    const cols = 96, cw = Math.min(9, (A.w * 0.5) / cols), bx = A.x + A.w * 0.25, by = A.y + A.h * 0.72;
+    for (let i = 0; i < cols; i++) { const v = raw(t + i * 0.0004); for (let b = 0; b < 8; b++) if (v >> b & 1) { c.fillStyle = b > 5 ? d.R(0.9) : b % 2 ? d.Wt(0.85) : d.G(0.8); c.fillRect(bx + i * cw, by + (7 - b) * cw, cw - 1.5, cw - 1.5); } }
+    for (let b = 0; b < 8; b++) d.text('b' + b, bx - 14, by + (7 - b) * cw + cw - 2, d.G(0.7));
+    d.text('B.01 // BIT MATRIX 8×' + cols, bx, by - 6, d.R(0.9), 'left', true);
+  }
+  DARK2.viz({
+    code: 'SIGNAL_COLLAPSE', z: 40, area,
+    probe() {
+      const t = tNow(), A = area(), pts = [];
+      for (let i = 0; i < 26; i++) {
+        const a = raw(t * 0.6 + i * 0.0131), b = raw(t * 0.37 + i * 0.0273 + 7), k = raw(t + i);
+        pts.push({ id: 'Σ' + a.toString(16).toUpperCase().padStart(2, '0') + b.toString(16).toUpperCase().padStart(2, '0'), x: A.x + 30 + a / 255 * (A.w - 60), y: A.y + 30 + b / 255 * (A.h - 60), k: k > 170 ? 'r' : k > 90 ? 'w' : 'g', v: k / 255, vx: (a - 128) * 6, vy: (b - 128) * 6, t: 'OVERFLOW' });
+      }
+      return { pts, series: { bb: bytebeat(t) * 100, life: Math.max(0, 100 - t * 6.6), fps: 1000 + raw(t) * 380 } };
+    },
+    layers: [
+      { type: 'rulers' },
+      { type: 'field', step: 64, alpha: 0.4 },
+      { type: 'web', k: 3, labels: 12, alpha: 0.3 },
+      { type: 'fn', draw: wave },
+      { type: 'alluvial', side: 'right', sort: 'v', w: 100, from: 0.08, to: 0.92, max: 26, step: 22, code: 'F.01', name: 'ALL SIGNALS CONVERGE', val: p => p.t },
+      { type: 'alluvial', side: 'left', sort: 'k', w: 100, from: 0.08, to: 0.92, max: 26, step: 22, code: 'F.02', name: 'BUFFER OVERFLOW', val: p => p.id },
+      { type: 'tags', max: 14, vec: 0.12 },
+      { type: 'radial', at: [0.13, 0.04, 0.2, 0.36], code: 'R.01', name: 'COLLAPSE', labels: 8 },
+      { type: 'iso', at: [0.66, 0.04, 0.2, 0.4], n: 12, code: 'I.01', name: 'LAST STACK' },
+      { type: 'matrix', at: [0.13, 0.6, 0.2, 0.36], rows: 22, cols: ['x', 'y', 'v', 'θ', '|v|'], code: 'M.01', name: 'SPECIES' },
+      { type: 'scope', at: [0.66, 0.6, 0.2, 0.34], series: ['bb', 'life', 'fps', 'sig'], labels: { bb: 'BYTEBEAT', life: 'LIFE %', fps: 'FRAME RATE' } },
+      { type: 'frame' }
+    ]
+  });
+  // en el colapso las capas viven en glitch casi permanente
+  setInterval(() => { if (Math.random() < 0.6) DARK2.glitch(180 + Math.random() * 420); }, 700);
+})();
+</script>
+<!-- /DARK2:viz -->
 </body>
 </html>

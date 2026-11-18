@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>INSTRUMENTALIZATION LOGS - PYRAMIDAL MONOLITHS</title>
+<title>PANOSYS // INSTRUMENTALIZATION LOGS - PYRAMIDAL MONOLITHS</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
-html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'Consolas', 'Courier New', monospace; cursor: crosshair; touch-action: none;}
+html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family: var(--psys-font); cursor: crosshair; touch-action: none;}
 
 #sl{position:fixed;inset:0;z-index:900;pointer-events:none;
   background:repeating-linear-gradient(0deg,rgba(0,0,0,0.25) 0,rgba(0,0,0,0.25) 1px,transparent 1px,transparent 3px);
@@ -17,8 +17,8 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'Co
 
 #scanline {
   position: fixed; top: 0; left: 0; right: 0; height: 15px;
-  background: linear-gradient(to bottom, transparent, rgba(0, 255, 65, 0.6), transparent);
-  box-shadow: 0 0 25px rgba(0, 255, 65, 0.9);
+  background: linear-gradient(to bottom, transparent, rgba(0,255,85, 0.6), transparent);
+  box-shadow: 0 0 25px rgba(0,255,85, 0.9);
   opacity: 0.8; z-index: 850; pointer-events: none;
   animation: scan 4s linear infinite;
   transition: background 0.3s, box-shadow 0.3s;
@@ -28,59 +28,59 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'Co
 #glitch-ov{position:fixed;inset:0;z-index:951;pointer-events:none;opacity:0;mix-blend-mode:difference;}
 #ansi-overlay {
   position: fixed; inset: 0; z-index: 850; 
-  background: rgba(0, 10, 0, 0.98); color: #00ff41; 
+  background: rgba(0, 10, 0, 0.98); color: #00ff55; 
   font-size: 26px; line-height: 24px; letter-spacing: 4px;
   font-weight: bold; overflow: hidden; opacity: 0; pointer-events: none;
   white-space: pre-wrap; word-break: break-all;
 }
 .ansi-rgb-glitch { animation: rgbTear 0.04s infinite; }
 @keyframes rgbTear {
-  0%   { text-shadow:  8px 0 #00ff41, -8px 0 #ff0000; transform: scale(1.05) translate(3px, 3px); }
-  50%  { text-shadow:  8px 4px #ff0000, 8px -4px #00ff41; transform: scale(0.99) translate(-3px, -2px); }
-  100% { text-shadow:  5px 3px #00ff41, -5px -3px #ff0000; transform: scale(1.02) translate(2px, -1px); }
+  0%   { text-shadow:  8px 0 #00ff55, -8px 0 #ff2a2a; transform: scale(1.05) translate(3px, 3px); }
+  50%  { text-shadow:  8px 4px #ff2a2a, 8px -4px #00ff55; transform: scale(0.99) translate(-3px, -2px); }
+  100% { text-shadow:  5px 3px #00ff55, -5px -3px #ff2a2a; transform: scale(1.02) translate(2px, -1px); }
 }
 
 #c { position:absolute; top:0; left:0; width:100%; height:100%; z-index:10; }
 
-#panel{ position:fixed; right:0; top:0; bottom:0; width:340px; border-left:1px solid rgba(0,255,65,0.2); background:rgba(0,5,0,0.98); z-index:800; display:flex; flex-direction:column; transition: transform 0.3s ease, border-color 0.3s; }
-#panel-top{padding:20px 20px 0;border-bottom:1px solid rgba(0,255,65,0.15);flex-shrink:0;}
-.p-sys{font-size:10px;letter-spacing:4px;color:rgba(0,255,65,0.7);margin-bottom:12px;} 
-.p-title{font-size:13px;letter-spacing:3px;color:#fff;padding-bottom:15px;text-shadow: 0 0 8px #00ff41;} 
-#panel-content{flex:1;padding:20px;display:flex;flex-direction:column; font-size:11px; color:#00ff41; line-height: 1.5; letter-spacing: 1px; overflow-y:auto;}
+#panel{ position:fixed; right:0; top:0; bottom:0; width:340px; border-left:1px solid rgba(0,255,85,0.2); background:rgba(0,5,0,0.98); z-index:800; display:flex; flex-direction:column; transition: transform 0.3s ease, border-color 0.3s; }
+#panel-top{padding:20px 20px 0;border-bottom:1px solid rgba(0,255,85,0.15);flex-shrink:0;}
+.p-sys{font-size:10px;letter-spacing:4px;color:rgba(0,255,85,0.7);margin-bottom:12px;} 
+.p-title{font-size:13px;letter-spacing:3px;color:#fff;padding-bottom:15px;text-shadow: var(--psys-glow-lg);} 
+#panel-content{flex:1;padding:20px;display:flex;flex-direction:column; font-size:11px; color:#00ff55; line-height: 1.5; letter-spacing: 1px; overflow-y:auto;}
 
 #minimap { 
   width: 100%; height: auto; aspect-ratio: 1/1; 
-  border: 1px solid rgba(0, 255, 65, 0.5); 
+  border: 1px solid rgba(0,255,85, 0.5); 
   background: rgba(0, 10, 0, 0.95);
   margin-bottom: 15px;
-  box-shadow: 0 0 20px rgba(0, 255, 65, 0.3);
+  box-shadow: 0 0 20px rgba(0,255,85, 0.3);
   image-rendering: pixelated;
   transition: border-color 0.3s, box-shadow 0.3s;
 }
 
-#quote-log { border-top: 1px solid rgba(0,255,65,0.3); padding-top: 15px; display: flex; flex-direction: column; gap: 8px; }
+#quote-log { border-top: 1px solid rgba(0,255,85,0.3); padding-top: 15px; display: flex; flex-direction: column; gap: 8px; }
 .quote-entry { animation: fadeInRight 0.2s ease-out forwards; opacity: 0; transform: translateX(20px); border-left: 2px solid; padding-left: 8px; margin-bottom: 4px; }
 .quote-time { color: rgba(255,255,255,0.5); margin-right: 5px; font-size: 9px; }
 
-#bbar{position:fixed;bottom:0;left:0;right:0;height:40px;border-top:1px solid rgba(0,255,65,0.2);background:rgba(0,0,0,0.96);z-index:800;display:flex;align-items:center;padding:0 25px;gap:20px;} 
+#bbar{position:fixed;bottom:0;left:0;right:0;height:40px;border-top:1px solid rgba(0,255,85,0.2);background:rgba(0,0,0,0.96);z-index:800;display:flex;align-items:center;padding:0 25px;gap:20px;} 
 .bb{font-size:11px;letter-spacing:2.5px;color:rgba(255,255,255,0.4);} 
-.bb span{color:#00ff41;margin-left:8px;font-weight:bold;}
-#topleft{position:fixed;top:0;left:0;right:0;height:40px;border-bottom:1px solid rgba(0,255,65,0.2);background:rgba(0,0,0,0.96);z-index:800;display:flex;align-items:center;padding:0 25px;gap:35px;} 
+.bb span{color:#00ff55;margin-left:8px;font-weight:bold;}
+#topleft{position:fixed;top:0;left:0;right:0;height:40px;border-bottom:1px solid rgba(0,255,85,0.2);background:rgba(0,0,0,0.96);z-index:800;display:flex;align-items:center;padding:0 25px;gap:35px;} 
 
-.stat-row { display: flex; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px solid rgba(0,255,65,0.2); padding-bottom: 5px; }
+.stat-row { display: flex; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px solid rgba(0,255,85,0.2); padding-bottom: 5px; }
 
-#mutation-timer { font-size: 32px; font-weight: bold; color: #00ff41; text-align: center; margin: 15px 0; text-shadow: 0 0 15px #00ff41; transition: color 0.3s, text-shadow 0.3s; }
+#mutation-timer { font-size: 32px; font-weight: bold; color: #00ff55; text-align: center; margin: 15px 0; text-shadow: var(--psys-glow-lg); transition: color 0.3s, text-shadow 0.3s; }
 
 #toggle-panel {
   position: fixed; top: 50px; right: 10px; z-index: 910;
-  background: rgba(0, 10, 0, 0.9); border: 1px solid #00ff41; color: #00ff41;
+  background: rgba(0, 10, 0, 0.9); border: 1px solid #00ff55; color: #00ff55;
   padding: 8px 12px; font-family: monospace; font-size: 11px; letter-spacing: 2px;
-  cursor: pointer; box-shadow: 0 0 10px rgba(0,255,65,0.4); display: none;
+  cursor: pointer; box-shadow: 0 0 10px rgba(0,255,85,0.4); display: none;
 }
 
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: rgba(0,0,0,0.5); }
-::-webkit-scrollbar-thumb { background: #00ff41; }
+::-webkit-scrollbar-thumb { background: #00ff55; }
 
 @media (max-width: 900px) {
   #panel { width: 100%; transform: translateX(100%); }
@@ -88,14 +88,17 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'Co
   #toggle-panel { display: block; }
 }
 
-body.panic #scanline { background: linear-gradient(to bottom, transparent, rgba(255, 0, 0, 0.6), transparent); box-shadow: 0 0 25px rgba(255,0,0,0.9); }
-body.panic #panel { border-left-color: rgba(255,0,0,0.2); background: rgba(5,0,0,0.98); }
-body.panic #minimap { border-color: rgba(255,0,0,0.5); box-shadow: 0 0 20px rgba(255,0,0,0.3); }
-body.panic #mutation-timer { color: #ff0000; text-shadow: 0 0 15px #ff0000; }
-body.panic #panel-content { color: #ff0000; }
-body.panic #ansi-overlay { background: rgba(10, 0, 0, 0.98); color: #ff0000; }
-body.panic #toggle-panel { border-color: #ff0000; color: #ff0000; box-shadow: 0 0 10px rgba(255,0,0,0.4); }
+body.panic #scanline { background: linear-gradient(to bottom, transparent, rgba(255,42,42, 0.6), transparent); box-shadow: 0 0 25px rgba(255,42,42,0.9); }
+body.panic #panel { border-left-color: rgba(255,42,42,0.2); background: rgba(5,0,0,0.98); }
+body.panic #minimap { border-color: rgba(255,42,42,0.5); box-shadow: 0 0 20px rgba(255,42,42,0.3); }
+body.panic #mutation-timer { color: #ff2a2a; text-shadow: var(--psys-glow-lg); }
+body.panic #panel-content { color: #ff2a2a; }
+body.panic #ansi-overlay { background: rgba(10, 0, 0, 0.98); color: #ff2a2a; }
+body.panic #toggle-panel { border-color: #ff2a2a; color: #ff2a2a; box-shadow: 0 0 10px rgba(255,42,42,0.4); }
 </style>
+<link rel="stylesheet" href="panosys.css">
+<link rel="stylesheet" href="dark.css">
+<link rel="stylesheet" href="dark2.css">
 </head>
 <body>
 
@@ -140,7 +143,7 @@ body.panic #toggle-panel { border-color: #ff0000; color: #ff0000; box-shadow: 0 
     </div>
     
     <div id="quote-log">
-      <div class="quote-entry" style="border-color:#00ff41;">
+      <div class="quote-entry" style="border-color:#00ff55;">
         <span class="quote-time">[SYS]</span> <span>WE ARE THE ARCHITECTURE.</span>
       </div>
     </div>
@@ -665,7 +668,7 @@ function mutateMaze() {
     playMutationNoiseBurst();
     triggerAnsiGlitch();
     generateSpaciousMaze();
-    let col = discomfortLevel > 0.6 ? "#ff0000" : "#00ff41";
+    let col = discomfortLevel > 0.6 ? "#ff2a2a" : "#00ff55";
     let randomShiftPhrase = WALL_PHRASES[Math.floor(Math.random() * WALL_PHRASES.length)];
     logEvent(randomShiftPhrase, col);
     mutationTimeLeft = 20.0;
@@ -765,17 +768,17 @@ function updateEntity() {
 
     let proxUI = document.getElementById('prox-ui');
     if (discomfortLevel > 0.85) {
-        proxUI.textContent = "WE_ABSORB_YOU"; proxUI.style.color = "#ff0000";
+        proxUI.textContent = "WE_ABSORB_YOU"; proxUI.style.color = "#ff2a2a";
         if (Math.random() > 0.92 && !clickGlitchActive) {
           triggerPanicCaptureSound();
           triggerAnsiGlitch(true);
           let randomAbsorptionPhrase = WALL_PHRASES[Math.floor(Math.random() * WALL_PHRASES.length)];
-          logEvent(randomAbsorptionPhrase, "#ff0000", true);
+          logEvent(randomAbsorptionPhrase, "#ff2a2a", true);
         }
     } else if (discomfortLevel > 0.4) {
         proxUI.textContent = "WE_SEE_YOU"; proxUI.style.color = "#ffaa00";
     } else {
-        proxUI.textContent = "MONITORED"; proxUI.style.color = "#00ff41";
+        proxUI.textContent = "MONITORED"; proxUI.style.color = "#00ff55";
     }
 
     if(discomfortLevel > 0) {
@@ -784,7 +787,7 @@ function updateEntity() {
             playPanicPulse();
             lastHeartbeatTime = performance.now() / 1000;
             document.getElementById('glitch-ov').style.opacity = discomfortLevel * 0.6; 
-            document.getElementById('glitch-ov').style.background = `radial-gradient(circle, rgba(255,0,0,0.7) 0%, transparent 100%)`; 
+            document.getElementById('glitch-ov').style.background = `radial-gradient(circle, rgba(255,42,42,0.7) 0%, transparent 100%)`; 
             setTimeout(() => { document.getElementById('glitch-ov').style.opacity = 0; }, 50);
         }
     }
@@ -797,7 +800,7 @@ function updateMinimap() {
     let ch = h / GRID_SIZE;
 
     let isPanic = discomfortLevel > 0.5;
-    let mainColor = isPanic ? 'rgba(255, 0, 0, ' : 'rgba(0, 255, 65, ';
+    let mainColor = isPanic ? 'rgba(255,42,42, ' : 'rgba(0,255,85, ';
 
     mctx.fillStyle = 'rgba(0, 5, 0, 0.95)';
     mctx.fillRect(0, 0, w, h);
@@ -827,15 +830,15 @@ function updateMinimap() {
     let eZ = (entityZ / CELL_SIZE) % GRID_SIZE;
     if(eX < 0) eX += GRID_SIZE; if(eZ < 0) eZ += GRID_SIZE;
     
-    mctx.fillStyle = '#ff0000';
-    mctx.shadowBlur = 12; mctx.shadowColor = '#ff0000';
+    mctx.fillStyle = '#ff2a2a';
+    mctx.shadowBlur = 12; mctx.shadowColor = '#ff2a2a';
     mctx.beginPath(); mctx.arc(eX * cw, eZ * ch, cw / 1.1, 0, Math.PI*2); mctx.fill();
     mctx.shadowBlur = 0;
 }
 
 function drawFloorGrid() {
     let isPanic = discomfortLevel > 0.5;
-    let gridColor = isPanic ? `rgba(255, 0, 0, ` : `rgba(0, 255, 65, `;
+    let gridColor = isPanic ? `rgba(255,42,42, ` : `rgba(0,255,85, `;
     
     const SUB_STEP = CELL_SIZE / 8; 
     let baseSubX = Math.floor(camX / SUB_STEP);
@@ -882,18 +885,18 @@ function drawVerticalWallText(points, depth, str, isRed) {
     let alpha = Math.max(0.2, 1 - (depth / (12 * CELL_SIZE))); 
     
     if(isRed) {
-        ctx.fillStyle = `rgba(255, 0, 0, ${alpha + 0.3})`;
-        ctx.shadowColor = '#ff0000';
+        ctx.fillStyle = `rgba(255,42,42, ${alpha + 0.3})`;
+        ctx.shadowColor = '#ff2a2a';
     } else if(discomfortLevel > 0.4 && Math.random() > 0.5) {
-        ctx.fillStyle = `rgba(255, 0, 0, ${alpha + discomfortLevel})`;
-        ctx.shadowColor = '#ff0000';
+        ctx.fillStyle = `rgba(255,42,42, ${alpha + discomfortLevel})`;
+        ctx.shadowColor = '#ff2a2a';
         str = "WE BLEED";
     } else if (discomfortLevel > 0.5) {
         ctx.fillStyle = `rgba(255, 50, 50, ${alpha})`;
-        ctx.shadowColor = '#ff0000';
+        ctx.shadowColor = '#ff2a2a';
     } else {
-        ctx.fillStyle = `rgba(0, 255, 65, ${alpha})`;
-        ctx.shadowColor = '#00ff41';
+        ctx.fillStyle = `rgba(0,255,85, ${alpha})`;
+        ctx.shadowColor = '#00ff55';
     }
     
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -930,7 +933,7 @@ function drawLoop(timestamp) {
   document.getElementById('investment-ui').textContent = totalInvestment.toFixed(2) + ' CREDITS';
 
   if(clickGlitchActive){ 
-      ctx.fillStyle = discomfortLevel > 0.5 ? `rgba(255, 0, 0, 1)` : `rgba(0, 255, 65, 1)`;
+      ctx.fillStyle = discomfortLevel > 0.5 ? `rgba(255,42,42, 1)` : `rgba(0,255,85, 1)`;
   } else {
       let panicBg = Math.floor(discomfortLevel * 100);
       ctx.fillStyle = `rgba(${panicBg}, 0, 0, 1)`;
@@ -964,9 +967,9 @@ function drawLoop(timestamp) {
           let p4 = project3D(flsh.x - flsh.w/2, flsh.y + flsh.h, flsh.z);
 
           if(p1.s > 0 && p2.s > 0 && p3.s > 0 && p4.s > 0) {
-              ctx.fillStyle = discomfortLevel > 0.5 ? 'rgba(255, 0, 0, 0.85)' : 'rgba(0, 255, 65, 0.85)';
+              ctx.fillStyle = discomfortLevel > 0.5 ? 'rgba(255,42,42, 0.85)' : 'rgba(0,255,85, 0.85)';
               ctx.shadowBlur = 35;
-              ctx.shadowColor = discomfortLevel > 0.5 ? '#ff0000' : '#00ff41';
+              ctx.shadowColor = discomfortLevel > 0.5 ? '#ff2a2a' : '#00ff55';
               
               ctx.beginPath();
               ctx.moveTo(p1.x, p1.y);
@@ -1178,7 +1181,7 @@ function processClickOrTap(clickX, clickY) {
             totalInvestment += 14.50;
             triggerModemHandshakeSound();
             triggerAnsiGlitch(); 
-            logEvent(p.text, wallClicked[p.gridX][p.gridZ] ? "#ff0000" : "#00ff41", true);
+            logEvent(p.text, wallClicked[p.gridX][p.gridZ] ? "#ff2a2a" : "#00ff55", true);
             break;
         }
     }
@@ -1231,5 +1234,82 @@ document.getElementById('toggle-panel').addEventListener('click',() => {
     document.getElementById('panel').classList.toggle('open');
 });
 </script>
+<script src="panosys.js"></script>
+<script src="dark.js"></script>
+<!-- DARK2:viz -->
+<script src="dark2viz.js"></script>
+<script>
+// DARK 2.0 · MONOLITH_LOOP · capas de instrumentos sobre el laberinto: cada monolito visible con su profundidad y su flujo optico
+// (el vector con que se mueve en pantalla al caminar), el vector de persecucion de la entidad, el laberinto cercano en planos
+// apilados y un haz de curvas que baja de cada monolito a su celda.
+(function () {
+  if (!window.DARK2) return;
+  const area = () => ({ x: 0, y: 40, w: Math.max(200, innerWidth - 340), h: innerHeight - 80 });
+  const trail = []; let lastT = 0;
+  const wrap = d => (Math.abs(d) > LIMIT / 2 ? (d > 0 ? d - LIMIT : d + LIMIT) : d);
+  // persecucion: plano polar centrado en quien camina (arriba = hacia donde mira). Muros cercanos, rastro y vector de la entidad
+  function pursuit(c, D, A, d, r) {
+    const cx = r.x + r.w / 2, cy = r.y + r.h / 2 + 6, Rm = Math.min(r.w, r.h) / 2 - 14, RANGE = 1500, k = Rm / RANGE;
+    d.title('P.01', 'PURSUIT', r.x, r.y + 9, 'β · d');
+    for (let i = 1; i <= 5; i++) { c.strokeStyle = d.G(i === 5 ? 0.4 : 0.15); c.beginPath(); c.arc(cx, cy, Rm * i / 5, 0, 6.283); c.stroke(); if (i % 2) d.text(String(RANGE * i / 5), cx + 2, cy - Rm * i / 5 + 9, d.G(0.4)); }
+    const rot = (dx, dz) => { const s = Math.sin(camYaw), q = Math.cos(camYaw); return [cx + (dx * q - dz * s) * k, cy - (dx * s + dz * q) * k]; };
+    // muros dentro del alcance
+    const gx = Math.floor(camX / CELL_SIZE), gz = Math.floor(camZ / CELL_SIZE), n = Math.ceil(RANGE / CELL_SIZE);
+    for (let i = -n; i <= n; i++) for (let j = -n; j <= n; j++) {
+      const a = ((gx + i) % GRID_SIZE + GRID_SIZE) % GRID_SIZE, b = ((gz + j) % GRID_SIZE + GRID_SIZE) % GRID_SIZE;
+      if (!maze[a] || maze[a][b] !== 1) continue;
+      const dx = (gx + i + 0.5) * CELL_SIZE - camX, dz = (gz + j + 0.5) * CELL_SIZE - camZ; if (Math.hypot(dx, dz) > RANGE) continue;
+      const p = rot(dx, dz); c.fillStyle = wallClicked[a] && wallClicked[a][b] ? d.R(0.9) : d.G(0.5); c.fillRect(p[0] - 1.5, p[1] - 1.5, 3, 3);
+    }
+    // rastro
+    c.strokeStyle = d.Wt(0.5); c.beginPath(); let pen = false;
+    trail.forEach(t => { const dx = wrap(t[0] - camX), dz = wrap(t[1] - camZ); if (Math.hypot(dx, dz) > RANGE) { pen = false; return; } const p = rot(dx, dz); pen ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); pen = true; });
+    c.stroke();
+    // quien camina y hacia donde mira
+    c.fillStyle = d.Wt(0.95); c.beginPath(); c.moveTo(cx, cy - 7); c.lineTo(cx - 4, cy + 4); c.lineTo(cx + 4, cy + 4); c.fill();
+    d.dash(cx, cy, cx, cy - Rm, d.Wt(0.3), [1, 4]);
+    // la entidad
+    const ex = wrap(entityX - camX), ez = wrap(entityZ - camZ), dist = Math.hypot(ex, ez), p = rot(ex / Math.max(1, dist / RANGE), ez / Math.max(1, dist / RANGE));
+    const q = rot(ex, ez), inside = dist <= RANGE, tip = inside ? q : p;
+    d.arrow(cx, cy, tip[0] + d.jx() * 0.3, tip[1], d.R(0.95));
+    const bearing = ((Math.atan2(ex, ez) - camYaw) * 57.2958 % 360 + 540) % 360 - 180;
+    d.text('ENTITY d=' + d.pad(dist, 5) + ' β=' + d.sgn(bearing) + d.pad(bearing, 3) + '°', r.x, r.y + r.h - 2, d.R(0.9), 'left', true);
+    d.text('x' + d.pad(camX, 5) + ' z' + d.pad(camZ, 5) + ' ψ' + d.pad(((camYaw * 57.2958) % 360 + 360) % 360, 3) + '°', r.x, r.y + r.h + 9, d.G(0.65));
+  }
+  DARK2.viz({
+    code: 'MONOLITH_LOOP', z: 905, area,
+    probe() {
+      const A = area(), now = performance.now(), pts = [];
+      if (now - lastT > 300) { lastT = now; trail.push([camX, camZ]); if (trail.length > 70) trail.shift(); }
+      const list = (currentRenderedPyramids || []).filter(p => p.box.maxX > 0 && p.box.minX < A.w).sort((a, b) => a.depth - b.depth).slice(0, 26);
+      const far = list.length ? list[list.length - 1].depth : 1;
+      list.forEach(p => {
+        const x = (p.box.minX + p.box.maxX) / 2, y = Math.max(A.y + 4, Math.min(A.y + A.h - 4, p.box.minY));
+        const hit = wallClicked[p.gridX] && wallClicked[p.gridX][p.gridZ];
+        pts.push({ id: 'M' + String(p.gridX).padStart(2, '0') + '.' + String(p.gridZ).padStart(2, '0'), x, y, k: hit ? 'r' : 'g', v: 1 - p.depth / (far * 1.1), w: [p.gridX, p.gridZ], t: 'd' + Math.round(p.depth) });
+      });
+      const e = project3D(entityX, 0, entityZ);
+      if (e.s > 0 && e.x > 0 && e.x < A.w) pts.push({ id: 'ENTITY', x: e.x, y: Math.max(A.y, Math.min(A.y + A.h, e.y)), k: 'r', v: 1, sel: true, t: 'PURSUER' });
+      const gx = Math.floor(camX / CELL_SIZE), gz = Math.floor(camZ / CELL_SIZE), span = 16;
+      const dist = Math.hypot(wrap(entityX - camX), wrap(entityZ - camZ));
+      return { pts,
+        grid: { get: (u, v) => { const a = ((gx - span / 2 + Math.floor(u * span)) % GRID_SIZE + GRID_SIZE) % GRID_SIZE, b = ((gz - span / 2 + Math.floor(v * span)) % GRID_SIZE + GRID_SIZE) % GRID_SIZE; return maze[a] && maze[a][b] === 1 ? (wallClicked[a] && wallClicked[a][b] ? 1 : 0.55) : 0; } },
+        series: { fear: discomfortLevel * 100, dist, mut: mutationTimeLeft, inv: totalInvestment } };
+    },
+    layers: [
+      { type: 'rulers', top: 4 },
+      { type: 'field', step: 86, alpha: 0.26 },
+      { type: 'web', k: 1, hull: false, dims: false, labels: 5, alpha: 0.16 },
+      { type: 'alluvial', side: 'bottom', sort: 'x', w: 70, from: 0.26, to: 0.78, max: 20, code: 'F.01', name: 'CELL INDEX', val: p => p.t },
+      { type: 'tags', max: 7, vec: 0.22 },
+      { type: 'fn', draw: pursuit, at: [0.012, 0.035, 0.2, 0.36] },
+      { type: 'iso', at: [0.012, 0.5, 0.2, 0.4], n: 16, code: 'I.01', name: 'MAZE RELIEF', max: 26 },
+      { type: 'scope', at: [0.8, 0.035, 0.19, 0.34], series: ['fear', 'dist', 'mut', 'inv'], labels: { fear: 'DISCOMFORT %', dist: 'ENTITY DIST', mut: 'MUTATION T-', inv: 'INVESTED' } },
+      { type: 'frame' }
+    ]
+  });
+})();
+</script>
+<!-- /DARK2:viz -->
 </body>
 </html>

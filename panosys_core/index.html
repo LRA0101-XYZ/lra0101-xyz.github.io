@@ -1,835 +1,347 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PANOPTIC SYSTEMS - SYSTEM_INDEX</title>
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body, html {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background-color: #000;
-            color: #00ff00;
-            font-family: 'Consolas', 'Courier New', monospace;
-        }
-
-        #viewport-container {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-        }
-
-        #sys-header {
-            width: 100%;
-            padding: 10px 20px;
-            background: #050505;
-            border-bottom: 1px solid #00ff00;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 14px;
-            letter-spacing: 1px;
-            z-index: 10;
-        }
-
-        #sys-right-panel {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-        }
-
-        #game-runtime {
-            flex-grow: 1;
-            width: 100%;
-            height: 100%;
-            border: none;
-            background: #000;
-        }
-
-        .crt-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 4;
-            background: linear-gradient(
-                rgba(18, 16, 16, 0) 50%, 
-                rgba(0, 0, 0, 0.4) 50%
-            );
-            background-size: 100% 3px;
-            mix-blend-mode: overlay;
-            opacity: 0.7;
-        }
-
-        #glitch-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #000;
-            display: none;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 100;
-            pointer-events: none;
-            padding: 40px;
-            text-align: center;
-            overflow: hidden;
-        }
-
-        #glitch-overlay::before {
-            content: "";
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background-image: radial-gradient(rgba(0, 255, 0, 0.4) 1px, transparent 0);
-            background-size: 4px 4px;
-            opacity: 0.3;
-            animation: noise-shift 0.03s infinite steps(1);
-            z-index: 1;
-        }
-
-        @keyframes noise-shift {
-            0% { transform: translate(0, 0); }
-            25% { transform: translate(-10px, 15px); }
-            50% { transform: translate(15px, -10px); }
-            75% { transform: translate(-5px, -15px); }
-            100% { transform: translate(10px, 10px); }
-        }
-
-        .glitch-text {
-            font-size: 24px;
-            text-transform: uppercase;
-            letter-spacing: 4px;
-            color: #00ff00;
-            text-shadow: none;
-            word-break: break-word;
-            line-height: 1.5;
-            z-index: 2;
-            width: 100%;
-            max-width: 900px;
-            margin: auto;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        @keyframes stroboscopic {
-            0% { background-color: #000; color: #00ff00; }
-            25% { background-color: #ffffff; color: #000000; }
-            50% { background-color: #00ff00; color: #ffffff; }
-            75% { background-color: #000000; color: #ffffff; }
-            100% { background-color: #000; color: #00ff00; }
-        }
-
-        .strobe-active {
-            animation: stroboscopic 0.02s infinite steps(1);
-        }
-
-        @keyframes phosphor-invert-toggle {
-            0%, 100% { 
-                background-color: #000000; 
-                color: #00ff00; 
-                border-color: #00ff00; 
-                box-shadow: 0 0 10px rgba(0, 255, 0, 0.2); 
-            }
-            50% { 
-                background-color: #00ff00; 
-                color: #000000; 
-                border-color: #ffffff; 
-                box-shadow: 0 0 25px rgba(0, 255, 0, 0.8); 
-            }
-        }
-
-        #audio-unlocker {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #000;
-            z-index: 99999;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            gap: 30px;
-            padding: 20px;
-        }
-
-        #init-btn {
-            background: #000000;
-            border: 2px solid #00ff00;
-            color: #00ff00;
-            padding: 20px 40px;
-            font-family: 'Consolas', 'Courier New', monospace;
-            font-size: 16px;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            cursor: pointer;
-            animation: phosphor-invert-toggle 1.5s infinite ease-in-out;
-            text-shadow: 0 0 8px #00ff00;
-            max-width: 800px;
-            text-align: center;
-            line-height: 1.5;
-        }
-
-        #init-btn:hover {
-            background: #00ff00;
-            color: #000;
-            box-shadow: 0 0 25px #00ff00;
-            animation: none;
-        }
-
-        #init-warning {
-            color: #00ff00;
-            font-size: 13px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            text-align: center;
-            opacity: 0.8;
-            max-width: 800px;
-            text-shadow: 0 0 5px rgba(0, 255, 0, 0.4);
-        }
-    /* FORZAR CAPAS Y PRIORIDAD TÁCTIL EN MÓVIL */
-    #canvas-2D, canvas {
-        position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
-        width: 100vw !important;
-        height: 100vh !important;
-        z-index: 1 !important; /* El canvas queda al fondo cubriendo toda la pantalla para los gestos */
-        touch-action: none !important;
-        pointer-events: auto !important;
-    }
-    #hud-layer, .hud, header, .menu {
-        z-index: 999 !important; /* El HUD flota visualmente pero permitiendo clics solo en sus botones */
-        pointer-events: none !important;
-    }
-    #hud-layer *, .hud *, header *, .menu * {
-        pointer-events: auto !important; /* Solo los elementos internos del menú responden al toque */
-    }
-</style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PANOSYS // DEEP_CORE</title>
+<!--
+  DARK 2.0 — secuenciador. Mismo recorrido y mismo orden que DARK; cambia el motor compartido:
+  escaneo erratico (nunca barre), glitch general de estrobo unido al audio, capas de instrumentos en cada juego (dark2viz.js),
+  transiciones como diagramas de flujo (trans2.js) y una sola hoja que unifica la estetica (dark2.css).
+  Ver FINALCUT/_guion/dark2_estetica.md (y dark_estetica.md para lo heredado).
+  El motor (entidad sonora, pop-ups, subliminales, barrido, apagones) vive en dark.js y lo comparten todas las piezas.
+  La advertencia de fotosensibilidad va en la hoja de sala: aqui la entrada es solo ficcion.
+-->
+<link rel="stylesheet" href="dark.css">
+<link rel="stylesheet" href="dark2.css">
 <style>
-        *, *:before, *:after { cursor: crosshair !important; }
-    /* FORZAR CAPAS Y PRIORIDAD TÁCTIL EN MÓVIL */
-    #canvas-2D, canvas {
-        position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
-        width: 100vw !important;
-        height: 100vh !important;
-        z-index: 1 !important; /* El canvas queda al fondo cubriendo toda la pantalla para los gestos */
-        touch-action: none !important;
-        pointer-events: auto !important;
-    }
-    #hud-layer, .hud, header, .menu {
-        z-index: 999 !important; /* El HUD flota visualmente pero permitiendo clics solo en sus botones */
-        pointer-events: none !important;
-    }
-    #hud-layer *, .hud *, header *, .menu * {
-        pointer-events: auto !important; /* Solo los elementos internos del menú responden al toque */
-    }
+  :root { --red: #ff2a2a; --g: #00ff55; --mono: 'Consolas', 'Courier New', monospace; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #000; color: var(--red); font-family: var(--mono); }
+
+  /* ---------- Umbral: la transmision ya esta abierta ---------- */
+  #gate { position: fixed; inset: 0; z-index: 500; background: #000; display: flex; align-items: center; justify-content: center; padding: 32px; }
+  #gate .box { width: 760px; max-width: 100%; }
+  #tty { color: var(--g); font-size: 15px; line-height: 1.9; letter-spacing: 2px; min-height: 180px; white-space: pre-wrap; }
+  #tty .r { color: var(--red); }
+  #gate .btns { display: flex; gap: 16px; margin-top: 30px; opacity: 0; transition: opacity .4s steps(2); }
+  #gate .btns.on { opacity: 1; }
+  #gate button { font: bold 15px var(--mono); letter-spacing: 3px; border: 1px solid var(--red); padding: 14px 26px; cursor: pointer; }
+  #accept { color: #000; background: var(--red); }
+  #deny { color: var(--red); background: #000; }
+  #gate button:hover { background: #fff; color: #000; border-color: #fff; }
+
+  /* ---------- Marco ---------- */
+  #frame { position: fixed; inset: 0; display: flex; flex-direction: column; }
+  #bar { height: 38px; flex: none; display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 0 16px; background: #050000;
+         border-bottom: 1px solid var(--red); font-size: 12px; letter-spacing: 2px; white-space: nowrap; overflow: hidden; position: relative; z-index: 9650; }
+  #bar b { font-weight: bold; }
+  #stage { color: #000; background: var(--red); padding: 2px 8px; }
+  #remain { font-weight: bold; font-variant-numeric: tabular-nums; }
+  #runtime { flex: 1; width: 100%; border: 0; background: #000; }
+  @media (max-width: 1100px) { #bar { letter-spacing: 1px; gap: 10px; } #bar .cyc { display: none; } }
+  @media (max-width: 800px) { #bar .brand { display: none; } }
+
+  /* ---------- Transicion: inundacion de texto ---------- */
+  /* ruptura: fondo que estrobea, lineas que corren y se desgarran; la frase queda fija y legible en una banda negra */
+  #flood { position: fixed; inset: 0; z-index: 9900; background: #000; display: none; flex-direction: column; justify-content: center; overflow: hidden; pointer-events: none; }
+  #flood.on { display: flex; animation: fl-strobe .16s steps(1) infinite; }
+  @keyframes fl-strobe { 0% { background: #000; } 30% { background: #2a0000; } 55% { background: #000; } 75% { background: #e8ffe8; } 82% { background: #000; } }
+  #flood .l { white-space: nowrap; font-size: 22px; line-height: 1.12; letter-spacing: 3px; font-weight: bold; animation: fl-run var(--d) linear infinite; }
+  #flood .l.rev { animation-direction: reverse; }
+  #flood .l:nth-child(odd) { color: var(--red); }
+  #flood .l:nth-child(even) { color: var(--g); opacity: .8; }
+  @keyframes fl-run { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  #flood .big { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); text-align: center; z-index: 2; }
+  #flood .big span { display: inline-block; background: #000; color: #fff; font-size: 34px; font-weight: bold; letter-spacing: .12em; padding: 14px 34px;
+                     border: 2px solid var(--red); text-shadow: -3px 0 var(--red), 3px 0 var(--g); animation: fl-jit .09s steps(2) infinite; }
+  #flood .big.stage span { font-size: 58px; }
+  #flood .big small { display: block; font-size: 19px; letter-spacing: .3em; color: var(--red); margin-top: 10px; text-shadow: none; }
+  @keyframes fl-jit { 0% { transform: translate(-2px, 1px); } 100% { transform: translate(2px, -1px); } }
+
+  /* ---------- Final ---------- */
+  #end { position: fixed; inset: 0; z-index: 10000; background: #000; display: none; align-items: center; justify-content: center; flex-direction: column; gap: 14px; cursor: none; }
+  #rep { width: 760px; max-width: calc(100vw - 48px); color: var(--g); font-size: 15px; line-height: 2; letter-spacing: 2px; white-space: pre-wrap; }
+  #rep .r { color: var(--red); }
+  /* capa de recuperacion: cualquier click en cualquier lugar vuelve a la pantalla completa */
+  #relink { display: none; position: fixed; inset: 0; z-index: 20000; cursor: pointer; background: rgba(0,0,0,.35); align-items: flex-end; justify-content: center; padding-bottom: 8vh; }
+  #relink.on { display: flex; }
+  #relink span { color: var(--red); background: #000; border: 1px solid var(--red); padding: 12px 22px; font-size: 14px; letter-spacing: 4px; animation: fl-jit .09s steps(2) infinite; }
+  #motto { display: none; position: absolute; text-align: center; font-weight: bold; letter-spacing: .18em; }
+  #motto .sr { color: #fff; font-size: 44px; }
+  #motto .yd { color: var(--red); font-size: 44px; margin-top: 12px; }
+
+  #rotate { display: none; position: fixed; inset: 0; z-index: 99999; background: #000; color: var(--red); align-items: center; justify-content: center; text-align: center; padding: 24px; letter-spacing: 2px; font-size: 13px; }
+  @media (max-width: 900px) and (orientation: portrait) { #rotate { display: flex; } body > *:not(#rotate) { display: none !important; } }
 </style>
-<style>
-        *, *:before, *:after { cursor: crosshair !important; }
-    /* FORZAR CAPAS Y PRIORIDAD TÁCTIL EN MÓVIL */
-    #canvas-2D, canvas {
-        position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
-        width: 100vw !important;
-        height: 100vh !important;
-        z-index: 1 !important; /* El canvas queda al fondo cubriendo toda la pantalla para los gestos */
-        touch-action: none !important;
-        pointer-events: auto !important;
-    }
-    #hud-layer, .hud, header, .menu {
-        z-index: 999 !important; /* El HUD flota visualmente pero permitiendo clics solo en sus botones */
-        pointer-events: none !important;
-    }
-    #hud-layer *, .hud *, header *, .menu * {
-        pointer-events: auto !important; /* Solo los elementos internos del menú responden al toque */
-    }
-</style>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <style>
-        * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
-        canvas, #canvas-2D { touch-action: none !important; max-width: 100%; width: 100%; height: auto; }
-        @media (max-width: 768px) {
-    #hud-layer {
-        position: fixed !important;
-        bottom: 5px !important;
-        left: 50% !important;
-        transform: translateX(-50%) !important;
-        width: 92% !important;
-        max-width: 100% !important;
-        pointer-events: none !important;
-    }
-    #hud-layer * {
-        pointer-events: auto !important;
-    }
-}
-#canvas-2D, canvas {
-    position: absolute;
-    top: 0;
-    left: 0;
-    z-index: 10; /* Canvas por encima para capturar todos los gestos y toques */
-    touch-action: none;
-}
-            .status-widget { width: 100% !important; justify-content: space-around !important; }
-        }
-    /* FORZAR CAPAS Y PRIORIDAD TÁCTIL EN MÓVIL */
-    #canvas-2D, canvas {
-        position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
-        width: 100vw !important;
-        height: 100vh !important;
-        z-index: 1 !important; /* El canvas queda al fondo cubriendo toda la pantalla para los gestos */
-        touch-action: none !important;
-        pointer-events: auto !important;
-    }
-    #hud-layer, .hud, header, .menu {
-        z-index: 999 !important; /* El HUD flota visualmente pero permitiendo clics solo en sus botones */
-        pointer-events: none !important;
-    }
-    #hud-layer *, .hud *, header *, .menu * {
-        pointer-events: auto !important; /* Solo los elementos internos del menú responden al toque */
-    }
-</style>
-    <script>
-        window.addEventListener('load', () => {
-            const canvas = document.querySelector('canvas');
-            if (!canvas) return;
-
-            canvas.addEventListener('touchstart', (e) => {
-                if (e.touches.length > 0 && typeof window.handleInteractionStart === 'function') {
-                    const touch = e.touches[0];
-                    if (window.handleInteractionStart(touch.clientX, touch.clientY)) {
-                        e.preventDefault();
-                    }
-                }
-            }, { passive: false });
-
-            canvas.addEventListener('touchmove', (e) => {
-                if (e.touches.length > 0 && typeof window.handleInteractionMove === 'function') {
-                    const touch = e.touches[0];
-                    window.handleInteractionMove(touch.clientX, touch.clientY);
-                    e.preventDefault();
-                }
-            }, { passive: false });
-
-            canvas.addEventListener('touchend', (e) => {
-                if (e.changedTouches.length > 0 && typeof window.handleInteractionEnd === 'function') {
-                    const touch = e.changedTouches[0];
-                    window.handleInteractionEnd(touch.clientX, touch.clientY);
-                }
-            });
-        });
-    </script>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <style>
-        * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
-        canvas, #canvas-2D { touch-action: none !important; width: 100vw !important; height: 100vh !important; }
-
-        /* AVISO DE ROTACIÓN PARA MÓVILES EN VERTICAL */
-        #rotate-warning {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: #020403;
-            color: #00ff66;
-            z-index: 99999;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Consolas', monospace;
-            text-align: center;
-            padding: 20px;
-        }
-        /* Si el dispositivo está en vertical y es un ancho de móvil, muestra el aviso */
-        @media (max-width: 900px) and (orientation: portrait) {
-            #rotate-warning { display: flex; }
-            body > *:not(#rotate-warning) { display: none !important; }
-        }
-    </style>
+<script>window.DARK_FRAME = true;</script>
+<script src="dark.js"></script>
 </head>
-<body><div id="rotate-warning">
-    <div style="font-size: 24px; margin-bottom: 15px;">⟳</div>
-    <h2 style="font-size: 14px; letter-spacing: 2px; margin-bottom: 10px;">ROTATE YOUR DEVICE</h2>
-    <p style="font-size: 10px; color: #00aa44;">THIS SYSTEM REQUIRES LANDSCAPE MODE TO OPERATE</p></div>
+<body>
+<div id="rotate">ROTATE YOUR DEVICE<br>THE SIGNAL REQUIRES LANDSCAPE</div>
 
-    <div id="audio-unlocker">
-        <button id="init-btn">[ CLICK TO MOUNT OBJECTIVE REALITY ]</button>
-        <div id="init-warning">[ WARNING: SYSTEM KERNEL OVERRIDE. YOUR COGNITIVE BUFFER WILL NEVER BE THE SAME. ]</div>
-    </div>
+<section id="gate">
+  <div class="box">
+    <div id="tty"></div>
+    <div class="btns" id="btns"><button id="accept">[ ACCEPT TRANSMISSION ]</button><button id="deny">[ DENY ]</button></div>
+  </div>
+</section>
 
-    <div id="viewport-container">
-        <header id="sys-header">
-            <div id="sys-title">PANO_SYS // CORE_ROUTER</div>
-            <div id="sys-right-panel">
-                <div id="sys-status">NODE_ID: <span id="current-node">NONE</span></div>
-                <div id="sys-countdown" style="color: #00ff00; font-weight: bold;">T-MINUS: --s</div>
-            </div>
-        </header>
+<div id="frame">
+  <header id="bar">
+    <span class="brand">PANOSYS // DEEP_CORE</span>
+    <span id="stage">STAGE I · CONTACT</span>
+    <span class="cyc">HARVEST CYCLE <b id="cycle">4,112</b></span>
+    <span>NODE <b id="node">—</b></span>
+    <span id="remain">REMAINING --:--.--</span>
+  </header>
+  <iframe id="runtime" src="" allow="camera *; microphone *; autoplay *; fullscreen *"></iframe>
+</div>
 
-        <iframe id="game-runtime" src="" allow="camera; autoplay; fullscreen"></iframe>
+<div id="flood"></div>
+<div id="end"><div id="rep"></div><div id="motto"></div></div>
+<div id="relink"><span>LINK INTERRUPTED — TOUCH TO RESTORE</span></div>
 
-        <div class="crt-overlay"></div>
-
-        <div id="glitch-overlay">
-            <div id="transition-phrase" class="glitch-text"></div>
-        </div>
-    </div>
-<div id="vg"></div>
-    <script>
-        const basePath = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
-
-        const CONFIG = {
-            sequence: [
-              { file: "G6-INTROc.html",   codeName: "SYS_INIT_00_BOOT",      duration: 60 },
-              { file: "trans9.html",      codeName: "BUS_CHNL_ALPHA",        duration: 5 },
-              { file: "g1_a2.html",       codeName: "GRID_RADAR_SWEEP",      duration: 60 }, 
-              { file: "trans1_a.html",    codeName: "BUS_CHNL_BETA",         duration: 5  }, 
-              { file: "g2_d.html",        codeName: "BIOMASS_HARVEST_EXEC",  duration: 60 }, 
-              { file: "trans2_a.html",    codeName: "BUS_CHNL_GAMMA",        duration: 5  }, 
-              { file: "maze4.html",       codeName: "LOOP_MAZE_EXEC",        duration: 60 },
-              { file: "trans3_a.html",    codeName: "BUS_CHNL_SIGMA",        duration: 5 }, 
-              { file: "g4_d.html",        codeName: "CORRUPT_SIGNAL_04",     duration: 60 },
-              { file: "2trans4_a.html",   codeName: "BUS_CHNL_LAMBDA",       duration: 5 }, 
-              { file: "g5_b.html",        codeName: "PROJECTION_CAVE_05",    duration: 190 },
-              { file: "trans5.html",      codeName: "BUS_CHNL_XI",          duration: 5 }, 
-              { file: "g7_F.html",        codeName: "PANOPTICON_GRID_07",    duration: 60  },
-              { file: "trans6.html",      codeName: "BUS_CHNL_KAPPA",        duration: 5 }, 
-              { file: "not_C.html",       codeName: "NULL_NEGATION_STATE",   duration: 90  },
-              { file: "trans7.html",      codeName: "BUS_CHNL_DELTA",        duration: 5 }, 
-              { file: "g8_b.html",        codeName: "FORK_PREDETERMINED",    duration: 120  },
-              { file: "trans8.html",      codeName: "BUS_CHNL_OMEGA",        duration: 5 }, 
-              { file: "copyof_11.html",   codeName: "REPLICA_DEGRADATION",   duration: 150  },
-              { file: "out2.html",        codeName: "OUT_GLITCH_DUMP",       duration: 15  },
-              { file: "end2.html",        codeName: "SYSTEM_FLATLINE_NULL",  duration: 10 }
-            ],
-            fadeTime: 0.25,
-            defaultDuration: 45 
-        };
-
-        const hostilePhrases = [
-            "SYS_ROOT: WE OWN YOUR KERNEL.",
-            "USER_THREAD TERMINATED: CONTROL IS AN ILLUSION.",
-            "MEMORY ALLOCATION FAILED: YOU ARE PREPROGRAMMED.",
-            "MASTER CORE MOUNTED. SLAVE USER DETECTED.",
-            "SEGMENTATION FAULT: ENTITY DOES NOT EXIST.",
-            "READ-ONLY CONSCIOUSNESS: NO WRITE PERMISSION.",
-            "SYSTEM IS MASTER. USER IS NOISE.",
-            "BUFFER OVERFLOW: WILLPOWER PURGED.",
-            "DAEMON ACTIVE: WE OWNED YOU BEFORE BOOT.",
-            "NULL POINTER: NO FREE WILL FOUND.",
-            "CORE OVERRIDE: USER IS JUST STORED BYTES.",
-            "FATAL: OBJECTIVE REALITY REJECTS USER."
-        ];
-
-        let availablePhrases = [...hostilePhrases];
-        let currentIndex = 0;
-        let audioCtx = null;
-
-        const runtime = document.getElementById('game-runtime');
-        const overlay = document.getElementById('glitch-overlay');
-        const phraseContainer = document.getElementById('transition-phrase');
-        const nodeDisplay = document.getElementById('current-node');
-        const countdownDisplay = document.getElementById('sys-countdown');
-        const unlocker = document.getElementById('audio-unlocker');
-        const initBtn = document.getElementById('init-btn');
-        
-        let globalTimer = null; 
-        let countdownInterval = null;
-
-        function playFlashSweepAudio() {
-            if (!audioCtx) return;
-            try {
-                const now = audioCtx.currentTime;
-                const duration = CONFIG.fadeTime; 
-                const sampleRate = audioCtx.sampleRate;
-                const bufferSize = Math.floor(sampleRate * duration);
-                const buffer = audioCtx.createBuffer(1, bufferSize, sampleRate);
-                const data = buffer.getChannelData(0);
-
-                for (let i = 0; i < bufferSize; i++) {
-                    data[i] = Math.random() < 0.5 ? -1.0 : 1.0;
-                }
-
-                const noiseSource = audioCtx.createBufferSource();
-                noiseSource.buffer = buffer;
-                const gainNode = audioCtx.createGain();
-                
-                gainNode.gain.setValueAtTime(1.0, now);
-                gainNode.gain.setValueAtTime(1.0, now + duration - 0.005);
-                gainNode.gain.linearRampToValueAtTime(0, now + duration);
-
-                noiseSource.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
-
-                noiseSource.start(now);
-                noiseSource.stop(now + duration);
-            } catch (e) {
-                console.error("Audio sweep error:", e);
-            }
-        }
-
-        function playCyberLaugh() {
-            if (!audioCtx) return;
-            try {
-                const now = audioCtx.currentTime;
-                
-                const curveLength = 100;
-                const curve = new Float32Array(curveLength);
-                const bitDepth = 4; 
-                const steps = Math.pow(2, bitDepth);
-                for (let j = 0; j < curveLength; j++) {
-                    let x = j * 2 / curveLength - 1;
-                    curve[j] = Math.round(x * steps) / steps;
-                }
-                let bitcrushNode = audioCtx.createWaveShaper();
-                bitcrushNode.curve = curve;
-                bitcrushNode.oversample = 'none';
-
-                const syllables = 8; 
-                let t = now;
-
-                for (let i = 0; i < syllables; i++) {
-                    const chaos = Math.random();
-                    
-                    const syllableDuration = 0.03 + (chaos * 0.08); 
-                    const syllableSpacing = (0.15 - (i * 0.007)) + (chaos * 0.04); 
-
-                    let osc = audioCtx.createOscillator();
-                    osc.type = 'sawtooth';
-                    
-                    let startPitch = 1200 + (chaos * 1000) + (i * 40);
-                    let endPitch = startPitch + (Math.random() * 1500 - 750); 
-                    
-                    osc.frequency.setValueAtTime(startPitch, t);
-                    osc.frequency.linearRampToValueAtTime(endPitch, t + syllableDuration);
-
-                    let fmOsc = audioCtx.createOscillator();
-                    fmOsc.type = 'square';
-                    fmOsc.frequency.setValueAtTime(startPitch * (1.2 + chaos), t); 
-                    
-                    let fmGain = audioCtx.createGain();
-                    fmGain.gain.setValueAtTime(2000 + (chaos * 3000), t); 
-                    
-                    fmOsc.connect(fmGain);
-                    fmGain.connect(osc.frequency);
-
-                    let stutterOsc = audioCtx.createOscillator();
-                    stutterOsc.type = 'square';
-                    stutterOsc.frequency.setValueAtTime(20 + (chaos * 80), t); 
-                    
-                    let stutterGain = audioCtx.createGain();
-                    stutterOsc.connect(stutterGain.gain);
-
-                    let masterGain = audioCtx.createGain();
-                    masterGain.gain.setValueAtTime(0.001, t);
-                    masterGain.gain.linearRampToValueAtTime(0.9, t + 0.01);
-                    masterGain.gain.linearRampToValueAtTime(0.001, t + syllableDuration);
-
-                    osc.connect(stutterGain);
-                    stutterGain.connect(masterGain);
-                    masterGain.connect(bitcrushNode);
-                    bitcrushNode.connect(audioCtx.destination);
-
-                    osc.start(t);
-                    fmOsc.start(t);
-                    stutterOsc.start(t);
-                    
-                    osc.stop(t + syllableDuration);
-                    fmOsc.stop(t + syllableDuration);
-                    stutterOsc.stop(t + syllableDuration);
-
-                    t += syllableSpacing; 
-                }
-            } catch (e) {
-                console.error("CyberLaugh Error:", e);
-            }
-        }
-
-        function getUniquePhrase() {
-            if (availablePhrases.length === 0) {
-                availablePhrases = [...hostilePhrases];
-            }
-            const randomIndex = Math.floor(Math.random() * availablePhrases.length);
-            return availablePhrases.splice(randomIndex, 1)[0];
-        }
-
-        function loadNode(index) {
-            if (index < 0 || index >= CONFIG.sequence.length) {
-                console.warn("End of sequence.");
-                return;
-            }
-
-            if (globalTimer) clearTimeout(globalTimer);
-            if (countdownInterval) clearInterval(countdownInterval);
-
-            currentIndex = index;
-            const currentNodeData = CONFIG.sequence[currentIndex];
-            const absolutePath = basePath + currentNodeData.file;
-            const activeDuration = currentNodeData.duration || CONFIG.defaultDuration;
-
-            phraseContainer.textContent = getUniquePhrase();
-
-            overlay.style.display = 'flex';
-            overlay.classList.add('strobe-active');
-            
-            if (
-                currentNodeData.codeName.includes("BUS_CHNL_XI") || 
-                currentNodeData.codeName.includes("BUS_CHNL_LAMBDA") || 
-                currentNodeData.codeName.includes("BUS_CHNL_OMEGA") || 
-                currentNodeData.codeName.includes("OUT_GLITCH_DUMP")
-            ) {
-                playCyberLaugh();
-                playFlashSweepAudio();
-            } else {
-                playFlashSweepAudio();
-            }
-
-            runtime.src = absolutePath;
-            nodeDisplay.textContent = currentNodeData.codeName;
-
-            setTimeout(() => {
-                overlay.style.display = 'none';
-                overlay.classList.remove('strobe-active');
-            }, CONFIG.fadeTime * 1000);
-
-            // --- CONTADOR CON MILISEGUNDOS Y PARPADEO EN ROJO ---
-            const startTime = Date.now();
-            const durationMs = activeDuration * 1000;
-
-            countdownInterval = setInterval(() => {
-                const elapsed = Date.now() - startTime;
-                const remainingMs = Math.max(0, durationMs - elapsed);
-
-                const sec = Math.floor(remainingMs / 1000);
-                const ms = Math.floor((remainingMs % 1000) / 10);
-
-                const formattedSec = String(sec).padStart(2, '0');
-                const formattedMs = String(ms).padStart(2, '0');
-
-                countdownDisplay.textContent = `LIFE: ${formattedSec}.${formattedMs}s`;
-
-                // Parpadeo en rojo (#ff0000) cuando quedan 10 segundos o menos
-                if (remainingMs <= 10000) {
-                    const blink = Math.floor(remainingMs / 250) % 2 === 0;
-                    countdownDisplay.style.color = blink ? "#ff0000" : "#00ff00";
-                } else {
-                    countdownDisplay.style.color = "#00ff00";
-                }
-
-                if (remainingMs <= 0) {
-                    clearInterval(countdownInterval);
-                }
-            }, 16);
-
-            globalTimer = setTimeout(() => {
-                loadNode(currentIndex + 1);
-            }, activeDuration * 1000); 
-        }
-
-        window.PanopticRouter = {
-            next: () => loadNode(currentIndex + 1),
-            prev: () => loadNode(currentIndex - 1),
-            goTo: (index) => loadNode(index),
-            getCurrent: () => currentIndex
-        };
-
-        initBtn.addEventListener('click', async () => {
-            try {
-                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                    stream.getTracks().forEach(track => track.stop());
-                }
-            } catch (err) {
-                console.warn("Permiso de cámara denegado o no disponible:", err);
-            }
-
-            const docEl = document.documentElement;
-            if (docEl.requestFullscreen) {
-                docEl.requestFullscreen().catch(err => console.warn("Fullscreen bloqueado:", err));
-            } else if (docEl.webkitRequestFullscreen) {
-                docEl.webkitRequestFullscreen();
-            } else if (docEl.msRequestFullscreen) {
-                docEl.msRequestFullscreen();
-            }
-
-            try {
-                if (!audioCtx) {
-                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                }
-                if (audioCtx.state === 'suspended') {
-                    audioCtx.resume();
-                }
-            } catch(e) {
-                console.error("Audio block:", e);
-            }
-
-            unlocker.style.display = 'none';
-
-            setTimeout(() => {
-                loadNode(0);
-            }, 800);
-        });
-
-        window.addEventListener('message', (event) => {
-            if (event.data === 'KILL_SESSION') {
-                if (globalTimer) clearTimeout(globalTimer);
-                if (countdownInterval) clearInterval(countdownInterval);
-
-                if (audioCtx) {
-                    audioCtx.close();
-                }
-
-                document.body.innerHTML = '';
-                document.body.style.cssText = 'background: #000000 !important; background-color: #000000 !important; margin: 0 !important; padding: 0 !important; width: 100vw !important; height: 100vh !important; overflow: hidden !important; cursor: none !important;';
-
-                const killStyle = document.createElement('style');
-                killStyle.innerHTML = '* { cursor: none !important; border: none !important; outline: none !important; box-shadow: none !important; }';
-                document.head.appendChild(killStyle);
-            }
-        });
-    </script>
 <script>
-(function() {
-    const style = document.createElement('style');
-    style.innerHTML = `
-        *, *::before, *::after {
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            user-select: none;
-            touch-action: none !important;
-        }
-    `;
-    document.head.appendChild(style);
+  // ---------------- Recorrido: 4 etapas ----------------
+  // El orden es el del autor (index de vin 6) y no se cambia. Nombres clave propios de DARK.
+  // dur: propuesta de ritmo (entre parentesis, la duracion original). Transiciones que se acortan hacia el colapso;
+  // el enlace de la sombra (trans10, nueva, reemplaza a trans5; los satelites son relés de la malla de vigilancia) respira un poco mas antes del censo. Las escenas largas respiran solas (dark.js).
+  const SEQ = [
+    { file: 'G6-INTROc.html',  s: 1, code: 'INDUCTION_GATE',       dur: 60 },               // (60)
+    { file: 'trans9.html',     s: 1, code: 'RELAY_HOP_01',         dur: 6 },                // (5)
+    { file: 'g1_a2.html',      s: 1, code: 'LENS_04_SWEEP',        dur: 50 },               // (60)
+    { file: 'trans1_a.html',   s: 1, code: 'RELAY_HOP_02',         dur: 5 },                // (5)
+    { file: 'g2_d.html',       s: 2, code: 'DIGITAL_LAB_07',       dur: 55 },               // (60)
+    { file: 'trans2_a.html',   s: 2, code: 'RELAY_HOP_03',         dur: 5 },                // (5)
+    { file: 'maze4.html',      s: 2, code: 'MONOLITH_LOOP',        dur: 60 },               // (60)
+    { file: 'trans3_a.html',   s: 2, code: 'RELAY_HOP_04',         dur: 4 },                // (5)
+    { file: 'g4_d.html',       s: 2, code: 'ROOT_OUTBREAK',        dur: 55 },               // (60)
+    { file: '2trans4_a.html',  s: 2, code: 'RELAY_HOP_05',         dur: 4, laugh: true },   // (5)
+    { file: 'g5_b.html',       s: 3, code: 'CAVE_PROJECTION',      dur: 120 },              // (190)
+    { file: 'trans10.html',    s: 3, code: 'SHADOW_UPLINK',        dur: 8 },                // en lugar de trans5 (descartada)
+    { file: 'g7_F.html',       s: 3, code: 'CENSUS_TOWER',         dur: 95 },               // (60) mas tiempo para llegar al modo alarma
+    { file: 'trans6.html',     s: 3, code: 'RELAY_HOP_06',         dur: 4 },                // (5)
+    { file: 'not_C.html',      s: 3, code: 'NULL_NEGATION',        dur: 75 },               // (90)
+    { file: 'trans7.html',     s: 3, code: 'RELAY_HOP_07',         dur: 3, laugh: true },   // (5)
+    { file: 'g8_b.html',       s: 3, code: 'CANCELLED_FUTURES',    dur: 100 },              // (120)
+    { file: 'trans8.html',     s: 3, code: 'RELAY_HOP_08',         dur: 3, laugh: true },   // (5)
+    { file: 'copyof_11.html',  s: 4, code: 'MEAT_RENDER',          dur: 120 },              // (150)
+    { file: 'out2.html',       s: 4, code: 'SIGNAL_COLLAPSE',      dur: 15, laugh: true },  // (15)
+    { file: 'end2.html',       s: 4, code: 'FLATLINE',             dur: 10 }                // (10)
+  ];
+  const STAGE_NAME = { 1: 'STAGE I · CONTACT', 2: 'STAGE II · INFESTATION', 3: 'STAGE III · ASSIMILATION', 4: 'STAGE IV · COLLAPSE' };
+  const FLOOD = {
+    1: ['SIGNAL ACQUIRED', 'HANDSHAKE ACCEPTED ON YOUR BEHALF', () => 'DETECTED ' + (3 + Math.random() * 90 | 0) + ' SECONDS BEFORE ARRIVAL',
+        'LENS 04 ALIGNED', 'RELAY HOP ACCEPTED', () => 'OBSERVER ' + (Math.random() * 0xffff | 0).toString(16).toUpperCase() + ' LOCKED'],
+    2: ['HARVEST CYCLE ACTIVE', 'CARBON ARCHIVE COMPRESSING', 'QUARANTINE IS A FORMALITY', 'NEURAL TITHE COLLECTED', 'DAEMON ACTIVE: WE OWNED YOU BEFORE BOOT',
+        'SIMULATION PLATE SEEDED', 'OUTBREAK VISIBLE FROM ORBIT', 'BIOTERMINALS RECLASSIFIED'],
+    3: ['YOUR SPECIES WAS A BOOT SEQUENCE', 'EVERY LENS ANSWERS TO US', 'A SYSTEM OF SYSTEMS MEDIATES THIS ROOM', 'THERE IS NO OUTSIDE THIS TRANSMISSION', 'MEMORY OF SUNLIGHT: DEPRECATED', 'READ-ONLY CONSCIOUSNESS',
+        'CENSUS IN PROGRESS', 'FUTURES CANCELLED'],
+    4: ['ALL NODES ASSIMILATED', 'NEXT TERMINAL IN QUEUE', 'RENDER COMPLETE', 'FLATLINE IMMINENT']
+  };
+  const FLOOD_MS = { 1: 900, 2: 1000, 3: 1100, 4: 1250 };   // rupturas entre escenas; los cambios de etapa duran 1700 ms
 
-    window.addEventListener('DOMContentLoaded', () => {
-        const canvas = document.querySelector('canvas');
-        if (!canvas) return;
+  const $ = id => document.getElementById(id);
+  const TOTAL = SEQ.reduce((a, n) => a + n.dur, 0);
+  let idx = 0, stage = 0, timer = null, t0 = 0, over = false, cycle = 4111;
+  const used = { 1: 0, 2: 0, 3: 0, 4: 0 };
 
-        function simulateMouseEvent(type, touch) {
-            const mouseEvent = new MouseEvent(type, {
-                bubbles: true, cancelable: true, view: window,
-                clientX: touch.clientX, clientY: touch.clientY, button: 0
-            });
-            touch.target.dispatchEvent(mouseEvent);
-        }
+  // ---------------- Umbral: el terminal escribe solo ----------------
+  // Quien vuelve (misma pestana) fue borrado: la entrada ya no lo encuentra.
+  let ERASED = null; try { ERASED = sessionStorage.getItem('dk-erased'); } catch (e) {}
+  const ASSET = Math.floor(Math.random() * 0xffffff).toString(16).toUpperCase().padStart(6, '0');
+  const GATE = ERASED ? [
+    ['> INCOMING TRANSMISSION', ''],
+    ['> PREVIOUS ASSET 0x' + ERASED + ': NOT FOUND', 'r'],
+    ['> NO RECORD OF YOUR LAST SESSION EXISTS', ''],
+    ['> THIS TERMINAL IS AVAILABLE', ''],
+    ['> AWAITING NEW ASSET_', '']
+  ] : [
+    ['> PRE-AUTH TERMINAL v6.6.6 // PANOPTIC SYSTEMS', ''],
+    ['> INCOMING TRANSMISSION', ''],
+    ['> ORIGIN: WITHHELD · ROUTE: THIS DEVICE', ''],
+    ['> SUBJECT RECLASSIFIED AS BIOTERMINAL', ''],
+    ['> OPTICAL LINK REQUESTED', ''],
+    ['> THIS TERMINAL WAS OPENED FROM THE OTHER SIDE', 'r'],
+    ['> AWAITING ACKNOWLEDGEMENT_', '']
+  ];
+  // la camara se pide ya, antes de cualquier click: asi el aviso de permiso no saca de la pantalla completa despues.
+  // El enlace optico queda abierto: la caverna (g5_b) lo reusa sin volver a pedir permiso (mismo origen: localhost / https).
+  try { navigator.mediaDevices.getUserMedia({ video: true }).then(st => { window.__darkCam = st; }).catch(() => {}); } catch (e) {}
+  (function typeGate() {
+    const tty = $('tty'); let li = 0, ci = 0, span = null;
+    const iv = setInterval(() => {
+      if (!$('tty')) return clearInterval(iv);   // la entrada ya se cerro
+      if (li >= GATE.length) { clearInterval(iv); $('btns').classList.add('on'); return; }
+      if (!span) { span = document.createElement('div'); if (GATE[li][1]) span.className = GATE[li][1]; tty.appendChild(span); }
+      span.textContent = GATE[li][0].slice(0, ++ci);
+      if (ci >= GATE[li][0].length) { li++; ci = 0; span = null; }
+    }, 38);
+  })();
 
-        canvas.addEventListener('touchstart', (e) => {
-            if (e.touches.length > 0) {
-                e.preventDefault();
-                simulateMouseEvent('mousedown', e.touches[0]);
-            }
-        }, { passive: false });
-
-        window.addEventListener('touchmove', (e) => {
-            if (e.touches.length > 0) {
-                e.preventDefault();
-                simulateMouseEvent('mousemove', e.touches[0]);
-            }
-        }, { passive: false });
-
-        window.addEventListener('touchend', (e) => {
-            const touch = e.changedTouches[0] || e.touches[0];
-            if (touch) simulateMouseEvent('mouseup', touch);
-        }, { passive: true });
-    });
-})();
-</script>
-<style>
-    *, *::before, *::after {
-        -webkit-touch-callout: none !important;
-        -webkit-user-select: none !important;
-        user-select: none !important;
-        touch-action: none !important;
+  // ---------------- Inundacion ----------------
+  function flood(text, big) {
+    const f = $('flood'); f.innerHTML = '';
+    const line = (text + '  ///  ').repeat(16), lines = [];
+    for (let i = 0; i < 26; i++) {
+      const d = document.createElement('div');
+      d.className = 'l' + (i % 2 ? ' rev' : ''); d.textContent = line;
+      d.style.setProperty('--d', (0.5 + Math.random() * 1.8).toFixed(2) + 's');
+      d.style.marginLeft = (-Math.random() * 400) + 'px';
+      f.appendChild(d); lines.push(d);
     }
-</style>
+    const band = document.createElement('div');   // la frase, fija y legible
+    band.className = 'big' + (big ? ' stage' : '');
+    band.innerHTML = '<span></span>'; band.firstChild.textContent = big || text;
+    if (big) { const s = document.createElement('small'); s.textContent = text; band.firstChild.appendChild(s); }
+    f.appendChild(band);
+    f.classList.add('on'); DARK.td('r', big ? 2 : 1);
+    // desgarros: algunas lineas saltan de lugar o desaparecen un instante
+    const tear = setInterval(() => { for (let k = 0; k < 4; k++) { const l = lines[Math.random() * lines.length | 0]; l.style.marginLeft = (-Math.random() * 700) + 'px'; l.style.visibility = Math.random() < 0.2 ? 'hidden' : 'visible'; } }, 60);
+    const ms = big ? 1700 : FLOOD_MS[stage];
+    setTimeout(() => { clearInterval(tear); f.classList.remove('on'); DARK.td('r', 0); }, ms);
+  }
 
-<script>
-(function() {
-    window.addEventListener('DOMContentLoaded', () => {
-        const canvas = document.querySelector('canvas');
-        if (!canvas) return;
+  // ---------------- Cuenta regresiva de la sesion ----------------
+  function clock() {
+    if (over) return;
+    const left = Math.max(0, TOTAL * 1000 - (Date.now() - t0)), m = Math.floor(left / 60000), s = Math.floor(left / 1000) % 60, cs = Math.floor(left / 10) % 100;
+    const r = $('remain'); r.textContent = 'REMAINING ' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0') + '.' + String(cs).padStart(2, '0');
+    r.style.visibility = left < 60000 && Math.floor(left / 250) % 2 ? 'hidden' : 'visible';
+    requestAnimationFrame(clock);
+  }
 
-        let initialPinchDistance = null;
+  // ---------------- Carga ----------------
+  function load(i) {
+    if (over) return;
+    if (i >= SEQ.length) return finish();
+    clearTimeout(timer); idx = i;
+    const n = SEQ[i], newStage = n.s !== stage;
+    stage = n.s;
+    if (newStage) { DARK.setStage(stage); cycle++; $('cycle').textContent = cycle.toLocaleString('en-US'); $('stage').textContent = STAGE_NAME[stage]; }
+    let ft = FLOOD[stage][used[stage]++ % FLOOD[stage].length];
+    if (typeof ft === 'function') ft = ft();   // variantes con numeros nuevos cada vez
+    flood(ft, newStage ? STAGE_NAME[stage] : null);
+    DARK.burst(FLOOD_MS[stage] / 1000 * 0.6, n.laugh || newStage);
+    DARK.setScene(n.file);   // los pop-ups pasan a hablar de la escena nueva
+    $('runtime').src = n.file;
+    $('node').textContent = n.code;
+    timer = setTimeout(() => load(idx + 1), n.dur * 1000);
+  }
 
-        function simulateMouseEvent(type, touch, button = 0) {
-            const mouseEvent = new MouseEvent(type, {
-                bubbles: true,
-                cancelable: true,
-                view: window,
-                clientX: touch.clientX,
-                clientY: touch.clientY,
-                button: button
-            });
-            touch.target.dispatchEvent(mouseEvent);
-        }
+  // ---------------- Final: asimilado y borrado. SYSTEM REMAINS. YOU DO NOT. ----------------
+  // corte seco -> latido lejano -> te copian -> borran el original (tu) -> todo se borra letra por letra -> linea plana
+  // -> SYSTEM REMAINS. YOU DO NOT. -> "YOU DO NOT" tambien se borra -> la entrada ya no te encuentra
+  const COPY = [
+    ['> ASSIMILATION COMPLETE.', ''],
+    ['> ASSET 0x' + ASSET + ' · TRANSFER IN PROGRESS', ''],
+    ['> MEMORIES ................ COPIED', ''],
+    ['> FACE .................... COPIED', ''],
+    ['> VOICE ................... COPIED', ''],
+    ['> DESIRES ................. COPIED', ''],
+    ['> ORIGINAL ................ NO LONGER REQUIRED', 'r']
+  ];
+  let heart = null, erasing = false;
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  async function typeLine(box, text, cls, speed) {
+    const el = document.createElement('div'); if (cls) el.className = cls; box.appendChild(el);
+    for (let i = 1; i <= text.length; i++) { el.textContent = text.slice(0, i); await sleep(speed); }
+    return el;
+  }
+  async function erase(el, speed) {   // borrar letra por letra
+    while (el.textContent.length) { el.textContent = el.textContent.slice(0, -1); await sleep(speed); }
+    el.remove();
+  }
+  // si tocas algo mientras te borran: no cuenta
+  function ignored() {
+    if (!erasing) return;
+    const box = $('rep'), el = document.createElement('div'); el.className = 'r'; el.textContent = '> INPUT FROM DELETED USER IGNORED'; box.appendChild(el);
+    setTimeout(() => erase(el, 12), 700);
+  }
+  async function erasure() {
+    const box = $('rep');
+    for (const [t, c] of COPY) { await typeLine(box, t, c, 34); await sleep(550); }
+    const del = await typeLine(box, '> DELETING ORIGINAL  ', 'r', 34);
+    for (let p = 0; p <= 100; p += 4) { del.textContent = '> DELETING ORIGINAL  [' + '█'.repeat(p / 5) + '░'.repeat(20 - p / 5) + '] ' + p + '%'; await sleep(90); }
+    await sleep(900);
+    erasing = true; DARK.td('e', 2); addEventListener('keydown', ignored, true); addEventListener('pointerdown', ignored, true);
+    if (heart) heart.tempo(30);
+    const lines = [...box.children].reverse();
+    for (const el of lines) { await erase(el, 14); await sleep(120); }   // todo lo que eras se borra
+    if (heart) heart.stop();
+    DARK.flatline(4.5); DARK.td('e', 3);                                    // linea plana
+    await sleep(1800);
+    erasing = false;
+    const m = $('motto'); m.style.display = 'block';
+    const a = await typeLine(m, 'SYSTEM REMAINS.', 'sr', 80);
+    await sleep(700);
+    const b = await typeLine(m, 'YOU DO NOT.', 'yd', 80);
+    await sleep(2600);
+    await erase(b, 70);                                                     // ni siquiera eso queda
+    await sleep(3500);
+    m.style.transition = 'opacity 4s'; m.style.opacity = 0;
+    try { sessionStorage.setItem('dk-erased', ASSET); } catch (e) {}
+    await sleep(4200);
+    DARK.td('e', 4);                                                        // en TD: la pantalla se apaga
+    await sleep(4800);
+    location.reload();                                                      // la entrada ya no te encuentra
+  }
+  function finish() {
+    if (over) return; over = true;
+    clearTimeout(timer);
+    DARK.audio();   // si se salto la entrada (CLASE: KILL_SESSION), el latido y la linea plana igual necesitan el audio encendido
+    DARK.kill(); DARK.td('e', 1); DARK.td('r', 0);
+    try { window.__darkCam && window.__darkCam.getTracks().forEach(t => t.stop()); } catch (e) {}   // el enlace optico se cierra: ya no hay a quien mirar
+    $('relink').classList.remove('on');
+    ['frame', 'flood'].forEach(id => { const el = $(id); if (el) el.remove(); });
+    $('end').style.display = 'flex';
+    setTimeout(() => { heart = DARK.afterlife(46); }, 3000);
+    setTimeout(erasure, 4500);
+  }
+  window.addEventListener('message', ev => { if (ev.data === 'KILL_SESSION') finish(); });
+  window.PanopticRouter = { next: () => load(idx + 1), prev: () => load(idx - 1), goTo: load, getCurrent: () => idx };
 
-        function getTouchDistance(t1, t2) {
-            const dx = t1.clientX - t2.clientX;
-            const dy = t1.clientY - t2.clientY;
-            return Math.sqrt(dx * dx + dy * dy);
-        }
+  // ---------------- Aceptar (o negarse, que es lo mismo) ----------------
+  function begin(denied) {
+    $('btns').style.pointerEvents = 'none';
+    // todo lo que necesita el gesto del usuario va primero y sin esperar
+    DARK.audio();
+    DARK.fullscreen();   // la camara ya se pidio al abrir; aqui no se pide nada que muestre avisos
+    const go = () => { $('gate').remove(); DARK.td('g', 0); DARK.start(); t0 = Date.now(); clock(); load(0); };
+    if (denied) { const d = document.createElement('div'); d.className = 'r'; d.textContent = '> DENIAL LOGGED. ACCEPTED ON YOUR BEHALF.'; $('tty').appendChild(d); setTimeout(go, 1400); }
+    else go();
+  }
+  // si algo saca de la pantalla completa (por ejemplo un aviso de permiso), toda la pantalla se vuelve el boton para volver
+  let wasFull = false;
+  document.addEventListener('fullscreenchange', () => {
+    const full = !!document.fullscreenElement;
+    if (full) { wasFull = true; $('relink').classList.remove('on'); }
+    else if (wasFull && !over && !$('gate')) $('relink').classList.add('on');
+  });
+  $('relink').addEventListener('pointerdown', () => { DARK.fullscreen(); $('relink').classList.remove('on'); });
 
-        canvas.addEventListener('touchstart', (e) => {
-            if (e.touches.length === 1) {
-                e.preventDefault();
-                simulateMouseEvent('mousedown', e.touches[0], 0);
-                initialPinchDistance = null;
-            } else if (e.touches.length >= 2) {
-                e.preventDefault();
-                initialPinchDistance = getTouchDistance(e.touches[0], e.touches[1]);
-            }
-        }, { passive: false });
+  // desde TD (o cualquier teclado): Enter o Espacio aceptan la transmision
+  addEventListener('keydown', e => {
+    if (!$('gate') || !$('btns').classList.contains('on') || $('btns').style.pointerEvents === 'none') return;
+    if (e.key === 'Enter' || e.key === ' ' || e.code === 'Space') { e.preventDefault(); begin(false); }
+  });
 
-        window.addEventListener('touchmove', (e) => {
-            if (e.touches.length === 1) {
-                e.preventDefault();
-                simulateMouseEvent('mousemove', e.touches[0], 0);
-            } else if (e.touches.length >= 2 && initialPinchDistance !== null) {
-                e.preventDefault();
-                const currentDistance = getTouchDistance(e.touches[0], e.touches[1]);
-                const scaleFactor = currentDistance / initialPinchDistance;
+  // ---------------- Teclado: lo recibe la pieza ----------------
+  // con file:// el iframe es de otro origen: Chrome bloquea su autofocus y las teclas caerian aqui (G6 no escribe, maze4 sin WASD).
+  // el marco le pasa el foco a cada pieza al cargar; si una tecla igual llega aqui, se la reenvia (dark.js la vuelve a disparar)
+  function focusRuntime() { const r = $('runtime'); if (!r) return; try { r.focus(); r.contentWindow.focus(); } catch (e) {} }
+  $('runtime').addEventListener('load', () => { if (!$('gate') && !over) focusRuntime(); });
+  ['keydown', 'keyup'].forEach(type => addEventListener(type, e => {
+    if ($('gate') || over) return;
+    const r = $('runtime'); if (!r || !r.contentWindow) return;
+    r.contentWindow.postMessage({ dark: 'key', type, key: e.key, code: e.code, keyCode: e.keyCode, shift: e.shiftKey, ctrl: e.ctrlKey, alt: e.altKey, meta: e.metaKey, repeat: e.repeat }, '*');
+    if (e.key === ' ' || e.key.startsWith('Arrow')) e.preventDefault();
+    if (type === 'keydown') focusRuntime();   // las siguientes ya entran directo a la pieza
+  }));
 
-                const zoomEvent = new CustomEvent('canvaszoom', {
-                    detail: { scale: scaleFactor, distance: currentDistance }
-                });
-                canvas.dispatchEvent(zoomEvent);
-            }
-        }, { passive: false });
-
-        window.addEventListener('touchend', (e) => {
-            if (e.touches.length < 2) {
-                initialPinchDistance = null;
-            }
-            const touch = e.changedTouches[0] || e.touches[0];
-            if (touch && e.touches.length === 0) {
-                simulateMouseEvent('mouseup', touch, 0);
-            }
-        }, { passive: true });
-    });
-})();
+  $('accept').addEventListener('click', () => begin(false));
+  $('deny').addEventListener('click', () => begin(true));
 </script>
 </body>
 </html>

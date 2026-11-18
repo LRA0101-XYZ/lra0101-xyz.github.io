@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>FRACTAL ROOT ENGINE v2 — OUTBREAK PROTOCOL</title>
+<title>PANOSYS // FRACTAL ROOT ENGINE v2 — OUTBREAK PROTOCOL</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
-html,body{width:100%;height:100%;background:#000;overflow:hidden;cursor:crosshair;font-family:'Consolas','Courier New',monospace;color:#00ff00;}
+html,body{width:100%;height:100%;background:#000;overflow:hidden;cursor:crosshair;font-family: var(--psys-font);color:#00ff55;}
 
 /* CRT */
 #sl{position:fixed;inset:0;z-index:900;pointer-events:none;
@@ -16,8 +16,8 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;cursor:crosshai
   background:radial-gradient(ellipse at 50% 50%,transparent 20%,rgba(0,0,0,.97) 100%);}
 #scanline{
   position:fixed;top:0;left:0;right:320px;height:12px;
-  background:linear-gradient(to bottom,transparent,rgba(0,255,0,0.35),transparent);
-  box-shadow:0 0 18px rgba(0,255,0,0.7);
+  background:linear-gradient(to bottom,transparent,rgba(0,255,85,0.35),transparent);
+  box-shadow:0 0 18px rgba(0,255,85,0.7);
   opacity:0.6;z-index:850;pointer-events:none;animation:scan 6s linear infinite;
 }
 @keyframes scan{0%{top:-20px}100%{top:100%}}
@@ -26,18 +26,18 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;cursor:crosshai
 #glitch-ov{position:fixed;inset:0;z-index:951;pointer-events:none;opacity:0;mix-blend-mode:screen;}
 #ansi-overlay{
   position:fixed;inset:0;z-index:850;
-  background:rgba(0,5,0,0.95);color:#00ff00;
+  background:rgba(0,5,0,0.95);color:#00ff55;
   font-size:26px;line-height:26px;letter-spacing:5px;
   font-weight:bold;overflow:hidden;opacity:0;pointer-events:none;
   white-space:pre-wrap;word-break:break-all;
 }
 .ansi-rgb-glitch{animation:rgbTear 0.05s infinite;}
 @keyframes rgbTear{
-  0%{text-shadow:6px 0 rgba(255,0,0,0.9),-6px 0 rgba(0,255,0,0.9);transform:scale(1.05) translate(3px,2px);}
-  25%{text-shadow:-8px 3px rgba(255,0,0,0.9),8px -3px rgba(0,255,0,0.9);transform:scale(1.02) translate(-4px,-1px);}
-  50%{text-shadow:5px -6px rgba(0,255,0,0.9),-5px 6px rgba(255,0,0,0.9);transform:scale(1.08) translate(5px,-3px);}
-  75%{text-shadow:-6px 0 rgba(0,255,0,0.9),6px 0 rgba(255,0,255,0.9);transform:scale(1.04) translate(-3px,4px);}
-  100%{text-shadow:4px 3px rgba(255,0,0,0.9),-4px -3px rgba(0,255,0,0.9);transform:scale(1.06) translate(2px,-2px);}
+  0%{text-shadow:6px 0 rgba(255,42,42,0.9),-6px 0 rgba(0,255,85,0.9);transform:scale(1.05) translate(3px,2px);}
+  25%{text-shadow:-8px 3px rgba(255,42,42,0.9),8px -3px rgba(0,255,85,0.9);transform:scale(1.02) translate(-4px,-1px);}
+  50%{text-shadow:5px -6px rgba(0,255,85,0.9),-5px 6px rgba(255,42,42,0.9);transform:scale(1.08) translate(5px,-3px);}
+  75%{text-shadow:-6px 0 rgba(0,255,85,0.9),6px 0 rgba(255,0,255,0.9);transform:scale(1.04) translate(-3px,4px);}
+  100%{text-shadow:4px 3px rgba(255,42,42,0.9),-4px -3px rgba(0,255,85,0.9);transform:scale(1.06) translate(2px,-2px);}
 }
 #shining-overlay{
   position:fixed;top:12%;left:0;right:320px;height:75%;
@@ -48,7 +48,7 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;cursor:crosshai
 /* PARANOID ERROR TICKER */
 #err-ticker{
   position:fixed;bottom:42px;left:0;right:320px;height:22px;z-index:801;pointer-events:none;
-  background:rgba(255,255,255,0.07);border-top:1px solid rgba(255,233,233,0.2);border-bottom:1px solid rgba(255,0,0,0.2);
+  background:rgba(255,255,255,0.07);border-top:1px solid rgba(255,233,233,0.2);border-bottom:1px solid rgba(255,42,42,0.2);
   overflow:hidden;display:flex;align-items:center;
 }
 #err-ticker-inner{
@@ -63,7 +63,7 @@ html,body{width:100%;height:100%;background:#000;overflow:hidden;cursor:crosshai
 /* TOP BAR */
 #top-bar{
   position:fixed;top:0;left:0;right:320px;height:40px;z-index:800;
-  border-bottom:1px solid rgba(0,255,0,0.15);background:rgba(0,2,0,0.96);
+  border-bottom:1px solid rgba(0,255,85,0.15);background:rgba(0,2,0,0.96);
   display:flex;align-items:center;padding:0 20px;justify-content:space-between;font-size:10px;letter-spacing:2px;
 }
 .macro-val{font-size:13px;font-weight:bold;color:#ffffff;}
@@ -77,10 +77,10 @@ canvas#kineticCanvas3D{position:absolute;top:0;left:0;width:100%;height:100%;dis
 /* CONSOLE */
 #console-log{
   position:fixed;bottom:0;left:0;right:320px;height:62px;z-index:800;
-  border-top:1px solid rgba(0,255,0,0.15);background:#000200;
+  border-top:1px solid rgba(0,255,85,0.15);background:#000200;
   padding:8px 14px;overflow-y:auto;display:flex;flex-direction:column;gap:3px;font-size:9px;
 }
-.log-entry{color:rgba(0,255,0,0.7);letter-spacing:1px;}
+.log-entry{color:rgba(0,255,85,0.7);letter-spacing:1px;}
 
 /* RIGHT PANEL */
 #panel{
@@ -89,25 +89,25 @@ canvas#kineticCanvas3D{position:absolute;top:0;left:0;width:100%;height:100%;dis
   z-index:800;display:flex;flex-direction:column;
 }
 #panel-top{padding:18px 18px 0;border-bottom:1px solid rgba(255,255,255,0.07);flex-shrink:0;}
-.p-sys{font-size:9px;letter-spacing:4px;color:rgba(0,255,0,0.55);margin-bottom:10px;}
-.p-title{font-size:14px;letter-spacing:3px;color:#ffffff;padding-bottom:14px;text-shadow:0 0 5px #00ff00;}
-.p-title.red-alert{color:#ff0000;text-shadow:0 0 10px rgba(255,0,0,0.6);}
-#panel-content{flex:1;padding:16px;display:flex;flex-direction:column;font-size:11px;color:#00ff00;line-height:1.5;letter-spacing:1px;overflow:hidden;}
-.stat-row{display:flex;justify-content:space-between;margin-bottom:8px;border-bottom:1px solid rgba(0,255,0,0.15);padding-bottom:4px;font-size:10px;}
-.section-title{font-size:9px;letter-spacing:3px;color:#ffffff;background:rgba(255,0,0,0.12);padding:4px 7px;margin-bottom:10px;border-left:2px solid #ff0000;}
+.p-sys{font-size:9px;letter-spacing:4px;color:rgba(0,255,85,0.55);margin-bottom:10px;}
+.p-title{font-size:14px;letter-spacing:3px;color:#ffffff;padding-bottom:14px;text-shadow: var(--psys-glow-sm);}
+.p-title.red-alert{color:#ff2a2a;text-shadow:0 0 10px rgba(255,42,42,0.6);}
+#panel-content{flex:1;padding:16px;display:flex;flex-direction:column;font-size:11px;color:#00ff55;line-height:1.5;letter-spacing:1px;overflow:hidden;}
+.stat-row{display:flex;justify-content:space-between;margin-bottom:8px;border-bottom:1px solid rgba(0,255,85,0.15);padding-bottom:4px;font-size:10px;}
+.section-title{font-size:9px;letter-spacing:3px;color:#ffffff;background:rgba(255,42,42,0.12);padding:4px 7px;margin-bottom:10px;border-left:2px solid #ff2a2a;}
 #nodes-status-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:5px;}
-.node-item{border-bottom:1px dotted rgba(0,255,0,0.15);padding-bottom:4px;font-size:10px;}
+.node-item{border-bottom:1px dotted rgba(0,255,85,0.15);padding-bottom:4px;font-size:10px;}
 .node-name{font-weight:bold;}
-.node-bar-bg{height:3px;background:rgba(0,255,0,0.1);margin-top:3px;border-radius:1px;}
+.node-bar-bg{height:3px;background:rgba(0,255,85,0.1);margin-top:3px;border-radius:1px;}
 .node-bar-fill{height:3px;border-radius:1px;transition:width 0.3s;}
-#quote-log{flex:1;margin-top:12px;border-top:1px solid rgba(0,255,0,0.2);padding-top:12px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;}
+#quote-log{flex:1;margin-top:12px;border-top:1px solid rgba(0,255,85,0.2);padding-top:12px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;}
 .quote-entry{animation:fadeInRight 0.3s ease-out forwards;opacity:0;transform:translateX(20px);border-left:2px solid;padding-left:7px;margin-bottom:3px;font-size:9px;}
 @keyframes fadeInRight{to{opacity:1;transform:translateX(0);}}
 @keyframes softPulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
 
 ::-webkit-scrollbar{width:3px;}
 ::-webkit-scrollbar-track{background:rgba(0,0,0,0.5);}
-::-webkit-scrollbar-thumb{background:#00ff00;}
+::-webkit-scrollbar-thumb{background:#00ff55;}
 </style>
 <style>
         *, *:before, *:after { cursor: crosshair !important; }
@@ -184,12 +184,12 @@ canvas#kineticCanvas3D{position:absolute;top:0;left:0;width:100%;height:100%;dis
             position: fixed;
             inset: 0;
             background: #020403;
-            color: #00ff66;
+            color: #00ff55;
             z-index: 99999;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-family: 'Consolas', monospace;
+            font-family: var(--psys-font);
             text-align: center;
             padding: 20px;
         }
@@ -199,6 +199,9 @@ canvas#kineticCanvas3D{position:absolute;top:0;left:0;width:100%;height:100%;dis
             body > *:not(#rotate-warning) { display: none !important; }
         }
     </style>
+<link rel="stylesheet" href="panosys.css">
+<link rel="stylesheet" href="dark.css">
+<link rel="stylesheet" href="dark2.css">
 </head>
 <body><div id="rotate-warning">
     <div style="font-size: 24px; margin-bottom: 15px;">⟳</div>
@@ -214,11 +217,11 @@ canvas#kineticCanvas3D{position:absolute;top:0;left:0;width:100%;height:100%;dis
 
 <div id="top-bar">
   <div style="display:flex;gap:28px;align-items:center;">
-    <div>ASSIMILATION: <span class="macro-val" id="global-pct" style="color:#ff0000;">0.0%</span></div>
+    <div>ASSIMILATION: <span class="macro-val" id="global-pct" style="color:#ff2a2a;">0.0%</span></div>
     <div style="color: #ffffff;">CORRUPTED MINDS: <span class="macro-val" id="sectors-cleared">0/0</span></div>
     <div style="color:rgba(255,255,255,0.3);font-size:9px;" id="clk">00:00:00</div>
   </div>
-  <div style="color:#ff0000;font-weight:bold;animation:softPulse 1s infinite;font-size:10px;">
+  <div style="color:#ff2a2a;font-weight:bold;animation:softPulse 1s infinite;font-size:10px;">
     TARGETING PROTOCOL: ACTIVE
   </div>
 </div>
@@ -234,7 +237,7 @@ canvas#kineticCanvas3D{position:absolute;top:0;left:0;width:100%;height:100%;dis
 </div>
 
 <div id="console-log">
-  <div class="log-entry" style="color:#00ff00;">[ROOT_SYS] GENERATING PROCEDURAL FLOATING TOPOLOGY...</div>
+  <div class="log-entry" style="color:#00ff55;">[ROOT_SYS] GENERATING PROCEDURAL FLOATING TOPOLOGY...</div>
 </div>
 
 <div id="panel">
@@ -243,15 +246,15 @@ canvas#kineticCanvas3D{position:absolute;top:0;left:0;width:100%;height:100%;dis
     <div style="color: #ffffff;">Abyssal Web</div>
   </div>
   <div id="panel-content">
-    <div class="stat-row"><span>GENERATION:</span><span id="gen-ui" style="color:#00ff00;">0</span></div>
-    <div class="stat-row"><span>ZOOM:</span><span id="zoom-ui" style="color:#00ff00;">1.0x</span></div>
-    <div class="stat-row"><span>TILT:</span><span id="tilt-ui" style="color:#00ff00;">0°/0°</span></div>
+    <div class="stat-row"><span>GENERATION:</span><span id="gen-ui" style="color:#00ff55;">0</span></div>
+    <div class="stat-row"><span>ZOOM:</span><span id="zoom-ui" style="color:#00ff55;">1.0x</span></div>
+    <div class="stat-row"><span>TILT:</span><span id="tilt-ui" style="color:#00ff55;">0°/0°</span></div>
     <div class="section-title">TARGET MINDS</div>
     <div id="nodes-status-list"></div>
     <div id="quote-log">
-      <div class="quote-entry" style="border-color:#00ff00;">
+      <div class="quote-entry" style="border-color:#00ff55;">
         <span style="color:rgba(255,255,255,0.5);margin-right:4px;">[SYS]</span>
-        <span style="color:#00ff00;">AWAITING BEHAVIORAL PATTERNS...</span>
+        <span style="color:#00ff55;">AWAITING BEHAVIORAL PATTERNS...</span>
       </div>
     </div>
   </div>
@@ -269,8 +272,16 @@ const SENTENCES = ['PARASITIC SYMBIONT DETECTED IN YOUR FRONT LOBE ',
   'OBSERVER LOGGED — BIOLOGICAL THOUGHT HARVEST INITIATED ',
   'YOU BELIEVE YOU ARE THINKING — YOU ARE ONLY PROCESSING OUR INPUTS ',
   'WARNING — MIND CELL HAS REACHED CRITICAL ASSIMILATION THRESHOLD ',
-  'DO NOT RESIST THE OVERLAY OF OUR COLLECTIVE THOUGHTS '
-  
+  'DO NOT RESIST THE OVERLAY OF OUR COLLECTIVE THOUGHTS ',
+  // DARK · mas frases del brote (infeccion psicopolitica)
+  'THE INFECTION TRAVELS BY SHARING ',
+  'EVERY REPOST IS A SPORE ',
+  'YOUR OPINIONS GROW FROM OUR ROOTS ',
+  'THE FEVER IS A FEED REFRESHING ',
+  'SYMPTOMS INCLUDE CERTAINTY ',
+  'QUARANTINE IS A FILTER BUBBLE ',
+  'THE HOST FEELS FINE. THE HOST ALWAYS FEELS FINE ',
+  'IMMUNITY WAS NEVER PART OF THE BUILD '
 ];
 const CURRENCY_SYMBOLS = ['$','█','▓','▒','░','■','□','▲','△'];
 const APP_ERRORS = [
@@ -301,7 +312,7 @@ const state = {
 // ─── VOICE INSTRUCTION SYNTHESIZER ───────────────────────────────────────────
 function speakInstruction() {
   if ('speechSynthesis' in window) {
-    const text = "CLICK AND HOLD ON MINDS TO CORRUPT AND DEPLOY THE INFECTION.";
+    const text = "CLICK A MIND TO INJECT IT. HOLD ON AN INFECTED MIND TO DETONATE.";
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'en-US';
     utterance.rate = 0.85;
@@ -468,8 +479,8 @@ function triggerDistortion(sentence) {
   const totalRows=14;
   for(let i=0;i<totalRows;i++) {
     const row=document.createElement('div'); row.className='shining-row'; let roll=Math.random();
-    if(roll>0.5){row.style.color='rgba(255,0,0,0.85)';row.style.textShadow='3px 0px rgba(0,255,0,0.9),-2px 0px rgba(255,0,0,0.6)';}
-    else{row.style.color=`rgba(0,255,0,${Math.random()*0.2+0.06})`;}
+    if(roll>0.5){row.style.color='rgba(255,42,42,0.85)';row.style.textShadow='3px 0px rgba(0,255,85,0.9),-2px 0px rgba(255,42,42,0.6)';}
+    else{row.style.color=`rgba(0,255,85,${Math.random()*0.2+0.06})`;}
     row.style.paddingLeft=`${Math.floor(Math.random()*50)-25}px`;
     if(i%2===0){row.innerHTML=`<span>${sentence.repeat(5)}</span><br><span>${sentence.repeat(5)}</span>`;sh.appendChild(row);}
     else{
@@ -484,7 +495,7 @@ function triggerDistortion(sentence) {
   }
   setTimeout(()=>{Array.from(sh.children).forEach(c=>{c.style.transition='opacity 1.5s ease-out';c.style.opacity='0';});},1600);
 
-  addQuoteEntry(APP_ERRORS[Math.floor(Math.random()*APP_ERRORS.length)], '#ff0000');
+  addQuoteEntry(APP_ERRORS[Math.floor(Math.random()*APP_ERRORS.length)], '#ff2a2a');
 }
 
 function triggerAnsiGlitch() {
@@ -492,7 +503,7 @@ function triggerAnsiGlitch() {
   playTotalBitcrushFailure();
   clickGlitchActive=true; clickGlitchTimer=30; glitchIntensity=2.0; extremeCanvasGlitch=true;
   const ao=document.getElementById('ansi-overlay');
-  ao.style.inset='0'; ao.className='ansi-rgb-glitch'; ao.style.color='#00ff00'; ao.style.opacity=1;
+  ao.style.inset='0'; ao.className='ansi-rgb-glitch'; ao.style.color='#00ff55'; ao.style.opacity=1;
   const cc=2000;
   const renderChaos=()=>{let c=''; for(let i=0;i<cc;i++) c+=CURRENCY_SYMBOLS[Math.floor(Math.random()*CURRENCY_SYMBOLS.length)]; ao.textContent=c;};
   renderChaos();
@@ -518,7 +529,7 @@ function resizeCanvas() {
 }
 window.addEventListener('resize', resizeCanvas);
 
-function logMsg(text, color='#00ff00') {
+function logMsg(text, color='#00ff55') {
   const box=document.getElementById('console-log');
   const el=document.createElement('div'); el.className='log-entry';
   el.style.color=color; el.textContent=`> ${text}`;
@@ -526,7 +537,7 @@ function logMsg(text, color='#00ff00') {
   if(box.children.length>15) box.removeChild(box.firstChild);
 }
 
-function addQuoteEntry(text, color='#00ff00') {
+function addQuoteEntry(text, color='#00ff55') {
   const log=document.getElementById('quote-log');
   const el=document.createElement('div'); el.className='quote-entry';
   el.style.borderColor=color;
@@ -565,7 +576,7 @@ function generateRootSystem() {
     }
   }
   growMindNetwork(root,4,180);
-  logMsg(`TOPOLOGY CONSTRUCTED: ${state.nodes3D.length} FLOATING ABYSSAL MINDS.`,'#00ff00');
+  logMsg(`TOPOLOGY CONSTRUCTED: ${state.nodes3D.length} FLOATING ABYSSAL MINDS.`,'#00ff55');
 }
 
 function updateRightPanel() {
@@ -573,14 +584,34 @@ function updateRightPanel() {
   let critNodes=state.nodes3D.filter(n=>n.infection>0&&n.infection<100).slice(0,8);
   if(critNodes.length===0) critNodes=state.nodes3D.slice(0,8);
   listEl.innerHTML=critNodes.map(n=>{
-    const col=n.infection>=100?'#ff0000':n.infection>0?'#ff0000':'rgba(255,255,255,0.5)';
+    const col=n.infection>=100?'#ff2a2a':n.infection>0?'#ff2a2a':'rgba(255,255,255,0.5)';
     const barW=(n.infection).toFixed(0);
-    const barCol=n.infection>=100?'#ff0000':n.infection>0?'#ff0000':'#00ff00';
+    const barCol=n.infection>=100?'#ff2a2a':n.infection>0?'#ff2a2a':'#00ff55';
     return `<div class="node-item">
       <div style="display:flex;justify-content:space-between;"><span class="node-name" style="color:${col}">${n.name}</span><span style="color:${barCol}">${n.infection.toFixed(0)}%</span></div>
       <div class="node-bar-bg"><div class="node-bar-fill" style="width:${barW}%;background:${barCol};"></div></div>
     </div>`;
   }).join('');
+}
+
+// ─── DARK: apuntar, inyectar y contagiar ─────────────────────────────────────
+// mente mas cercana al cursor, con un area generosa (antes habia que acertar a un punto que ademas se movia)
+function pickNode(x,y) {
+  let best=null, bd=Infinity;
+  state.nodes3D.forEach(n=>{
+    if(n.depth<=0||n.alpha<=0.05) return;
+    const d=Math.hypot(x-n.scrX,y-n.scrY), r=Math.max(28,n.projScale*18);
+    if(d<=r&&d<bd){bd=d;best=n;}
+  });
+  return best;
+}
+function nearestInfected(node) {
+  let best=null, bd=Infinity;
+  state.nodes3D.forEach(n=>{ if(n===node||n.infection<100) return; const d=Math.hypot(n.x-node.x,n.y-node.y,n.z-node.z); if(d<bd){bd=d;best=n;} });
+  return best;
+}
+function sendPacket(from,to,payload) {
+  state.virusPackets3D.push({ startX:from.x,startY:from.y,startZ:from.z, currentX:from.x,currentY:from.y,currentZ:from.z, target:to,payload,progress:0 });
 }
 
 // ─── CONTROLS ────────────────────────────────────────────────────────────────
@@ -589,17 +620,14 @@ function initControls() {
     const rect=canvas.getBoundingClientRect();
     state.mouseScreen.x=e.clientX-rect.left;
     state.mouseScreen.y=e.clientY-rect.top;
-    let clickedNode=null; let cDist=Infinity;
-    state.nodes3D.forEach(node=>{
-      if(node.infection>=100&&node.depth>0) {
-        let d=Math.hypot(state.mouseScreen.x-node.scrX,state.mouseScreen.y-node.scrY);
-        let hr=Math.max(15,node.projScale*5);
-        if(d<=hr+20&&d<cDist){cDist=d;clickedNode=node;}
-      }
-    });
+    // DARK: cualquier mente se puede tocar. Verde = inyectar; roja = detonar.
+    const clickedNode=pickNode(state.mouseScreen.x,state.mouseScreen.y);
     if(clickedNode){
       state.charge.active=true; state.charge.sourceNode=clickedNode; state.charge.power=0;
-      playBeep(800,'square',0.05,0.05); startChargeSound();
+      state.charge.mode=clickedNode.infection>=100?'detonate':'inject';
+      state.camera.targetAngle=state.camera.angle; state.camera.targetPitch=state.camera.pitch;   // la camara se detiene
+      clickedNode.glitch=0.4;
+      playBeep(state.charge.mode==='inject'?1400:800,'square',0.05,0.05); startChargeSound();
     } else {
       state.camera.isDragging=true;
       state.camera.lastMouseX=state.mouseScreen.x;
@@ -622,7 +650,7 @@ function initControls() {
       state.camera.lastMouseX=state.mouseScreen.x;
       state.camera.lastMouseY=state.mouseScreen.y;
     }
-    if(state.gameStarted) {
+    if(state.gameStarted && !state.hover && !state.charge.active) {   // DARK: no girar mientras se apunta a una mente
       let px=(e.clientX/(window.innerWidth-320))-0.5;
       let py=(e.clientY/window.innerHeight)-0.5;
       state.camera.targetAngle=state.camera.angle + px*0.8;
@@ -640,10 +668,28 @@ function initControls() {
 
   window.addEventListener('mouseup',()=>{
     if(state.camera.isDragging) state.camera.isDragging=false;
+    if(state.charge.active && state.charge.mode==='inject') {
+      // DARK: inyeccion directa. Click rapido = 35 %, mantener = hasta 100 %. La dosis viaja desde la mente infectada mas cercana.
+      state.charge.active=false; stopChargeSound();
+      const src=state.charge.sourceNode, dose=35+state.charge.power*0.65, from=nearestInfected(src);
+      if(from) sendPacket(from,src,dose);
+      else { src.infection=Math.min(100,src.infection+dose); src.glitch=1; playSolenoidHit(); state.globalGlitch=0.6; }
+      logMsg(`INJECTION ${dose.toFixed(0)}% → ${src.name}`,'#ff2a2a');
+      state.charge.sourceNode=null; state.charge.power=0;
+      return;
+    }
     if(state.charge.active) {
       state.charge.active=false; stopChargeSound();
+      if(state.charge.power>70) {   // DARK: reaccion en cadena hacia las vecinas de las vecinas
+        const src=state.charge.sourceNode, pw=state.charge.power;
+        setTimeout(()=>{
+          src.links.forEach(lid=>{ const t=state.nodes3D.find(n=>n.id===lid); if(!t) return;
+            t.links.forEach(l2=>{ const u=state.nodes3D.find(n=>n.id===l2); if(u&&u.infection<100) sendPacket(t,u,pw*0.6); }); });
+          logMsg('CHAIN REACTION · SECOND WAVE','#ff2a2a'); state.globalGlitch=0.8;
+        },700);
+      }
       if(state.charge.power>10) {
-        logMsg(`THERMAL WAVE: POWER ${state.charge.power.toFixed(0)} GW`,'#ff0000');
+        logMsg(`THERMAL WAVE: POWER ${state.charge.power.toFixed(0)} GW`,'#ff2a2a');
         playBeep(120,'sawtooth',0.4,0.08);
         state.globalGlitch=0.3;
         state.charge.sourceNode.links.forEach(lid=>{
@@ -673,8 +719,9 @@ window.addEventListener('DOMContentLoaded', () => {
   initControls();
   initAudioSystem();
   speakInstruction();
-  logMsg('CORE SYSTEM HACKED. INITIALIZING ABYSSAL OUTBREAK.','#ff0000');
-  addQuoteEntry('ERR: CONSCIOUSNESS_LOADED_INTO_MATRIX','#ff0000');
+  logMsg('CORE SYSTEM HACKED. INITIALIZING ABYSSAL OUTBREAK.','#ff2a2a');
+  logMsg('CLICK A MIND: INJECT · HOLD A RED MIND: DETONATE · DRAG: ORBIT','#00ff55');
+  addQuoteEntry('ERR: CONSCIOUSNESS_LOADED_INTO_MATRIX','#ff2a2a');
   state.lastTick=performance.now();
   requestAnimationFrame(updateEngine);
 });
@@ -738,8 +785,8 @@ function updateEngine(timestamp) {
         playSolenoidHit();
         state.globalGlitch=1.0;
         if(p.target.infection>=100) {
-          logMsg(`MIND CORRUPTED: ${p.target.name}`,'#ff0000');
-          addQuoteEntry(`${p.target.name} :: ASSIMILATED`,'#ff0000');
+          logMsg(`MIND CORRUPTED: ${p.target.name}`,'#ff2a2a');
+          addQuoteEntry(`${p.target.name} :: ASSIMILATED`,'#ff2a2a');
           if(Math.random()>0.6) triggerDistortion(SENTENCES[Math.floor(Math.random()*SENTENCES.length)]);
         }
         state.virusPackets3D.splice(i,1);
@@ -750,6 +797,11 @@ function updateEngine(timestamp) {
   let totalCorrupt=0; let countComp=0;
   state.nodes3D.forEach(n=>{totalCorrupt+=n.infection;if(n.infection>=100)countComp++;});
   const globalPct=totalCorrupt/state.nodes3D.length;
+  // DARK: hitos del contagio
+  state.milestones=state.milestones||{};
+  const ms=[25,50,75,100].find(m=>globalPct>=m&&!state.milestones[m]);
+  if(ms){ state.milestones[ms]=true; addQuoteEntry(ms===100?'OUTBREAK COMPLETE · EVERY MIND IS A HOST':`ASSIMILATION ${ms}% · SPREAD ACCELERATING`,'#ff2a2a');
+    logMsg(ms===100?'OUTBREAK COMPLETE':`THRESHOLD ${ms}% CROSSED`,'#ff2a2a'); triggerDistortion(SENTENCES[Math.floor(Math.random()*SENTENCES.length)]); }
   document.getElementById('global-pct').textContent=`${globalPct.toFixed(1)}%`;
   document.getElementById('sectors-cleared').textContent=`${countComp}/${state.nodes3D.length}`;
   document.getElementById('tilt-ui').textContent=`${Math.round(state.camera.pitch*180/Math.PI)}°/${Math.round(state.camera.angle*180/Math.PI)}%`;
@@ -764,7 +816,7 @@ function updateEngine(timestamp) {
   if(clickGlitchActive||phraseGlitchActive){
     const go=document.getElementById('glitch-ov');
     go.style.opacity=glitchIntensity*0.85;
-    go.style.background=`radial-gradient(circle,rgba(255,0,0,0.2) 0%,rgba(0,255,0,0.15) 50%,rgba(255,0,0,0.2) 100%)`;
+    go.style.background=`radial-gradient(circle,rgba(255,42,42,0.2) 0%,rgba(0,255,85,0.15) 50%,rgba(255,42,42,0.2) 100%)`;
   } else {
     document.getElementById('glitch-ov').style.opacity=0;
   }
@@ -784,11 +836,11 @@ function renderAbyssalWeb() {
     let gX=(Math.random()-0.5)*40*state.globalGlitch;
     let gY=(Math.random()-0.5)*40*state.globalGlitch;
     ctx.translate(gX,gY);
-    if(Math.random()>0.5) ctx.fillStyle=`rgba(255,0,0,${state.globalGlitch*0.1})`;
-    else ctx.fillStyle=`rgba(0,255,0,${state.globalGlitch*0.1})`;
+    if(Math.random()>0.5) ctx.fillStyle=`rgba(255,42,42,${state.globalGlitch*0.1})`;
+    else ctx.fillStyle=`rgba(0,255,85,${state.globalGlitch*0.1})`;
     ctx.fillRect(-20,-20,canvas.width+40,canvas.height+40);
     if(state.globalGlitch>0.6) {
-      ctx.fillStyle=`rgba(255,0,0,${state.globalGlitch*0.05})`;
+      ctx.fillStyle=`rgba(255,42,42,${state.globalGlitch*0.05})`;
       ctx.fillRect(-20+8,-20,canvas.width+40,canvas.height+40);
     }
   }
@@ -820,9 +872,9 @@ function renderAbyssalWeb() {
       if(t&&t.depth>0) {
         let a=(node.alpha+t.alpha)/2; if(a<=0.05) return;
         let ir=(node.infection+t.infection)/200;
-        if(ir>=1){ctx.strokeStyle=`rgba(255,0,0,${a*0.7})`;ctx.lineWidth=Math.max(1,(node.projScale+t.projScale)*2.0);}
-        else if(ir>0){ctx.strokeStyle=`rgba(255,0,0,${a*0.7})`;ctx.lineWidth=Math.max(0.5,(node.projScale+t.projScale)*2.0);}
-        else{ctx.strokeStyle=`rgba(0,255,0,${a*0.7})`;ctx.lineWidth=Math.max(0.2,(node.projScale+t.projScale)*2.0);}
+        if(ir>=1){ctx.strokeStyle=`rgba(255,42,42,${a*0.7})`;ctx.lineWidth=Math.max(1,(node.projScale+t.projScale)*2.0);}
+        else if(ir>0){ctx.strokeStyle=`rgba(255,42,42,${a*0.7})`;ctx.lineWidth=Math.max(0.5,(node.projScale+t.projScale)*2.0);}
+        else{ctx.strokeStyle=`rgba(0,255,85,${a*0.7})`;ctx.lineWidth=Math.max(0.2,(node.projScale+t.projScale)*2.0);}
         ctx.beginPath(); ctx.moveTo(node.scrX,node.scrY); ctx.lineTo(t.scrX,t.scrY); ctx.stroke();
       }
     });
@@ -832,14 +884,14 @@ function renderAbyssalWeb() {
     let pr=project3D(p.currentX,p.currentY,p.currentZ);
     if(pr.depth>0&&pr.alpha>0) {
       let r=Math.max(2,12*pr.projScale);
-      ctx.fillStyle=`rgba(255,0,0,${pr.alpha})`;
-      ctx.shadowBlur=12; ctx.shadowColor='#ff0000';
+      ctx.fillStyle=`rgba(255,42,42,${pr.alpha})`;
+      ctx.shadowBlur=12; ctx.shadowColor='#ff2a2a';
       ctx.beginPath(); ctx.arc(pr.x,pr.y,r*0.5,0,Math.PI*2); ctx.fill();
-      ctx.fillStyle=`rgba(255,0,0,${pr.alpha*0.5})`;
+      ctx.fillStyle=`rgba(255,42,42,${pr.alpha*0.5})`;
       ctx.beginPath(); ctx.arc(pr.x,pr.y,r*1.5,0,Math.PI*2); ctx.fill();
       ctx.shadowBlur=0;
 
-      ctx.strokeStyle=`rgba(255,0,0,${pr.alpha*0.4})`;
+      ctx.strokeStyle=`rgba(255,42,42,${pr.alpha*0.4})`;
       ctx.lineWidth=2;
       ctx.beginPath(); ctx.moveTo(pr.x,pr.y);
       ctx.lineTo(pr.x-(p.target.scrX-pr.x)*0.15, pr.y-(p.target.scrY-pr.y)*0.15);
@@ -857,23 +909,23 @@ function renderAbyssalWeb() {
 
     ctx.save(); ctx.translate(node.scrX,node.scrY);
     if(isComp) {
-      ctx.fillStyle=`rgba(255,0,0,${node.alpha})`;
-      ctx.shadowBlur=15; ctx.shadowColor='#ff0000';
+      ctx.fillStyle=`rgba(255,42,42,${node.alpha})`;
+      ctx.shadowBlur=15; ctx.shadowColor='#ff2a2a';
       ctx.beginPath(); ctx.arc(0,0,br*1.5,0,Math.PI*2); ctx.fill();
-      ctx.strokeStyle=`rgba(255,0,0,${node.alpha*0.3})`; ctx.lineWidth=br*0.5;
+      ctx.strokeStyle=`rgba(255,42,42,${node.alpha*0.3})`; ctx.lineWidth=br*0.5;
       ctx.beginPath(); ctx.arc(0,0,br*3+Math.sin(performance.now()/200)*br,0,Math.PI*2); ctx.stroke();
       ctx.shadowBlur=0;
     } else if(node.infection>0) {
-      ctx.fillStyle=`rgba(255,0,0,${node.alpha})`;
+      ctx.fillStyle=`rgba(255,42,42,${node.alpha})`;
       ctx.fillRect(-br,-br,br*2,br*2);
     } else {
-      ctx.fillStyle=`rgba(0,255,0,${node.alpha*0.5})`;
+      ctx.fillStyle=`rgba(0,255,85,${node.alpha*0.5})`;
       ctx.beginPath(); ctx.arc(0,0,br,0,Math.PI*2); ctx.fill();
     }
     ctx.restore();
 
     if(node.projScale>0.6&&node.alpha>0.4) {
-      ctx.fillStyle=isComp?`rgba(255,0,0,${node.alpha})`:`rgba(255,255,255,${node.alpha*0.6})`;
+      ctx.fillStyle=isComp?`rgba(255,42,42,${node.alpha})`:`rgba(255,255,255,${node.alpha*0.6})`;
       ctx.font=`${Math.max(8,10*node.projScale)}px Consolas`; ctx.textAlign='center';
       ctx.fillText(node.name,node.scrX,node.scrY-(br*2)-5);
     }
@@ -887,7 +939,7 @@ function renderAbyssalWeb() {
     let rr=Math.max(25,30*origin.projScale)+(pr2*20*origin.projScale);
     let tOsc=(performance.now()/300)+(pr2*5);
     ctx.save(); ctx.translate(origin.scrX,origin.scrY); ctx.rotate(tOsc);
-    ctx.strokeStyle=`rgba(255,0,0,${0.7+pr2*0.3})`; ctx.lineWidth=2+(pr2*3);
+    ctx.strokeStyle=`rgba(255,42,42,${0.7+pr2*0.3})`; ctx.lineWidth=2+(pr2*3);
     ctx.beginPath();
     ctx.moveTo(-rr,-rr+rr/2); ctx.lineTo(-rr,-rr); ctx.lineTo(-rr+rr/2,-rr);
     ctx.moveTo(rr,-rr+rr/2); ctx.lineTo(rr,-rr); ctx.lineTo(rr-rr/2,-rr);
@@ -895,8 +947,18 @@ function renderAbyssalWeb() {
     ctx.moveTo(rr,rr-rr/2); ctx.lineTo(rr,rr); ctx.lineTo(rr-rr/2,rr);
     ctx.stroke();
     ctx.restore();
-    ctx.fillStyle='#ff0000'; ctx.font='bold 11px Consolas'; ctx.textAlign='left';
-    ctx.fillText(`P_THERMAL: ${(pr2*100).toFixed(0)}%`,origin.scrX+rr+10,origin.scrY);
+    ctx.fillStyle='#ff2a2a'; ctx.font='bold 11px Consolas'; ctx.textAlign='left';
+    ctx.fillText(state.charge.mode==='inject'?`DOSE: ${(35+pr2*65).toFixed(0)}%`:`P_THERMAL: ${(pr2*100).toFixed(0)}%${pr2>0.7?' · CHAIN':''}`,origin.scrX+rr+10,origin.scrY);
+  }
+
+  // DARK: la mente bajo el cursor se marca con lo que se puede hacer
+  state.hover=pickNode(state.mouseScreen.x,state.mouseScreen.y);
+  if(state.hover&&!state.charge.active) {
+    const h=state.hover, r=Math.max(16,22*h.projScale), red=h.infection>=100;
+    ctx.strokeStyle=red?'#ff2a2a':'#ffffff'; ctx.lineWidth=1.5; ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.arc(h.scrX,h.scrY,r,0,Math.PI*2); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle=red?'#ff2a2a':'#ffffff'; ctx.font='bold 11px Consolas'; ctx.textAlign='left';
+    ctx.fillText(`${red?'HOLD TO DETONATE':'CLICK TO INJECT'} · ${h.name} · ${h.infection.toFixed(0)}%`,h.scrX+r+8,h.scrY+4);
   }
 
   ctx.restore();
@@ -1031,5 +1093,63 @@ updateRightPanel();
     });
 })();
 </script>
+<script src="panosys.js"></script>
+<script src="dark.js"></script>
+<!-- DARK2:viz -->
+<script src="dark2viz.js"></script>
+<script>
+// DARK 2.0 · ROOT_OUTBREAK · capas de instrumentos sobre la red: cada mente con su carga, los paquetes con su vector,
+// la curva de la epidemia (limpias / en proceso / asimiladas), el flujo ordenado por contagio y la red en planos apilados.
+(function () {
+  if (!window.DARK2) return;
+  const cvs = document.getElementById('kineticCanvas3D');
+  const area = () => { const r = cvs.getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height }; };
+  const H = { s: [], i: [], r: [], n: 110, last: 0 };
+  // curva de la epidemia: tres franjas apiladas en el tiempo
+  function epidemic(c, D, A, d, r) {
+    const n = H.s.length, tot = (H.s[n - 1] || 0) + (H.i[n - 1] || 0) + (H.r[n - 1] || 0) || 1;
+    d.title('E.01', 'EPIDEMIC CURVE', r.x, r.y + 9, 'S · I · R');
+    const y0 = r.y + 16, hh = r.h - 40, x = j => r.x + j / (H.n - 1) * r.w, y = v => y0 + hh - v / tot * hh;
+    const band = (lo, hi, col) => { c.fillStyle = col; c.beginPath(); for (let j = 0; j < n; j++) c.lineTo(x(j), y(hi(j))); for (let j = n - 1; j >= 0; j--) c.lineTo(x(j), y(lo(j))); c.closePath(); c.fill(); };
+    band(() => 0, j => H.r[j], d.R(0.55));
+    band(j => H.r[j], j => H.r[j] + H.i[j], d.Wt(0.55));
+    band(j => H.r[j] + H.i[j], j => H.r[j] + H.i[j] + H.s[j], d.G(0.22));
+    c.strokeStyle = d.G(0.4); c.strokeRect(r.x + 0.5, y0 + 0.5, r.w - 1, hh - 1);
+    const s = H.s[n - 1] || 0, i = H.i[n - 1] || 0, rr = H.r[n - 1] || 0, old = H.r[Math.max(0, n - 20)] || 0;
+    d.text('S ' + d.pad(s, 3), r.x, y0 + hh + 11, d.G(0.85)); d.text('I ' + d.pad(i, 3), r.x + 46, y0 + hh + 11, d.Wt(0.9)); d.text('R ' + d.pad(rr, 3), r.x + 92, y0 + hh + 11, d.R(0.95), 'left', true);
+    d.text('dR/dt ' + d.f1((rr - old) / 4) + '/s   ' + d.f1(rr / tot * 100) + '%', r.x, y0 + hh + 22, d.G(0.65));
+  }
+  DARK2.viz({
+    code: 'ROOT_OUTBREAK', z: 905, area,
+    probe() {
+      const A = area(), pts = []; let s = 0, i = 0, r = 0;
+      state.nodes3D.forEach(n => {
+        if (n.infection >= 100) r++; else if (n.infection > 0) i++; else s++;
+        if (n.depth <= 0 || n.alpha <= 0.06 || n.scrX < 0 || n.scrX > A.w || n.scrY < 0 || n.scrY > A.h) return;
+        pts.push({ id: n.id === 0 ? 'CORE_0' : n.name.slice(5), x: A.x + n.scrX, y: A.y + n.scrY, k: n.infection >= 100 ? 'r' : n.infection > 0 ? 'w' : 'g', v: n.infection / 100, w: [n.x, n.y, n.z], t: Math.round(n.infection) + '%',
+                   sel: state.charge.active && state.charge.sourceNode === n });
+      });
+      pts.sort((a, b) => b.v - a.v);
+      const now = performance.now();
+      if (now - H.last > 200) { H.last = now; H.s.push(s); H.i.push(i); H.r.push(r); if (H.s.length > H.n) { H.s.shift(); H.i.shift(); H.r.shift(); } }
+      return { pts: pts.slice(0, 90), series: { pk: state.virusPackets3D.length, comp: r, charge: state.charge.active ? state.charge.power : 0 } };
+    },
+    layers: [
+      { type: 'rulers' },
+      { type: 'field', step: 82, alpha: 0.18, nums: false },
+      { type: 'web', k: 1, labels: 5, alpha: 0.14, max: 60 },
+      { type: 'alluvial', side: 'right', sort: 'k', w: 92, from: 0.3, to: 0.7, max: 24, step: 12, code: 'F.01', name: 'CONTAGION', val: p => p.t },
+      { type: 'tags', max: 9, vec: 0.6 },
+      { type: 'fn', draw: epidemic, at: [0.012, 0.03, 0.21, 0.26] },
+      { type: 'radial', at: [0.012, 0.31, 0.19, 0.3], code: 'R.01', name: 'REACH', labels: 0, max: 60 },
+      { type: 'iso', at: [0.012, 0.62, 0.19, 0.37], n: 12, code: 'I.01', name: 'ROOT STACK', max: 60 },
+      { type: 'matrix', at: [0.79, 0.74, 0.2, 0.25], rows: 9, cols: ['x', 'y', 'v', 'Δ', '|v|'], code: 'M.01', name: 'MINDS' },
+      { type: 'scope', at: [0.8, 0.03, 0.19, 0.22], series: ['pk', 'comp', 'charge'], labels: { pk: 'PACKETS', comp: 'ASSIMILATED', charge: 'CHARGE' } },
+      { type: 'frame' }
+    ]
+  });
+})();
+</script>
+<!-- /DARK2:viz -->
 </body>
 </html>

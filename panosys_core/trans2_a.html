@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>0x00_SYS_COLONIZATION</title>
+<title>PANOSYS // 0x00_SYS_COLONIZATION</title>
 <style>
   html, body {
     margin: 0;
@@ -22,7 +22,7 @@
     height: 100vh;
     box-sizing: border-box;
     padding: 10px;
-    font-family: 'Courier New', Courier, monospace;
+    font-family: var(--psys-font);
     font-size: 1.1vw;
     line-height: 1;
     overflow: hidden;
@@ -42,15 +42,15 @@
   }
 
   .v-low { color: #005500; } 
-  .v-mid { color: #00ff00; } 
-  .v-high { color: #39ff14; text-shadow: 0 0 3px #39ff14; font-weight: bold; } 
-  .v-alert { color: #ff0000; font-weight: bold; } 
-  .v-crit { color: #ff3333; background-color: #330000; font-weight: bold; } 
-  .v-data { color: #ffffff; text-shadow: 0 0 5px #ffffff; } 
+  .v-mid { color: #00ff55; } 
+  .v-high { color: #00ff55; text-shadow: var(--psys-glow-sm); font-weight: bold; } 
+  .v-alert { color: #ff2a2a; font-weight: bold; } 
+  .v-crit { color: #ff2a2a; background-color: #330000; font-weight: bold; } 
+  .v-data { color: #ffffff; text-shadow: var(--psys-glow-sm); } 
   
-  .inv { background-color: #00ff00; color: #000000; }
+  .inv { background-color: #00ff55; color: #000000; }
 
-  .flash-r { background-color: #ff0000 !important; color: #ffffff !important; }
+  .flash-r { background-color: #ff2a2a !important; color: #ffffff !important; }
   .flash-w { background-color: #ffffff !important; color: #000000 !important; }
   #vg {
     position: fixed;
@@ -74,12 +74,12 @@
             position: fixed;
             inset: 0;
             background: #020403;
-            color: #00ff66;
+            color: #00ff55;
             z-index: 99999;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-family: 'Consolas', monospace;
+            font-family: var(--psys-font);
             text-align: center;
             padding: 20px;
         }
@@ -89,6 +89,9 @@
             body > *:not(#rotate-warning) { display: none !important; }
         }
     </style>
+<link rel="stylesheet" href="panosys.css">
+<link rel="stylesheet" href="dark.css">
+<link rel="stylesheet" href="dark2.css">
 </head>
 <body><div id="rotate-warning">
     <div style="font-size: 24px; margin-bottom: 15px;">⟳</div>
@@ -333,7 +336,7 @@
 
     if (ratioInfected > 0.98) {
       triggerColonizationGlitch(ratioInfected, true); 
-      document.body.style.backgroundColor = '#ff0000';
+      document.body.style.backgroundColor = '#ff2a2a';
       setTimeout(() => {
         document.body.style.backgroundColor = '#000000';
         initGrid();
@@ -467,5 +470,14 @@
     });
 })();
 </script>
+<script src="panosys.js"></script>
+<script src="dark.js"></script>
+<!-- DARK2:trans -->
+<script src="trans2.js"></script>
+<script>
+// DARK 2.0 · la transicion como diagrama de flujo de datos (looks/). La pagina original sigue debajo con su audio.
+TRANS2.run({"hop":"RELAY_HOP_03","from":"DIGITAL_LAB_07","to":"MONOLITH_LOOP","dur":5,"panes":[{"mode":"matrix"}],"caption":"TERMINAL × ATTRIBUTE → CLASS"});
+</script>
+<!-- /DARK2:trans -->
 </body>
 </html>

@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MU-TH-UR // COPY_PASTE_CAVE</title>
+    <title>PANOSYS // MU-TH-UR // COPY_PASTE_CAVE</title>
 
     <style>
 
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
         body, html {
             background-color: #020202;
-            color: #22ff55;
-            font-family: 'Consolas', 'Courier New', Courier, monospace;
+            color: #00ff55;
+            font-family: var(--psys-font);
             overflow-x: hidden;
             scroll-behavior: smooth; 
             cursor: crosshair;
@@ -38,7 +38,7 @@
             height: 60px;
             padding: 0 20px; 
             background: rgba(0, 0, 0, 0.98);
-            border-bottom: 3px solid #22ff55;
+            border-bottom: 3px solid #00ff55;
             display: flex; 
             justify-content: space-between; 
             align-items: center;
@@ -73,7 +73,7 @@
             border: 2px solid #000; 
             outline: 2px solid #115522;
             outline-offset: -3px;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.9), 0 0 8px rgba(34, 255, 85, 0.1);
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.9), 0 0 8px rgba(0,255,85, 0.1);
             padding: 10px;
             display: flex;
             flex-direction: column;
@@ -85,8 +85,8 @@
         }
 
         .data-block:hover {
-            border-color: #22ff55;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.9), 0 0 15px rgba(34, 255, 85, 0.5);
+            border-color: #00ff55;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.9), 0 0 15px rgba(0,255,85, 0.5);
             z-index: 10;
         }
 
@@ -103,7 +103,7 @@
         }
 
         .meta-row { display: flex; justify-content: space-between; gap: 10px; width: 100%; }
-        .alert-text { color: #ff3333; animation: blink 1s infinite; white-space: nowrap; }
+        .alert-text { color: #ff2a2a; animation: blink 1s infinite; white-space: nowrap; }
         .cure-text { color:#ffffff; }
 
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
@@ -121,7 +121,7 @@
         #live-aphorism {
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
             font-size: 22px; text-align: center; 
-            background: #22ff55; color: #000; padding: 12px 25px; 
+            background: #00ff55; color: #000; padding: 12px 25px; 
             z-index: 10000; font-weight: bold; width: 90%; max-width: 800px;
             text-transform: uppercase;
         }
@@ -149,8 +149,8 @@
             max-width: 90vw;
             max-height: 85vh;
             overflow-y: auto;
-            box-shadow: 0 0 50px rgba(34, 255, 85, 0.2), inset 0 0 20px rgba(0,0,0,0.9);
-            border-color: #22ff55;
+            box-shadow: 0 0 50px rgba(0,255,85, 0.2), inset 0 0 20px rgba(0,0,0,0.9);
+            border-color: #00ff55;
             animation: none;
         }
 
@@ -159,12 +159,12 @@
             position: fixed;
             inset: 0;
             background: #020403;
-            color: #00ff66;
+            color: #00ff55;
             z-index: 999999;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-family: 'Consolas', monospace;
+            font-family: var(--psys-font);
             text-align: center;
             padding: 20px;
         }
@@ -222,7 +222,7 @@
                 overflow-y: auto !important;
                 -webkit-overflow-scrolling: touch;
                 padding: 10px !important;
-                border: 2px solid #22ff55 !important;
+                border: 2px solid #00ff55 !important;
                 outline: 2px solid #115522 !important;
             }
             #inspection-overlay .ascii-art {
@@ -237,6 +237,9 @@
             }
         }
     </style>
+<link rel="stylesheet" href="panosys.css">
+<link rel="stylesheet" href="dark.css">
+<link rel="stylesheet" href="dark2.css">
 </head>
 <body>
     <div id="rotate-warning">
@@ -531,7 +534,7 @@
                 let phrase = aphorisms[index % aphorisms.length];
                 speakPhrase(phrase);
                 
-                liveAphorism.style.background = "#22ff55";
+                liveAphorism.style.background = "#00ff55";
                 liveAphorism.style.color = "#000";
 
                 liveAphorism.textContent = phrase;
@@ -545,18 +548,36 @@
                 audioCtx.resume();
             }
 
-           setTimeout(()=>{
+           setTimeout(startCam, 500);
+           // DARK: si la camara no arranco (permiso pendiente o negado), se reintenta sola y con cada click
+           setTimeout(() => { if (!camOn) startCam(); }, 3000);
+           window.addEventListener('pointerdown', () => { if (!camOn) startCam(); }, true);
+        }
+
+        let camOn = false;
+        function startCam() {
+            // DARK: si el recorrido ya abrio el enlace optico en la entrada, se reusa (sin otro aviso de permiso
+            // que saque de la pantalla completa). Solo es accesible con el mismo origen: localhost o https.
+            let shared = null;
+            try { shared = window.parent !== window && window.parent.__darkCam; } catch (e) {}
+            if (shared && shared.active && !camOn) {
+                video.srcObject = shared; video.play();
+                camOn = true; captureLoop(); runMantra();
+                return;
+            }
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
             navigator.mediaDevices.getUserMedia({ video: true, audio: false })
                 .then(stream => {
                     video.srcObject = stream;
                     video.play();
-                    captureLoop(); 
-                    runMantra(); 
+                    if (camOn) return;
+                    camOn = true;
+                    captureLoop();
+                    runMantra();
                 })
                 .catch(err => {
                     liveAphorism.textContent = "VISION REQUIRED TO INITIATE CONSUMPTION.";
                 });
-            },500);
         }
 
         window.addEventListener('DOMContentLoaded', startAll);
@@ -566,5 +587,94 @@
             }
         }, { once: true });
     </script>
+<script src="panosys.js"></script>
+<script src="dark.js"></script>
+<!-- DARK2:viz -->
+<script src="dark2viz.js"></script>
+<script>
+// DARK 2.0 · CAVE_PROJECTION · capas de instrumentos sobre el muro de ladrillos: cada captura de la camara se mide antes de volverse
+// ladrillo (histograma de luz con los mismos caracteres del ASCII, mapa de movimiento entre capturas, centro de luz y su vector),
+// la sombra de quien mira aparece como relieve en planos apilados, y cada ladrillo visible lleva su etiqueta y su flujo.
+(function () {
+  if (!window.DARK2) return;
+  const area = () => ({ x: 0, y: 60, w: innerWidth, h: Math.max(100, innerHeight - 140) });
+  const GW = 14, F = { luma: null, prev: null, diff: null, gh: 10, hist: new Array(11).fill(0), mean: 0, motion: 0, cx: 0.5, cy: 0.5, pcx: 0.5, pcy: 0.5, n: 0 };
+  const stats = new WeakMap();
+  // cada captura pasa por aqui antes de volverse ladrillo (se engancha la lectura de pixeles de la pieza, sin cambiarla)
+  const read0 = ctx.getImageData.bind(ctx);
+  ctx.getImageData = function (x, y, w, h) {
+    const d = read0(x, y, w, h);
+    try {
+      const gh = Math.max(4, Math.round(GW * h / w)), luma = new Float32Array(GW * gh), cnt = new Float32Array(GW * gh), hist = new Array(11).fill(0), px = d.data;
+      let sum = 0, sx = 0, sy = 0;
+      for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
+        const k = (j * w + i) * 4, b = (0.299 * px[k] + 0.587 * px[k + 1] + 0.114 * px[k + 2]) / 255, g = Math.min(gh - 1, (j / h * gh) | 0) * GW + Math.min(GW - 1, (i / w * GW) | 0);
+        luma[g] += b; cnt[g]++; hist[Math.min(10, (b * 10) | 0)]++; sum += b; sx += b * i; sy += b * j;
+      }
+      for (let g = 0; g < luma.length; g++) luma[g] /= cnt[g] || 1;
+      const diff = new Float32Array(GW * gh); let mo = 0;
+      if (F.luma && F.luma.length === luma.length) for (let g = 0; g < luma.length; g++) { diff[g] = Math.abs(luma[g] - F.luma[g]); mo += diff[g]; }
+      F.prev = F.luma; F.luma = luma; F.diff = diff; F.gh = gh; F.hist = hist; F.mean = sum / (w * h); F.motion = mo / luma.length;
+      F.pcx = F.cx; F.pcy = F.cy; F.cx = sum ? sx / sum / w : 0.5; F.cy = sum ? sy / sum / h : 0.5; F.n++;
+    } catch (e) {}
+    return d;
+  };
+  const CH = ' .:-=+*#%@@';
+  // histograma de luz: una barra por caracter del ASCII
+  function luma(c, D, A, d, r) {
+    d.title('L.01', 'LUMA → GLYPH', r.x, r.y + 9, 'CAPTURE ' + d.pad(F.n, 4));
+    const m = Math.max(1, ...F.hist), bw = (r.w - 4) / 11, base = r.y + r.h - 24;
+    F.hist.forEach((v, i) => {
+      const h = v / m * (r.h - 50), x = r.x + i * bw;
+      c.fillStyle = i > 7 ? d.Wt(0.85) : d.G(0.35 + i * 0.06); c.fillRect(x + 1.5, base - h, bw - 3, h);
+      d.text(CH[i] === ' ' ? '·' : CH[i], x + bw / 2, base + 10, d.Wt(0.9), 'center', true);
+      if (v) d.text(String(v), x + bw / 2, base - h - 3, d.G(0.6), 'center');
+    });
+    d.line(r.x, base + 0.5, r.x + r.w, base + 0.5, d.Wt(0.5));
+    d.text('MEAN ' + d.f1(F.mean * 100) + '%   MOTION ' + d.f1(F.motion * 1000) + '‰', r.x, base + 21, d.G(0.7));
+  }
+  // mapa de movimiento: que celdas cambiaron entre las dos ultimas capturas; cruz = centro de luz, flecha = hacia donde se movio
+  function motion(c, D, A, d, r) {
+    d.title('M.02', 'MOTION Δ', r.x, r.y + 9, GW + '×' + F.gh);
+    const x0 = r.x, y0 = r.y + 16, cw = r.w / GW, ch = (r.h - 30) / F.gh;
+    c.strokeStyle = d.G(0.35); c.strokeRect(x0 + 0.5, y0 + 0.5, r.w - 1, ch * F.gh - 1);
+    if (!F.diff) { d.text('NO VISION', x0 + r.w / 2, y0 + ch * F.gh / 2, d.R(0.8), 'center', true); return; }
+    for (let j = 0; j < F.gh; j++) for (let i = 0; i < GW; i++) {
+      const v = F.diff[j * GW + i], l = F.luma[j * GW + i];
+      c.fillStyle = d.G(0.08 + l * 0.3); c.fillRect(x0 + i * cw + 1, y0 + j * ch + 1, cw - 2, ch - 2);
+      if (v > 0.03) { c.fillStyle = v > 0.12 ? d.R(0.9) : d.Wt(0.3 + v * 4); c.fillRect(x0 + i * cw + cw * 0.25, y0 + j * ch + ch * 0.25, cw * 0.5, ch * 0.5); }
+    }
+    const px = x0 + F.cx * r.w, py = y0 + F.cy * ch * F.gh, qx = x0 + F.pcx * r.w, qy = y0 + F.pcy * ch * F.gh;
+    d.cross(px, py, 6, d.Wt(0.95));
+    if (Math.hypot(px - qx, py - qy) > 1.5) d.arrow(qx, qy, px + (px - qx) * 2, py + (py - qy) * 2, d.R(0.9));
+    d.text('Σ(' + d.f1(F.cx) + ',' + d.f1(F.cy) + ')  Δ(' + d.sgn(F.cx - F.pcx) + d.f1(Math.abs(F.cx - F.pcx) * 100) + ',' + d.sgn(F.cy - F.pcy) + d.f1(Math.abs(F.cy - F.pcy) * 100) + ')', x0, y0 + ch * F.gh + 11, d.G(0.7));
+  }
+  DARK2.viz({
+    code: 'CAVE_PROJECTION', z: 50, area,
+    probe() {
+      const A = area(), pts = [], kids = muralGrid.children, n = kids.length;
+      for (let i = Math.max(0, n - 30); i < n; i++) {
+        const el = kids[i]; let s = stats.get(el); if (!s) { s = { id: 'BRK' + String(assetCount - (n - 1 - i)).padStart(4, '0'), mean: F.mean, motion: F.motion }; stats.set(el, s); }
+        const r = el.getBoundingClientRect(); if (r.bottom < A.y || r.top > A.y + A.h) continue;
+        pts.push({ id: s.id, x: r.left + r.width / 2, y: Math.max(A.y, Math.min(A.y + A.h, r.top + r.height / 2)), k: i === n - 1 ? 'w' : s.motion > 0.05 ? 'r' : 'g', v: Math.min(1, s.mean * 1.6), t: 'μ' + Math.round(s.mean * 100) });
+      }
+      const gh = F.gh;
+      return { pts, series: { mean: F.mean * 100, motion: F.motion * 1000, bricks: assetCount },
+               grid: F.luma ? { get: (u, v) => F.luma[Math.min(gh - 1, (v * gh) | 0) * GW + Math.min(GW - 1, (u * GW) | 0)] } : null };
+    },
+    layers: [
+      { type: 'rulers', top: 4 },
+      { type: 'web', k: 1, hull: false, dims: false, labels: 4, alpha: 0.2 },
+      { type: 'tags', max: 6, vec: 0.4, size: 12 },
+      { type: 'fn', draw: luma, at: [0.012, 0.04, 0.2, 0.3], bg: 0.86 },
+      { type: 'fn', draw: motion, at: [0.012, 0.38, 0.2, 0.34], bg: 0.86 },
+      { type: 'iso', at: [0.79, 0.04, 0.2, 0.62], n: 14, code: 'I.01', name: 'SHADOW RELIEF', bg: 0.86 },
+      { type: 'scope', at: [0.79, 0.7, 0.2, 0.28], series: ['mean', 'motion', 'bricks'], labels: { mean: 'LIGHT %', motion: 'MOTION ‰', bricks: 'BRICKS' }, bg: 0.86 },
+      { type: 'frame' }
+    ]
+  });
+})();
+</script>
+<!-- /DARK2:viz -->
 </body>
 </html>
